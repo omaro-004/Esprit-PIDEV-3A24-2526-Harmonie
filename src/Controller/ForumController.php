@@ -21,7 +21,7 @@ use App\Service\ModerationService;
 use Knp\Component\Pager\PaginatorInterface;
 use App\Service\TranslationService;
 use App\Service\SpellCheckService;
-use App\Service\ImageGenerationService;
+use App\Service\ImageGen;
 // ── Résumer la discussion ──────────────────────────────
 use App\Service\SummaryService;
 use App\Repository\CommentaireRepository;
@@ -110,7 +110,7 @@ class ForumController extends AbstractController
     #[Route('/forum/generate-image', name: 'forum_generate_image', methods: ['POST'])]
     public function generateImage(
         Request $request,
-        ImageGenerationService $imageGenerator
+        ImageGen $imageGenerator
     ): JsonResponse {
         $prompt = trim($request->request->get('prompt', ''));
         $style  = trim($request->request->get('style', ''));
