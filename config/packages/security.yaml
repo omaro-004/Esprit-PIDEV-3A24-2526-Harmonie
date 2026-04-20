@@ -53,3 +53,4 @@ security:
         - { path: ^/admin,                 roles: ROLE_ADMIN }
         - { path: ^/profile,               roles: ROLE_USER }
         - { path: ^/,                      roles: ROLE_USER }
+        - { path: ^/forum/post/\d+/summarize, roles: PUBLIC_ACCESS }

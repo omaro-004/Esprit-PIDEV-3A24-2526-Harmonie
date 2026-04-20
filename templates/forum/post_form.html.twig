@@ -1,11 +1,13 @@
 {% extends 'base.html.twig' %}
 {% block title %}{{ post ? 'Modifier' : 'Nouveau' }} post — Harmony{% endblock %}
 
+
 {% block stylesheets %}
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
     /* Styles correction orthographique */
     .spell-container { position: relative; }
+
 
     .spell-errors {
         margin-top: 8px;
@@ -13,6 +15,7 @@
         flex-direction: column;
         gap: 6px;
     }
+
 
     .spell-error-item {
         background: #FFF8E7;
@@ -26,6 +29,7 @@
         gap: 10px;
     }
 
+
     .spell-error-word {
         font-weight: 700;
         background: rgba(245,158,11,.15);
@@ -33,12 +37,14 @@
         border-radius: 4px;
     }
 
+
     .spell-suggestions {
         display: flex;
         gap: 6px;
         flex-wrap: wrap;
         margin-top: 6px;
     }
+
 
     .spell-suggestion-btn {
         padding: 3px 10px;
@@ -53,7 +59,9 @@
         transition: background .15s;
     }
 
+
     .spell-suggestion-btn:hover { background: #4B3B9E; }
+
 
     .spell-checking {
         font-size: 11px;
@@ -62,12 +70,15 @@
         display: none;
     }
 
+
     .spell-ok {
         font-size: 11px;
         color: #16A34A;
         margin-top: 6px;
         display: none;
     }
+
+
 
 
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -93,10 +104,12 @@
         color:white;font-family:var(--font-head);font-weight:700;font-size:14px;
         display:grid;place-items:center;}
 
+
     .page{max-width:680px;margin:0 auto;padding:48px 40px 80px;}
     .breadcrumb{display:flex;align-items:center;gap:8px;font-size:13px;
         color:var(--text-muted);margin-bottom:24px;}
     .breadcrumb a{color:var(--purple);text-decoration:none;font-weight:500;}
+
 
     .form-card{background:var(--white);border:1px solid var(--border);
         border-radius:20px;padding:40px;}
@@ -106,6 +119,7 @@
         background:var(--purple-pale);color:var(--purple);
         padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;
         margin-bottom:20px;}
+
 
     .form-group{margin-bottom:20px;}
     .form-label{display:block;font-size:13px;font-weight:600;color:var(--text-mid);margin-bottom:7px;}
@@ -118,9 +132,11 @@
     .form-textarea{resize:vertical;min-height:160px;}
     .char-count{font-size:11px;color:var(--text-muted);text-align:right;margin-top:4px;}
 
+
     .error-box{background:#FEF2F2;border:1px solid rgba(239,68,68,.2);
         border-radius:10px;padding:12px 16px;margin-bottom:20px;
         color:#E05252;font-size:13px;display:flex;align-items:center;gap:8px;}
+
 
     .form-actions{display:flex;gap:12px;margin-top:28px;}
     .btn-submit{flex:1;padding:12px;background:var(--purple);color:white;border:none;
@@ -133,6 +149,7 @@
         display:inline-flex;align-items:center;}
 </style>
 {% endblock %}
+
 
 {% block body %}
 <header class="topbar">
@@ -156,6 +173,8 @@
 </header>
 
 
+
+
 <main class="page">
     <div class="breadcrumb">
         <a href="{{ path('forum') }}">💬 Forum</a>
@@ -165,9 +184,11 @@
         <span>{{ post ? 'Modifier le post' : 'Nouveau post' }}</span>
     </div>
 
+
     <div class="form-card">
         <div class="form-title">{{ post ? '✏️ Modifier le post' : '📝 Nouveau post' }}</div>
         <div class="cat-badge">🗂 {{ categorie.nomCategorie }}</div>
+
 
         {# Message modération #}
         {% for msg in app.flashes('error_moderation') %}
@@ -182,7 +203,11 @@
 
 
 
+
+
+
         {{ form_start(form, {'attr': {'enctype': 'multipart/form-data', 'novalidate': 'novalidate'}}) }}
+
 
             <div class="form-group">
                 <label class="form-label">Titre *</label>
@@ -198,6 +223,7 @@
                 <div class="char-count"><span id="titreCount">0</span>/150</div>
             </div>
 
+
             <div class="form-group">
                 <label class="form-label">Contenu *</label>
                 <div class="spell-container">
@@ -211,8 +237,10 @@
                 {% endfor %}
             </div>
 
+
             <div class="form-group">
                 <label class="form-label">Image (optionnelle)</label>
+
 
                 {# Aperçu si image existante #}
                 {% if post and post.imagePath %}
@@ -226,10 +254,12 @@
                     </div>
                 {% endif %}
 
+
                 {{ form_widget(form.imageFile, {'attr': {'class': 'form-input', 'accept': 'image/*', 'id': 'imageFileInput'}}) }}
                 {% for error in form.imageFile.vars.errors %}
                     <div class="error-box">⚠️ {{ error.message }}</div>
                 {% endfor %}
+
 
                 {# Aperçu avant upload #}
                 <div id="imagePreview" style="display:none;margin-top:10px;">
@@ -238,6 +268,7 @@
                 </div>
             </div>
 
+
             <div class="form-actions">
                 <a href="{{ path('forum_posts', {id: categorie.idCategorie}) }}" class="btn-cancel">Annuler</a>
                 <button type="submit" class="btn-submit">
@@ -245,15 +276,18 @@
                 </button>
             </div>
 
+
         {{ form_end(form) }}
     </div>
 </main>
+
 
 {% block javascripts %}
 <script>
 // ── COMPTEUR DE CARACTÈRES ──────────────────────────
 const titreInput   = document.getElementById('post_titre');
 const titreCount   = document.getElementById('titreCount');
+
 
 function updateTitre() {
     if (titreCount && titreInput) {
@@ -262,6 +296,7 @@ function updateTitre() {
 }
 if (titreInput) titreInput.addEventListener('input', updateTitre);
 updateTitre();
+
 
 // ── APERÇU IMAGE ───────────────────────────────────
 const imageInput = document.getElementById('imageFileInput');
@@ -279,10 +314,13 @@ if (imageInput) {
     });
 }
 
+
 // ── CORRECTION ORTHOGRAPHIQUE ──────────────────────
+
 
 // Timer pour le debounce — attend 1s après que l'user arrête de taper
 let spellTimers = {};
+
 
 /**
  * Planifie une vérification orthographique après 1 seconde de pause
@@ -296,8 +334,10 @@ function scheduleSpellCheck(inputId, errorsId, statusId) {
         clearTimeout(spellTimers[inputId]);
     }
 
+
     const input = document.getElementById(inputId);
     const text  = input.value.trim();
+
 
     // Efface les erreurs si texte vide
     if (text.length < 5) {
@@ -306,15 +346,18 @@ function scheduleSpellCheck(inputId, errorsId, statusId) {
         return;
     }
 
+
     // Affiche "Vérification..."
     document.getElementById(statusId).style.display = 'block';
     document.getElementById(statusId).textContent = '✏️ Vérification...';
+
 
     // Lance la vérification après 1 seconde
     spellTimers[inputId] = setTimeout(() => {
         doSpellCheck(text, inputId, errorsId, statusId);
     }, 1000);
 }
+
 
 /**
  * Envoie le texte au controller Symfony qui appelle LanguageTool API
@@ -325,17 +368,21 @@ async function doSpellCheck(text, inputId, errorsId, statusId) {
         formData.append('text', text);
         formData.append('language', 'fr');
 
+
         const res  = await fetch('/forum/spellcheck', {
             method: 'POST',
             body: formData,
         });
         const data = await res.json();
 
+
         const errorsDiv  = document.getElementById(errorsId);
         const statusDiv  = document.getElementById(statusId);
 
+
         // Cache le statut
         statusDiv.style.display = 'none';
+
 
         if (!data.errors || data.errors.length === 0) {
             // Aucune faute
@@ -346,8 +393,10 @@ async function doSpellCheck(text, inputId, errorsId, statusId) {
             return;
         }
 
+
         // Remet la couleur normale du statut
         statusDiv.style.color = '#9590B8';
+
 
         // Affiche chaque erreur avec ses suggestions
         errorsDiv.innerHTML = data.errors.map(err => `
@@ -373,11 +422,13 @@ async function doSpellCheck(text, inputId, errorsId, statusId) {
             </div>
         `).join('');
 
+
     } catch(e) {
         console.error('SpellCheck error:', e);
         document.getElementById(statusId).style.display = 'none';
     }
 }
+
 
 /**
  * Applique une suggestion — remplace le mot erroné dans le textarea
@@ -391,13 +442,16 @@ function applySuggestion(inputId, wrongWord, suggestion, offset, length) {
     const input = document.getElementById(inputId);
     const text  = input.value;
 
+
     // Remplace le mot erroné à la position exacte
     input.value = text.substring(0, offset) + suggestion + text.substring(offset + length);
+
 
     // Relance la vérification après correction
     scheduleSpellCheck(inputId, inputId === 'post_titre' ? 'titre-errors' : 'contenu-errors',
                                 inputId === 'post_titre' ? 'titre-status' : 'contenu-status');
 }
+
 
 /**
  * Échappe le HTML pour éviter les injections XSS
@@ -410,3 +464,4 @@ function escHtml(str) {
 </script>
 {% endblock %}
 {% endblock %}
+

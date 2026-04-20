@@ -1,6 +1,7 @@
 {% extends 'base.html.twig' %}
 {% block title %}{{ post.titre }} — Forum Harmony{% endblock %}
 
+
 {% block stylesheets %}
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -13,6 +14,7 @@
         --font-head:'Syne',sans-serif;--font-body:'Inter',sans-serif;
     }
     html,body{font-family:var(--font-body);background:var(--purple-ghost);color:var(--text);}
+
 
     .topbar{position:sticky;top:0;z-index:200;background:var(--white);
         border-bottom:1px solid var(--border);height:62px;display:flex;
@@ -32,12 +34,15 @@
         color:white;font-family:var(--font-head);font-weight:700;font-size:14px;
         display:grid;place-items:center;}
 
+
     .page{max-width:780px;margin:0 auto;padding:48px 40px 80px;}
+
 
     .breadcrumb{display:flex;align-items:center;gap:8px;font-size:13px;
         color:var(--text-muted);margin-bottom:24px;}
     .breadcrumb a{color:var(--purple);text-decoration:none;font-weight:500;}
     .breadcrumb a:hover{text-decoration:underline;}
+
 
     /* POST */
     .post-box{background:var(--white);border:1px solid var(--border);
@@ -53,6 +58,7 @@
     .post-body{font-size:15px;color:var(--text-mid);line-height:1.8;
         border-top:1px solid var(--purple-ghost);padding-top:20px;}
 
+
     /* COMMENTAIRES */
     .comments-header{display:flex;align-items:center;justify-content:space-between;
         margin-bottom:16px;}
@@ -60,6 +66,7 @@
         color:var(--text);display:flex;align-items:center;gap:8px;}
     .comments-count{font-size:12px;font-weight:600;color:var(--purple);
         background:var(--purple-pale);padding:3px 10px;border-radius:20px;}
+
 
     .comment-card{background:var(--white);border:1px solid var(--border);
         border-radius:14px;padding:18px 22px;margin-bottom:12px;
@@ -72,15 +79,18 @@
     .comment-date{font-size:11px;color:var(--text-muted);}
     .comment-body{font-size:14px;color:var(--text-mid);line-height:1.7;}
 
+
     .no-comments{text-align:center;padding:36px;color:var(--text-muted);
         background:var(--white);border:1px dashed var(--border);border-radius:14px;
         font-size:14px;}
+
 
     @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
     .fade{animation:fadeUp .4s ease both;}
     .d1{animation-delay:.06s;}.d2{animation-delay:.12s;}
 </style>
 {% endblock %}
+
 
 {% block body %}
 <header class="topbar">
@@ -104,7 +114,9 @@
     </div>
 </header>
 
+
 <main class="page">
+
 
     <div class="breadcrumb fade">
         <a href="{{ path('forum') }}">💬 Forum</a>
@@ -115,6 +127,7 @@
         {% endif %}
         <span>{{ post.titre|slice(0, 40) }}{% if post.titre|length > 40 %}…{% endif %}</span>
     </div>
+
 
     <!-- POST -->
     <div class="post-box fade">
@@ -129,6 +142,7 @@
         <div class="post-body">{{ post.contenu }}</div>
     </div>
 
+
     <!-- COMMENTAIRES -->
     <div class="fade d1">
         <div class="comments-header">
@@ -137,6 +151,7 @@
                 <span class="comments-count">{{ commentaires|length }}</span>
             </div>
         </div>
+
 
         {% if commentaires is empty %}
             <div class="no-comments">Aucun commentaire pour l'instant. Sois le premier ! 👋</div>
@@ -156,5 +171,7 @@
         {% endif %}
     </div>
 
+
 </main>
 {% endblock %}
+

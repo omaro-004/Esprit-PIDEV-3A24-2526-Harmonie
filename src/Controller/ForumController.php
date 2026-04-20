@@ -1,6 +1,7 @@
 <?php
 namespace App\Controller;
 
+
 use App\Form\CategorieType;
 use App\Form\PostType;
 use App\Form\CommentaireType;
@@ -19,31 +20,114 @@ use Symfony\Component\String\Slugger\SluggerInterface;
 use App\Service\ModerationService;
 use Knp\Component\Pager\PaginatorInterface;
 use App\Service\TranslationService;
-//use Symfony\Component\HttpFoundation\JsonResponse;
 use App\Service\SpellCheckService;
-use App\Service\ImageGen;
+use App\Service\ImageGenerationService;
+// ── Résumer la discussion ──────────────────────────────
+use App\Service\SummaryService;
+use App\Repository\CommentaireRepository;
 
+
+use App\Repository\PostRepository;
+use App\Service\SentimentService;
 class ForumController extends AbstractController
 {
-    // ── GÉNÉRATION IMAGE IA ──────────────────────────────
+    // ── analyse du sentiment comment ──────────────────────────────
+    #[Route('/forum/comment/{id}/sentiment', name: 'comment_sentiment', methods: ['POST'])]
+    public function analyzeSentiment(
+        int $id,
+        CommentaireRepository $commentaireRepo,
+        SentimentService $sentimentService
+    ): JsonResponse {
+        try {
+            $commentaire = $commentaireRepo->find($id);
+            if (!$commentaire) {
+                return new JsonResponse(['error' => 'Commentaire introuvable'], 404);
+            }
 
-     #[Route('/forum/generate-image', name: 'forum_generate_image', methods: ['POST'])]
+
+            $result = $sentimentService->analyze($commentaire->getContenu());
+
+
+            return new JsonResponse($result);
+
+
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+
+     // ── Résumer la discussion ──────────────────────────────
+
+
+    #[Route('/forum/post/{id}/summarize', name: 'summarize_discussion', methods: ['POST'])]
+    public function summarizeDiscussion(
+        int $id,
+        CommentaireRepository $commentaireRepo,
+        PostRepository $postRepo,
+        SummaryService $summaryService
+    ): JsonResponse {
+        try {
+             // Vérifie si connecté, retourne JSON au lieu de rediriger
+            if (!$this->getUser()) {
+                return new JsonResponse(['error' => 'Non connecté'], 401);
+            }
+
+
+            $post = $postRepo->find($id);
+            if (!$post) {
+                return new JsonResponse(['error' => 'Post introuvable'], 404);
+            }
+
+
+            $commentaires = $commentaireRepo->findBy(['idPost' => $id]);
+
+
+            if (empty($commentaires)) {
+                return new JsonResponse(['summary' => 'Aucun commentaire à résumer pour le moment.']);
+            }
+
+
+            $resume = $summaryService->summarizeDiscussion(
+                $post->getTitre(),
+                $commentaires
+            );
+
+
+            return new JsonResponse(['summary' => $resume]);
+
+
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+
+   
+
+
+    // ── GÉNÉRATION IMAGE IA ──────────────────────────────
+    #[Route('/forum/generate-image', name: 'forum_generate_image', methods: ['POST'])]
     public function generateImage(
         Request $request,
-        ImageGen $imageGenerator
+        ImageGenerationService $imageGenerator
     ): JsonResponse {
         $prompt = trim($request->request->get('prompt', ''));
         $style  = trim($request->request->get('style', ''));
+
 
         if (empty($prompt)) {
             return new JsonResponse(['error' => 'Merci de décrire l\'image.'], 400);
         }
 
+
         if (strlen($prompt) > 500) {
             return new JsonResponse(['error' => 'Prompt trop long (max 500 caractères).'], 400);
         }
 
+
         $imageBase64 = $imageGenerator->generateImageBytes($prompt, $style);
+
 
         if (!$imageBase64) {
             return new JsonResponse([
@@ -51,12 +135,14 @@ class ForumController extends AbstractController
             ], 503);
         }
 
+
         return new JsonResponse([
             'image'  => $imageBase64,
             'prompt' => $prompt,
             'style'  => $style,
         ]);
     }
+
 
 
 
@@ -69,20 +155,25 @@ class ForumController extends AbstractController
         $text     = $request->request->get('text', '');
         $language = $request->request->get('language', 'fr');
 
+
         // Sécurité — texte trop long
         if (strlen($text) > 2000) {
             return new JsonResponse(['errors' => []]);
         }
 
+
         $errors = $spellCheck->check($text, $language);
+
 
         return new JsonResponse(['errors' => $errors]);
     }
+
 
     private function getCurrentUserId(): int
     {
         return $this->getUser()->getUserId();
     }
+
 
     // ── TRADUCTION D'UN POST (AJAX) ──────────────────────
     #[Route('/forum/post/{id}/translate', name: 'forum_post_translate', methods: ['POST'])]
@@ -97,8 +188,10 @@ class ForumController extends AbstractController
             return new JsonResponse(['error' => 'Post introuvable'], 404);
         }
 
+
         // Récupère la langue cible depuis la requête AJAX
         $targetLang = $request->request->get('lang', 'en');
+
 
         // Langues supportées pour éviter les abus
         $supportedLangs = ['en', 'ar', 'es', 'de', 'it'];
@@ -106,9 +199,11 @@ class ForumController extends AbstractController
             return new JsonResponse(['error' => 'Langue non supportée'], 400);
         }
 
+
         // Traduit le titre et le contenu séparément
         $translatedTitre   = $translator->translate($post->getTitre(), 'fr', $targetLang);
         $translatedContenu = $translator->translate($post->getContenu(), 'fr', $targetLang);
+
 
         return new JsonResponse([
             'titre'   => $translatedTitre,
@@ -117,9 +212,11 @@ class ForumController extends AbstractController
         ]);
     }
 
+
     // ════════════════════════════════════════════════
     //  CATÉGORIES
     // ════════════════════════════════════════════════
+
 
     #[Route('/forum', name: 'forum')]
     public function index(EntityManagerInterface $em): Response
@@ -130,12 +227,14 @@ class ForumController extends AbstractController
         ]);
     }
 
+
     #[Route('/forum/categorie/new', name: 'forum_categorie_new', methods: ['GET','POST'])]
 public function newCategorie(Request $request, EntityManagerInterface $em): Response
 {
     $cat  = new Categorie();
     $form = $this->createForm(CategorieType::class, $cat, ['attr' => ['novalidate' => 'novalidate']]);
     $form->handleRequest($request);
+
 
     if ($form->isSubmitted() && $form->isValid()) {
         $cat->setDateCreation(new \DateTime());
@@ -144,11 +243,13 @@ public function newCategorie(Request $request, EntityManagerInterface $em): Resp
         return $this->redirectToRoute('forum');
     }
 
+
     return $this->render('forum/categorie_form.html.twig', [
         'form'   => $form->createView(),
         'cat'    => null,
     ]);
 }
+
 
    // #[Route('/forum/categorie/{id}/edit', name: 'forum_categorie_edit', methods: ['GET','POST'])]
     //public function editCategorie(int $id, Request $request, EntityManagerInterface $em): Response
@@ -158,19 +259,23 @@ public function editCategorie(int $id, Request $request, EntityManagerInterface 
     $cat = $em->getRepository(Categorie::class)->find($id);
     if (!$cat) throw $this->createNotFoundException();
 
+
     $form = $this->createForm(CategorieType::class, $cat, ['attr' => ['novalidate' => 'novalidate']]);
     $form->handleRequest($request);
+
 
     if ($form->isSubmitted() && $form->isValid()) {
         $em->flush();
         return $this->redirectToRoute('forum');
     }
 
+
     return $this->render('forum/categorie_form.html.twig', [
         'form' => $form->createView(),
         'cat'  => $cat,
     ]);
 }
+
 
     #[Route('/forum/categorie/{id}/delete', name: 'forum_categorie_delete', methods: ['POST'])]
     public function deleteCategorie(int $id, EntityManagerInterface $em): Response
@@ -188,10 +293,21 @@ public function editCategorie(int $id, Request $request, EntityManagerInterface 
 
 
 
+
+
+
+
+
+
+
+
+
     // ════════════════════════════════════════════════
     //  POSTS — avec recherche, tri, pagination
     // ════════════════════════════════════════════════
 
+
+   
 
 
 #[Route('/forum/categorie/{id}', name: 'forum_posts')]
@@ -204,9 +320,11 @@ public function posts(
     $categorie = $em->getRepository(Categorie::class)->find($id);
     if (!$categorie) throw $this->createNotFoundException();
 
+
     // ── Paramètres GET ──
     $search = trim($request->query->get('search', ''));
     $tri    = $request->query->get('tri', 'date_desc');
+
 
     // ── Construction de la requête Doctrine (QueryBuilder) ──
     // On passe le QueryBuilder au paginator, pas les résultats
@@ -217,16 +335,19 @@ public function posts(
         ->where('p.idCategorie = :idCat')
         ->setParameter('idCat', $id);
 
+
     if ($search !== '') {
         $qb->andWhere('p.titre LIKE :s OR p.contenu LIKE :s')
            ->setParameter('s', '%' . $search . '%');
     }
+
 
     match($tri) {
         'date_asc' => $qb->orderBy('p.dateCreation', 'ASC'),
         'likes'    => $qb->orderBy('p.dateCreation', 'DESC'),
         default    => $qb->orderBy('p.dateCreation', 'DESC'),
     };
+
 
     // ── KnpPaginator — remplace toute la logique manuelle ──
     // paginate(requête, numéro de page, nombre d'éléments par page)
@@ -237,9 +358,11 @@ public function posts(
         5                                      // posts par page
     );
 
+
     // ── Les posts de la page courante ──
     // $pagination->getItems() retourne uniquement les posts de la page
     $posts = $pagination->getItems();
+
 
     // ── Likes ──
     $likesMap  = [];
@@ -253,6 +376,7 @@ public function posts(
             ->findOneBy(['idPost' => $pid, 'userId' => $this->getCurrentUserId(), 'typeReaction' => 'like']);
     }
 
+
     // Tri par likes (après pagination — uniquement sur la page courante)
     if ($tri === 'likes') {
         $postsArray = $posts;
@@ -262,12 +386,14 @@ public function posts(
         $posts = $postsArray;
     }
 
+
     // ── Commentaires pour les posts affichés ──
     $commentairesMap = [];
     foreach ($posts as $post) {
         $commentairesMap[$post->getIdPost()] = $em->getRepository(Commentaire::class)
             ->findBy(['idPost' => $post->getIdPost()], ['dateCommentaire' => 'ASC']);
     }
+
 
     // ── Map userId => "Prénom Nom" ──
     $userIds = array_unique(array_map(fn($p) => $p->getUserId(), $posts));
@@ -279,6 +405,7 @@ public function posts(
     }
     $allUserIds = array_unique(array_merge($userIds, $allCommentUserIds));
 
+
     $usersMap = [];
     if (!empty($allUserIds)) {
         $users = $em->createQueryBuilder()
@@ -289,6 +416,7 @@ public function posts(
             $usersMap[$u->getUserId()] = $u->getUserPrenom() . ' ' . $u->getUserNom();
         }
     }
+
 
     return $this->render('forum/posts.html.twig', [
         'categorie'       => $categorie,
@@ -310,17 +438,20 @@ public function posts(
     // ── LIKE toggle (AJAX) ──────────────────────────
     // ════════════════════════════════════════════════
 
+
     #[Route('/forum/post/{id}/like', name: 'forum_post_like', methods: ['POST', 'GET'])]
     public function toggleLike(int $id, EntityManagerInterface $em): JsonResponse
     {
         $post = $em->getRepository(Post::class)->find($id);
         if (!$post) return new JsonResponse(['error' => 'Post introuvable'], 404);
 
+
         $existing = $em->getRepository(Reaction::class)->findOneBy([
             'idPost'       => $id,
             'userId'       => $this->getCurrentUserId(),
             'typeReaction' => 'like',
         ]);
+
 
         if ($existing) {
             $em->remove($existing);
@@ -336,17 +467,21 @@ public function posts(
         }
         $em->flush();
 
+
         $count = count($em->getRepository(Reaction::class)
             ->findBy(['idPost' => $id, 'typeReaction' => 'like']));
 
+
         return new JsonResponse(['liked' => $liked, 'count' => $count]);
     }
+
 
     // ════════════════════════════════════════════════
     //  POSTS CRUD
     // ════════════════════════════════════════════════
 
 
+   
 #[Route('/forum/categorie/{idCat}/post/new', name: 'forum_post_new', methods: ['GET','POST'])]
 public function newPost(
     int $idCat,
@@ -358,11 +493,14 @@ public function newPost(
     $categorie = $em->getRepository(Categorie::class)->find($idCat);
     if (!$categorie) throw $this->createNotFoundException();
 
+
     $post = new Post();
     $form = $this->createForm(PostType::class, $post, ['attr' => ['novalidate' => 'novalidate']]);
     $form->handleRequest($request);
 
+
     if ($form->isSubmitted() && $form->isValid()) {
+
 
         // ── Vérification gros mots ──
         $texteAVerifier = $post->getTitre() . ' ' . $post->getContenu();
@@ -376,6 +514,7 @@ public function newPost(
             ]);
         }
 
+
         // ── Gestion upload image ──
         $imageFile = $form->get('imageFile')->getData();
         if ($imageFile) {
@@ -388,14 +527,17 @@ public function newPost(
             } catch (\Exception $e) {}
         }
 
+
         $post->setIdCategorie($idCat);
         $post->setUserId($this->getCurrentUserId());
         $post->setDateCreation(new \DateTime());
         $em->persist($post);
         $em->flush();
 
+
         return $this->redirectToRoute('forum_posts', ['id' => $idCat]);
     }
+
 
     return $this->render('forum/post_form.html.twig', [
         'form'      => $form->createView(),
@@ -403,6 +545,7 @@ public function newPost(
         'categorie' => $categorie,
     ]);
 }
+
 
 #[Route('/forum/post/{id}/edit', name: 'forum_post_edit', methods: ['GET','POST'])]
 public function editPost(
@@ -415,10 +558,14 @@ public function editPost(
     if (!$post) throw $this->createNotFoundException();
     $categorie = $em->getRepository(Categorie::class)->find($post->getIdCategorie());
 
+
     $form = $this->createForm(PostType::class, $post, ['attr' => ['novalidate' => 'novalidate']]);
     $form->handleRequest($request);
 
+
     if ($form->isSubmitted() && $form->isValid()) {
+
+
 
 
         // ── Gestion upload image ──
@@ -427,6 +574,7 @@ public function editPost(
             $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
             $safeFilename     = $slugger->slug($originalFilename);
             $newFilename      = $safeFilename . '-' . uniqid() . '.' . $imageFile->guessExtension();
+
 
             try {
                 $imageFile->move(
@@ -450,9 +598,11 @@ public function editPost(
             ]);
         }
 
+
         $em->flush();
         return $this->redirectToRoute('forum_posts', ['id' => $post->getIdCategorie()]);
     }
+
 
     return $this->render('forum/post_form.html.twig', [
         'form'      => $form->createView(),
@@ -461,6 +611,8 @@ public function editPost(
     ]);
 }
 
+
+   
 
 
     #[Route('/forum/post/{id}/delete', name: 'forum_post_delete', methods: ['POST'])]
@@ -476,9 +628,11 @@ public function editPost(
         return $this->redirectToRoute('forum');
     }
 
+
     // ════════════════════════════════════════════════
     //  COMMENTAIRES
     // ════════════════════════════════════════════════
+
 
     // Après — ajouter ModerationService
     #[Route('/forum/post/{idPost}/comment/new', name: 'forum_comment_new', methods: ['POST'])]
@@ -491,6 +645,7 @@ public function editPost(
 {
     $post = $em->getRepository(Post::class)->find($idPost);
     if (!$post) throw $this->createNotFoundException();
+
 
     $contenu = trim($request->request->get('contenu', ''));
     // ── Validation longueur ──
@@ -512,6 +667,7 @@ public function editPost(
         ]);
     }
 
+
     $c = new Commentaire();
     $c->setContenu($contenu);
     $c->setIdPost($idPost);
@@ -520,8 +676,10 @@ public function editPost(
     $em->persist($c);
     $em->flush();
 
+
     return $this->redirectToRoute('forum_posts', ['id' => $post->getIdCategorie()]);
 }
+
 
     #[Route('/forum/comment/{id}/edit', name: 'forum_comment_edit', methods: ['GET','POST'])]
 public function editComment(int $id, Request $request, EntityManagerInterface $em): Response
@@ -530,13 +688,16 @@ public function editComment(int $id, Request $request, EntityManagerInterface $e
     if (!$c) throw $this->createNotFoundException();
     $post = $em->getRepository(Post::class)->find($c->getIdPost());
 
+
     $form = $this->createForm(CommentaireType::class, $c, ['attr' => ['novalidate' => 'novalidate']]);
     $form->handleRequest($request);
+
 
     if ($form->isSubmitted() && $form->isValid()) {
         $em->flush();
         return $this->redirectToRoute('forum_posts', ['id' => $post->getIdCategorie()]);
     }
+
 
     return $this->render('forum/comment_form.html.twig', [
         'form'    => $form->createView(),
@@ -544,6 +705,7 @@ public function editComment(int $id, Request $request, EntityManagerInterface $e
         'post'    => $post,
     ]);
 }
+
 
     #[Route('/forum/comment/{id}/delete', name: 'forum_comment_delete', methods: ['POST'])]
     public function deleteComment(int $id, EntityManagerInterface $em): Response
@@ -559,3 +721,6 @@ public function editComment(int $id, Request $request, EntityManagerInterface $e
         return $this->redirectToRoute('forum');
     }
 }
+
+
+

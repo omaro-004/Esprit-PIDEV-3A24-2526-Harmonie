@@ -75,3 +75,13 @@ services:
     App\Service\Telegram\EventReminderService:
         arguments:
             $botToken: '%env(TELEGRAM_BOT_TOKEN)%'
+# ----------------------résumé -------------------------------------------
+    App\Service\SummaryService:
+        arguments:
+            $apiKey: '%env(GROQ_API_KEY)%'
+
+
+    # ----------------------sentiment -------------------------------------------
+    App\Service\SentimentService:
+        arguments:
+            $apiKey: '%env(GROQ_API_KEY)%'
