@@ -1,0 +1,55 @@
+security:
+    password_hashers:
+        App\Entity\User:
+            algorithm: bcrypt
+            cost: 12
+
+    providers:
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: userEmail
+
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+
+        main:
+            lazy: true
+            provider: app_user_provider
+
+            custom_authenticators:
+                - App\Security\GoogleLoginAuthenticator
+                - App\Security\FacebookAuthenticator
+
+            form_login:
+                login_path: app_login
+                check_path: app_login
+                username_parameter: email
+                password_parameter: password
+                default_target_path: homepage
+                always_use_default_target_path: false
+
+            logout:
+                path: app_logout
+                target: app_login
+
+            remember_me:
+                secret: '%kernel.secret%'
+                lifetime: 10800
+                always_remember_me: true
+
+    role_hierarchy:
+        ROLE_ADMIN: [ROLE_USER]
+
+    access_control:
+        - { path: ^/login,                 roles: PUBLIC_ACCESS }
+        - { path: ^/register,              roles: PUBLIC_ACCESS }
+        - { path: ^/face-verify,           roles: PUBLIC_ACCESS }
+        - { path: ^/connect/google,        roles: PUBLIC_ACCESS }
+        - { path: ^/connect/facebook,      roles: PUBLIC_ACCESS }
+        - { path: ^/forgot-password,       roles: PUBLIC_ACCESS }
+        - { path: ^/admin,                 roles: ROLE_ADMIN }
+        - { path: ^/profile,               roles: ROLE_USER }
+        - { path: ^/,                      roles: ROLE_USER }

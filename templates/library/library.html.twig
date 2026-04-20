@@ -1,0 +1,467 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Library – Harmony{% endblock %}
+
+{% block stylesheets %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --purple:        #6A5ACD;
+            --purple-dark:   #4B3B9E;
+            --purple-soft:   #8B7FD4;
+            --purple-pale:   #EDE8FA;
+            --purple-ghost:  #F7F5FD;
+            --text:          #1C1733;
+            --text-mid:      #4A4570;
+            --text-muted:    #9590B8;
+            --border:        rgba(106,90,205,.12);
+            --white:         #FFFFFF;
+            --font-head:     'Syne', sans-serif;
+            --font-body:     'Inter', sans-serif;
+            --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 22px;
+            --sh-sm: 0 2px 8px rgba(106,90,205,.08);
+            --sh-md: 0 6px 24px rgba(106,90,205,.12);
+            --sh-lg: 0 16px 48px rgba(106,90,205,.18);
+            --t: 160ms cubic-bezier(.16,1,.3,1);
+        }
+        html, body { height: 100%; font-family: var(--font-body); background: var(--purple-ghost); color: var(--text); }
+
+        /* ── TOPBAR ─────────────────────────────────────────── */
+        .topbar {
+            position: sticky; top: 0; z-index: 200;
+            background: var(--white); border-bottom: 1px solid var(--border);
+            height: 62px; display: flex; align-items: center; padding: 0 40px; gap: 8px;
+        }
+        .topbar-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; margin-right: 32px; flex-shrink: 0; }
+        .logo-mark { width: 34px; height: 34px; border-radius: 10px; object-fit: contain; }
+        .logo-name { font-family: var(--font-head); font-weight: 800; font-size: 17px; color: var(--text); }
+        .nav-links { display: flex; align-items: center; gap: 2px; flex: 1; overflow-x: auto; scrollbar-width: none; }
+        .nav-links::-webkit-scrollbar { display: none; }
+        .nav-link {
+            display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 9px;
+            font-size: 13px; font-weight: 500; color: var(--text-mid); text-decoration: none; white-space: nowrap;
+            transition: background var(--t), color var(--t);
+        }
+        .nav-link:hover  { background: var(--purple-pale); color: var(--purple); }
+        .nav-link.active { background: var(--purple-pale); color: var(--purple); font-weight: 600; }
+        .topbar-right { display: flex; align-items: center; gap: 10px; margin-left: auto; flex-shrink: 0; }
+        .logout-btn {
+            padding: 7px 16px; border-radius: 9px; border: 1.5px solid rgba(239,68,68,.25);
+            background: transparent; color: #E05252; font-family: var(--font-body); font-size: 13px; font-weight: 500; cursor: pointer;
+            transition: background var(--t), border-color var(--t);
+        }
+        .logout-btn:hover { background: #FEF2F2; border-color: #E05252; }
+        .avatar {
+            width: 36px; height: 36px; border-radius: 50%; background: var(--purple); color: #fff;
+            font-family: var(--font-head); font-weight: 700; font-size: 14px;
+            display: grid; place-items: center; cursor: pointer; border: 2px solid var(--purple-pale);
+            transition: box-shadow var(--t);
+        }
+        .avatar:hover { box-shadow: 0 0 0 3px rgba(106,90,205,.22); }
+        .profile-wrap { position: relative; }
+        .profile-dropdown {
+            position: absolute; top: calc(100% + 10px); right: 0; width: 220px;
+            background: var(--white); border: 1px solid var(--border); border-radius: 14px;
+            box-shadow: 0 12px 40px rgba(0,0,0,.1); padding: 16px; display: none; z-index: 500;
+        }
+        .profile-dropdown.open { display: block; }
+        .pd-name  { font-size: 14px; font-weight: 600; }
+        .pd-email { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        .pd-divider { height: 1px; background: var(--border); margin: 12px 0; }
+        .pd-hint { font-size: 11px; color: var(--text-muted); font-style: italic; }
+
+        /* ── PAGE ───────────────────────────────────────────── */
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 40px 80px; }
+        .page-header { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
+        .page-header-left { display: flex; align-items: center; gap: 12px; flex: 1; }
+        .page-icon { width: 44px; height: 44px; border-radius: var(--r-md); background: var(--purple-pale); display: grid; place-items: center; font-size: 22px; flex-shrink: 0; }
+        .page-title { font-family: var(--font-head); font-weight: 800; font-size: clamp(1.5rem, 2.5vw, 2rem); color: var(--text); letter-spacing: -.3px; }
+        .page-header-actions { display: flex; gap: 10px; align-items: center; }
+
+        /* ── BUTTONS ────────────────────────────────────────── */
+        .btn {
+            display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: var(--r-md);
+            font-family: var(--font-body); font-size: 13.5px; font-weight: 500;
+            cursor: pointer; border: none; text-decoration: none;
+            transition: background var(--t), box-shadow var(--t), transform var(--t);
+        }
+        .btn:active { transform: scale(.97); }
+        .btn-primary  { background: var(--purple); color: #fff; box-shadow: 0 2px 12px rgba(106,90,205,.3); }
+        .btn-primary:hover  { background: var(--purple-dark); box-shadow: 0 4px 18px rgba(106,90,205,.4); }
+        .btn-secondary { background: var(--white); color: var(--text-mid); border: 1px solid var(--border); box-shadow: var(--sh-sm); }
+        .btn-secondary:hover { background: var(--purple-ghost); color: var(--purple); }
+        .btn-ghost { background: none; color: var(--text-muted); border: 1px solid transparent; padding: 7px 12px; }
+        .btn-ghost:hover { background: var(--purple-pale); color: var(--purple); }
+        .btn-danger { background: #FEF2F2; color: #E05252; border: 1px solid rgba(239,68,68,.2); }
+        .btn-danger:hover { background: #FEE2E2; }
+        .btn:disabled { opacity: .5; cursor: not-allowed; transform: none !important; }
+
+        /* ── TOOLBAR ────────────────────────────────────────── */
+        .toolbar { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 24px; }
+        .view-toggle-group { display: flex; gap: 2px; background: var(--white); border: 1px solid var(--border); border-radius: var(--r-md); padding: 3px; }
+        .vtb { display: grid; place-items: center; width: 34px; height: 34px; border: none; background: none; cursor: pointer; border-radius: 8px; color: var(--text-muted); transition: background var(--t), color var(--t); }
+        .vtb:hover { color: var(--purple); background: var(--purple-ghost); }
+        .vtb.active { background: var(--purple-pale); color: var(--purple); }
+
+        /* ── GRID ───────────────────────────────────────────── */
+        .courses-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px,100%), 1fr)); gap: 20px; }
+
+        /* ── CARD ───────────────────────────────────────────── */
+        .course-card {
+            background: var(--white); border: 1px solid var(--border); border-radius: var(--r-xl);
+            overflow: hidden; box-shadow: var(--sh-sm); cursor: pointer; position: relative;
+            transition: box-shadow var(--t), transform var(--t);
+        }
+        .course-card:hover { box-shadow: var(--sh-md); transform: translateY(-3px); }
+        .course-card:focus-visible { outline: 2px solid var(--purple); outline-offset: 3px; }
+        .course-card-image { width: 100%; height: 148px; object-fit: cover; display: block; }
+        .course-card-placeholder { width: 100%; height: 148px; background: var(--purple-ghost); display: grid; place-items: center; font-size: 2.5rem; }
+        .course-card-body { padding: 14px 16px 18px; }
+        .course-card-title { font-family: var(--font-head); font-size: 14.5px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+        .course-card-subject { font-size: 12px; color: var(--text-muted); }
+        .course-delete-btn {
+            position: absolute; top: 8px; right: 8px; width: 28px; height: 28px;
+            border-radius: 50%; background: rgba(0,0,0,.45); backdrop-filter: blur(4px);
+            color: #fff; font-size: 12px; border: none; cursor: pointer; display: grid; place-items: center;
+            opacity: 0; transition: opacity var(--t), background var(--t);
+        }
+        .course-card:hover .course-delete-btn { opacity: 1; }
+        .course-delete-btn:hover { background: #E05252; }
+
+        /* ── LIST ───────────────────────────────────────────── */
+        .courses-list { display: flex; flex-direction: column; gap: 8px; }
+        .course-list-item {
+            display: flex; align-items: center; gap: 14px; padding: 12px 16px;
+            background: var(--white); border: 1px solid var(--border); border-radius: var(--r-lg);
+            cursor: pointer; transition: background var(--t), box-shadow var(--t);
+        }
+        .course-list-item:hover { background: var(--purple-ghost); box-shadow: var(--sh-sm); }
+        .course-list-thumb { width: 56px; height: 56px; border-radius: var(--r-md); object-fit: cover; flex-shrink: 0; }
+        .course-list-placeholder { width: 56px; height: 56px; border-radius: var(--r-md); background: var(--purple-ghost); display: grid; place-items: center; font-size: 1.4rem; flex-shrink: 0; }
+        .course-list-info { flex: 1; min-width: 0; }
+        .course-list-title { font-family: var(--font-head); font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .course-list-subject { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+        /* ── RECOMMENDED COURSES ────────────────────────────── */
+        .recommended-section {
+            margin-bottom: 32px;
+        }
+        .recommended-header {
+            display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+        }
+        .recommended-icon {
+            width: 32px; height: 32px; border-radius: var(--r-md);
+            background: var(--purple-pale); display: grid; place-items: center;
+            font-size: 16px; flex-shrink: 0;
+        }
+        .recommended-title {
+            font-family: var(--font-head); font-weight: 700; font-size: 18px;
+            color: var(--text); margin: 0;
+        }
+        .recommended-subtitle {
+            font-size: 13px; color: var(--text-muted); margin: 0;
+        }
+        .recommended-scroll-container {
+            position: relative; overflow: hidden;
+        }
+        .recommended-courses {
+            display: flex; gap: 16px; overflow-x: auto; padding: 4px 0 12px;
+            scrollbar-width: thin; scrollbar-color: var(--purple-soft) transparent;
+        }
+        .recommended-courses::-webkit-scrollbar {
+            height: 6px;
+        }
+        .recommended-courses::-webkit-scrollbar-track {
+            background: var(--purple-ghost); border-radius: 3px;
+        }
+        .recommended-courses::-webkit-scrollbar-thumb {
+            background: var(--purple-soft); border-radius: 3px;
+        }
+        .recommended-courses::-webkit-scrollbar-thumb:hover {
+            background: var(--purple);
+        }
+        .recommended-course-card {
+            flex: 0 0 220px; background: var(--white); border: 1px solid var(--border);
+            border-radius: var(--r-lg); overflow: hidden; box-shadow: var(--sh-sm);
+            cursor: pointer; transition: box-shadow var(--t), transform var(--t);
+        }
+        .recommended-course-card:hover {
+            box-shadow: var(--sh-md); transform: translateY(-2px);
+        }
+        .recommended-course-image {
+            width: 100%; height: 120px; object-fit: cover; display: block;
+        }
+        .recommended-course-placeholder {
+            width: 100%; height: 120px; background: var(--purple-ghost);
+            display: grid; place-items: center; font-size: 2rem;
+        }
+        .recommended-course-body {
+            padding: 12px 14px 16px;
+        }
+        .recommended-course-title {
+            font-family: var(--font-head); font-size: 13px; font-weight: 700;
+            color: var(--text); margin-bottom: 4px; line-height: 1.3;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .recommended-course-subject {
+            font-size: 11px; color: var(--text-muted);
+        }
+
+        /* ── EMPTY STATE ────────────────────────────────────── */
+        .empty-state {
+            grid-column: 1/-1; display: flex; flex-direction: column; align-items: center;
+            padding: 80px 40px; text-align: center;
+            background: var(--white); border: 1px solid var(--border); border-radius: var(--r-xl);
+        }
+        .empty-icon { font-size: 3rem; margin-bottom: 20px; }
+        .empty-state h3 { font-family: var(--font-head); font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+        .empty-state p  { font-size: 14px; color: var(--text-muted); max-width: 34ch; margin-bottom: 28px; line-height: 1.6; }
+
+        /* ── MODAL ──────────────────────────────────────────── */
+        .modal-backdrop {
+            position: fixed; inset: 0; z-index: 400;
+            background: rgba(28,23,51,.45); backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity var(--t);
+        }
+        .modal-backdrop.open { opacity: 1; pointer-events: all; }
+        .modal {
+            background: var(--white); border-radius: var(--r-xl); box-shadow: var(--sh-lg);
+            padding: 32px; width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto;
+            transform: translateY(20px); transition: transform var(--t);
+        }
+        .modal-backdrop.open .modal { transform: translateY(0); }
+        .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+        .modal-title { font-family: var(--font-head); font-size: 18px; font-weight: 800; }
+        .modal-close { width: 32px; height: 32px; border-radius: 8px; border: none; background: none; cursor: pointer; color: var(--text-muted); display: grid; place-items: center; transition: background var(--t); }
+        .modal-close:hover { background: var(--purple-pale); color: var(--purple); }
+        .form-group { margin-bottom: 18px; }
+        .form-label { display: block; font-size: 13px; font-weight: 600; color: var(--text-mid); margin-bottom: 7px; }
+        .req { color: #E05252; }
+        .form-control { width: 100%; padding: 9px 13px; background: var(--purple-ghost); border: 1.5px solid var(--border); border-radius: var(--r-md); font-family: var(--font-body); font-size: 13.5px; color: var(--text); outline: none; transition: border-color var(--t), box-shadow var(--t); }
+        .form-control::placeholder { color: var(--text-muted); }
+        .form-control:focus { border-color: var(--purple-soft); box-shadow: 0 0 0 3px rgba(106,90,205,.12); background: var(--white); }
+        .image-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .image-hint { font-size: 11.5px; color: var(--text-muted); margin-top: 6px; }
+        .auto-gen-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: var(--r-md); border: 1.5px solid var(--border); background: var(--white); font-family: var(--font-body); font-size: 13px; color: var(--text-muted); cursor: pointer; transition: all var(--t); }
+        .auto-gen-toggle:hover, .auto-gen-toggle.active { border-color: var(--purple); color: var(--purple); background: var(--purple-ghost); }
+        .form-file-list { min-height: 60px; max-height: 120px; overflow-y: auto; background: var(--purple-ghost); border: 1.5px solid var(--border); border-radius: var(--r-md); padding: 8px; font-size: 12px; color: var(--text-muted); }
+        .form-file-item { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 7px; }
+        .form-file-item:hover { background: var(--purple-pale); }
+        .form-file-remove { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 12px; }
+        .form-file-remove:hover { color: #E05252; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 28px; }
+        .toast-container { position: fixed; bottom: 28px; right: 28px; z-index: 600; display: flex; flex-direction: column; gap: 8px; }
+        .toast { padding: 12px 18px; border-radius: var(--r-md); font-size: 13.5px; font-weight: 500; box-shadow: var(--sh-md); animation: toastIn .2s ease; }
+        .toast-success { background: #ECFDF5; color: #166534; border: 1px solid #BBF7D0; }
+        .toast-error   { background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
+        @keyframes toastIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+        @media (max-width: 640px) {
+            .topbar { padding: 0 20px; }
+            .nav-links { display: none; }
+            .container { padding: 24px 20px 60px; }
+            .courses-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    {% set current_route = app.request.attributes.get('_route') %}
+    {% set on_library = (current_route == 'library') %}
+
+    <header class="topbar">
+        <a href="{{ path('homepage') }}" class="topbar-logo">
+            <img src="{{ asset('images/logo.png') }}" class="logo-mark" alt="Harmony">
+        </a>
+
+        <nav class="nav-links">
+            <a href="{{ path('activites') }}"   class="nav-link {{ current_route == 'activites'   ? 'active' }}"><span class="nav-emoji">🏋</span> Activités</a>
+            <a href="{{ path('forum') }}"       class="nav-link {{ current_route == 'forum'       ? 'active' }}"><span class="nav-emoji">💬</span> Forum</a>
+            <a href="{{ path('taches') }}"      class="nav-link {{ current_route == 'taches'      ? 'active' }}"><span class="nav-emoji">📚</span> Tâches</a>
+            <a href="{{ path('evenements') }}"  class="nav-link {{ current_route == 'evenements'  ? 'active' }}"><span class="nav-emoji">📅</span> Événements</a>
+            <a href="{{ path('nutrition') }}"   class="nav-link {{ current_route == 'nutrition'   ? 'active' }}"><span class="nav-emoji">🥗</span> Nutrition</a>
+            <a href="{{ path('meditation') }}"  class="nav-link {{ current_route == 'meditation'  ? 'active' }}"><span class="nav-emoji">🧘</span> Méditation</a>
+            <a href="{{ path('journal') }}"     class="nav-link {{ current_route == 'journal'     ? 'active' }}"><span class="nav-emoji">📔</span> Journal</a>
+            <a href="{{ path('app_courses') }}"  class="nav-link {{ current_route starts with 'app_courses' ? 'active' }}"><span class="nav-emoji">📖</span> My Courses</a>
+        </nav>
+
+        <div class="topbar-right">
+            <form method="post" action="{{ path('app_logout') }}" style="margin: 0;">
+                <input type="hidden" name="_token" value="{{ csrf_token('logout') }}">
+                <button type="submit" class="logout-btn">Déconnexion</button>
+            </form>
+            <div class="profile-wrap">
+                <div class="avatar" id="avatarBtn">
+                    {{ app.user ? app.user.firstName|first|upper : 'E' }}
+                </div>
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="pd-name">{{ app.user ? app.user.firstName ~ ' ' ~ app.user.lastName : 'Étudiant' }}</div>
+                    <div class="pd-email">{{ app.user ? app.user.email : 'email@exemple.com' }}</div>
+                    <div class="pd-divider"></div>
+                    <div class="pd-hint">Double-clic pour modifier</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+
+        <div class="page-header">
+            <div class="page-header-left">
+                <div class="page-icon" aria-hidden="true">📚</div>
+                <h1 class="page-title">Library</h1>
+            </div>
+            <div class="page-header-actions">
+                <a href="{{ path('app_courses') }}" class="btn btn-secondary">📖 My Courses</a>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <div class="view-toggle-group" role="group" aria-label="View mode">
+                <button class="vtb active" id="gridViewBtn" type="button" aria-pressed="true" aria-label="Grid view" title="Grid view">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                        <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+                    </svg>
+                </button>
+                <button class="vtb" id="listViewBtn" type="button" aria-pressed="false" aria-label="List view" title="List view">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+                        <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+
+        {# ── RECOMMENDED COURSES ─────────────────────────────────────── #}
+        {% if recommendedCourses is not empty %}
+            <section class="recommended-section">
+                <div class="recommended-header">
+                    <div class="recommended-icon" aria-hidden="true">✨</div>
+                    <div>
+                        <h2 class="recommended-title">Recommended for You</h2>
+                        <p class="recommended-subtitle">Based on your course subjects</p>
+                    </div>
+                </div>
+                <div class="recommended-scroll-container">
+                    <div class="recommended-courses">
+                        {% for course in recommendedCourses %}
+                            <article class="recommended-course-card"
+                                     data-id="{{ course.id }}"
+                                     data-href="{{ path('app_courses_detail', {id: course.id}) }}"
+                                     tabindex="0" role="button" aria-label="Open {{ course.title }}">
+                                {% if course.coverImagePath %}
+                                    <img class="recommended-course-image" src="/covers/{{ course.coverImagePath }}"
+                                         alt="{{ course.title }}" width="220" height="120" loading="lazy">
+                                {% else %}
+                                    <div class="recommended-course-placeholder" aria-hidden="true">🎓</div>
+                                {% endif %}
+                                <div class="recommended-course-body">
+                                    <p class="recommended-course-title">{{ course.title }}</p>
+                                    {% if course.subjectName %}<p class="recommended-course-subject">{{ course.subjectName }}</p>{% endif %}
+                                </div>
+                            </article>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+        {% endif %}
+
+        {# ── GRID VIEW ───────────────────────────────────────────────── #}
+        <div class="courses-grid" id="gridView" aria-label="Library grid">
+            {% if courses is not empty %}
+                {% for course in courses %}
+                    <article class="course-card"
+                             data-id="{{ course.id }}"
+                             data-href="{{ path('app_courses_detail', {id: course.id}) }}"
+                             tabindex="0" role="button" aria-label="Open {{ course.title }}">
+                        {% if course.coverImagePath %}
+                            <img class="course-card-image" src="/covers/{{ course.coverImagePath }}"
+                                 alt="{{ course.title }}" width="260" height="148" loading="lazy">
+                        {% else %}
+                            <div class="course-card-placeholder" aria-hidden="true">🎓</div>
+                        {% endif %}
+                        <div class="course-card-body">
+                            <p class="course-card-title">{{ course.title }}</p>
+                            {% if course.subjectName %}<p class="course-card-subject">{{ course.subjectName }}</p>{% endif %}
+                        </div>
+                    </article>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon" aria-hidden="true">📖</div>
+                    <h3>No published courses yet</h3>
+                    <p>No courses have been published to the library yet.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        {# ── LIST VIEW ───────────────────────────────────────────────── #}
+        <div class="courses-list" id="listView" style="display:none;" aria-label="Library list">
+            {% if courses is not empty %}
+                {% for course in courses %}
+                    <div class="course-list-item"
+                         data-id="{{ course.id }}"
+                         data-href="{{ path('app_courses_detail', {id: course.id}) }}"
+                         tabindex="0" role="button" aria-label="Open {{ course.title }}">
+                        {% if course.coverImagePath %}
+                            <img class="course-list-thumb" src="/covers/{{ course.coverImagePath }}"
+                                 alt="{{ course.title }}" width="56" height="56" loading="lazy">
+                        {% else %}
+                            <div class="course-list-placeholder" aria-hidden="true">🎓</div>
+                        {% endif %}
+                        <div class="course-list-info">
+                            <p class="course-list-title">{{ course.title }}</p>
+                            {% if course.subjectName %}<p class="course-list-subject">{{ course.subjectName }}</p>{% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state" style="grid-column:unset;">
+                    <div class="empty-icon" aria-hidden="true">📖</div>
+                    <h3>No published courses yet</h3>
+                    <p>No courses have been published to the library yet.</p>
+                </div>
+            {% endif %}
+        </div>
+
+    </main>
+
+    <script>
+        (function () {
+            'use strict';
+            const gridView    = document.getElementById('gridView');
+            const listView    = document.getElementById('listView');
+            const gridViewBtn = document.getElementById('gridViewBtn');
+            const listViewBtn = document.getElementById('listViewBtn');
+
+            function setView(grid) {
+                gridView.style.display = grid ? '' : 'none';
+                listView.style.display = grid ? 'none' : '';
+                gridViewBtn.classList.toggle('active', grid);
+                listViewBtn.classList.toggle('active', !grid);
+                gridViewBtn.setAttribute('aria-pressed', String(grid));
+                listViewBtn.setAttribute('aria-pressed', String(!grid));
+            }
+            gridViewBtn.addEventListener('click', () => setView(true));
+            listViewBtn.addEventListener('click', () => setView(false));
+
+            document.querySelectorAll('.course-card, .course-list-item, .recommended-course-card').forEach(el => {
+                el.addEventListener('click', () => window.location.href = el.dataset.href);
+                el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); } });
+            });
+
+            const avatarBtn = document.getElementById('avatarBtn'); const dropdown = document.getElementById('profileDropdown');
+            if (avatarBtn) {
+                avatarBtn.addEventListener('click', e => { e.stopPropagation(); const open = dropdown.classList.toggle('open'); avatarBtn.setAttribute('aria-expanded', String(open)); });
+                document.addEventListener('click', () => { dropdown.classList.remove('open'); avatarBtn.setAttribute('aria-expanded', 'false'); });
+            }
+        })();
+    </script>
+{% endblock %}

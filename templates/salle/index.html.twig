@@ -1,0 +1,53 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Salle index{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="{{ asset('harmonie/css/harmony-theme.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+{% include '_planning_topbar.html.twig' %}
+<main class="page">
+    <h1>Salle index</h1>
+
+    <table class="table table-bordered table-hover w-100">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Nom</th>
+                <th>Capacite</th>
+                <th>Equipements</th>
+                <th>Disponible</th>
+                <th>Description</th>
+                <th>DateCreation</th>
+                <th>actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for salle in salles %}
+            <tr>
+                <td>{{ salle.id }}</td>
+                <td>{{ salle.nom }}</td>
+                <td>{{ salle.capacite }}</td>
+                <td>{{ salle.equipements }}</td>
+                <td>{{ salle.disponible ? 'Yes' : 'No' }}</td>
+                <td>{{ salle.description }}</td>
+                <td>{{ salle.dateCreation ? salle.dateCreation|date('Y-m-d H:i:s') : '' }}</td>
+                <td>
+                    <a href="{{ path('app_salle_show', {'id': salle.id}) }}">show</a>
+                    <a href="{{ path('app_salle_edit', {'id': salle.id}) }}">edit</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="8">no records found</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_salle_new') }}">Create new</a>
+</main>
+{% endblock %}

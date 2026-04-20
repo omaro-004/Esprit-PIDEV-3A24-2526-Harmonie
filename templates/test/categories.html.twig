@@ -1,0 +1,10 @@
+<h1>Liste des catégories</h1>
+
+{% for cat in categories %}
+    <div>
+        <h3>{{ cat.nomCategorie }}</h3>
+        <p>{{ cat.description }}</p>
+        <small>{{ cat.dateCreation|date('Y-m-d H:i') }}</small>
+        <hr>
+    </div>
+{% endfor %}

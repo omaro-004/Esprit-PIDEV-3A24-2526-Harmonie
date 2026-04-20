@@ -1,0 +1,122 @@
+{% form_theme form 'form_div_layout.html.twig' %}
+{% if panel_mode == 'edit' and entity is defined and entity %}
+    {% set form_action = path('app_evenement_edit', { id: entity.id }) %}
+{% else %}
+    {% set form_action = path('app_evenement_new') %}
+{% endif %}
+
+{{ form_start(form, {
+    action: form_action,
+    attr: {
+        class: 'evenement-form harmony-panel-form',
+        id: 'evenement-panel-form',
+        autocomplete: 'off',
+        novalidate: 'novalidate',
+        'data-api-salles': path('app_evenement_salles_api')
+    }
+}) }}
+
+    <div class="mb-3">
+        {{ form_label(form.titre) }}
+        {{ form_widget(form.titre) }}
+        {{ form_errors(form.titre) }}
+    </div>
+
+    <div class="mb-3">
+        {{ form_label(form.dateDebut) }}
+        {{ form_widget(form.dateDebut) }}
+        {{ form_errors(form.dateDebut) }}
+    </div>
+
+    <div class="mb-3">
+        {{ form_label(form.dateFin) }}
+        {{ form_widget(form.dateFin) }}
+        {{ form_errors(form.dateFin) }}
+    </div>
+
+    <div class="mb-3">
+        {{ form_label(form.eventType) }}
+        {{ form_widget(form.eventType) }}
+        {{ form_errors(form.eventType) }}
+    </div>
+
+    {# Présentiel / En ligne — visible pour Cours et Réunion #}
+    <div class="js-lieu-buttons-container" style="display: none;">
+        <div class="mb-3">
+            <label class="form-label">Mode</label>
+            <div class="btn-group" role="group">
+                {% set lieuTypeValue = form.lieuType.vars.data %}
+                <input type="radio" class="btn-check js-lieu-button" id="lieu_presentiel" name="evenement[lieuType]" value="presentiel" {% if lieuTypeValue == 'presentiel' %}checked{% endif %}>
+                <label class="btn btn-outline-primary" for="lieu_presentiel">Présentiel</label>
+
+                <input type="radio" class="btn-check js-lieu-button" id="lieu_enligne" name="evenement[lieuType]" value="en_ligne" {% if lieuTypeValue == 'en_ligne' %}checked{% endif %}>
+                <label class="btn btn-outline-primary" for="lieu_enligne">En ligne</label>
+            </div>
+            {{ form_errors(form.lieuType) }}
+            {# Marquer le champ comme rendu pour éviter que form_end le réaffiche #}
+            {% do form.lieuType.setRendered() %}
+        </div>
+    </div>
+
+    {# Où ? libre — visible pour Loisir et Autre #}
+    <div class="js-lieu-free-container" style="display: none;">
+        <div class="mb-3">
+            {{ form_label(form.lieuAdresse) }}
+            {{ form_widget(form.lieuAdresse) }}
+            {{ form_errors(form.lieuAdresse) }}
+        </div>
+    </div>
+
+    {# Où ? + salle — visible pour Cours/Réunion + Présentiel #}
+    <div class="js-lieu-presentiel-container" style="display: none;">
+        <div class="mb-3">
+            <label class="form-label">Où ?</label>
+            <input
+                type="text"
+                class="form-control js-lieu-adresse"
+                name="evenement[lieuAdresse]"
+                placeholder="Adresse, campus, ou tapez &quot;esprit&quot; pour les salles…"
+                data-toggle-salles="true"
+            >
+        </div>
+
+        <div class="js-salle-select-container" style="display: none;">
+            <div class="mb-3">
+                {{ form_label(form.salle) }}
+                {{ form_widget(form.salle) }}
+                {{ form_errors(form.salle) }}
+            </div>
+        </div>
+    </div>
+
+    {{ form_errors(form) }}
+
+    <div class="mb-3" style="border-top:1px solid #eee;padding-top:14px;margin-top:8px;">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:500;margin-bottom:0;">
+            {{ form_widget(form.rappelActif, {'attr': {'name': 'evenement[rappelActif]'}}) }}
+            <span>Activer le rappel Telegram</span>
+        </label>
+        <div id="rappel-minutes-wrap" style="display:none;margin-top:10px;">
+            {{ form_label(form.reminderMinutes) }}
+            {{ form_widget(form.reminderMinutes) }}
+        </div>
+    </div>
+
+    <div class="harmony-panel-actions">
+        <button type="button" class="harmony-panel-cancel js-harmony-panel-cancel">Annuler</button>
+        {{ form_widget(form.submit, {'attr': {'class': 'btn btn-primary harmony-panel-submit'}}) }}
+    </div>
+
+{{ form_end(form) }}
+
+<script src="{{ asset('harmonie/js/evenement-form.js') }}"></script>
+<script>
+(function () {
+    var cb = document.querySelector('input[name="evenement[rappelActif]"]');
+    var wrap = document.getElementById('rappel-minutes-wrap');
+    if (!cb || !wrap) return;
+    function toggle() { wrap.style.display = cb.checked ? 'block' : 'none'; }
+    cb.addEventListener('change', toggle);
+    toggle();
+})();
+</script>

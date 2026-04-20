@@ -1,0 +1,83 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ session.theme }} - Harmony{% endblock %}
+
+{% block stylesheets %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --purple:#6A5ACD;--purple-dark:#4B3B9E;--purple-soft:#8B7FD4;
+            --purple-pale:#EDE8FA;--purple-ghost:#F7F5FD;
+            --text:#1C1733;--text-mid:#4A4570;--text-muted:#9590B8;
+            --border:rgba(106,90,205,.12);--white:#FFFFFF;
+            --font-head:'Syne',sans-serif;--font-body:'Inter',sans-serif;
+        }
+        html,body{height:100%;font-family:var(--font-body);background:var(--purple-ghost);color:var(--text);}
+
+
+        .container{max-width:900px;margin:0 auto;padding:48px 40px 80px;}
+        .back-link{display:inline-flex;align-items:center;gap:6px;color:var(--text-muted);text-decoration:none;font-size:13px;margin-bottom:20px;}
+        .back-link:hover{color:var(--purple);}
+
+        .detail-card{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:32px;margin-bottom:24px;}
+        .detail-title{font-family:var(--font-head);font-size:28px;font-weight:700;color:var(--text);margin-bottom:16px;}
+        .detail-row{display:flex;gap:8px;margin-bottom:10px;font-size:14px;}
+        .detail-label{color:var(--text-muted);min-width:120px;}
+        .detail-value{color:var(--text);font-weight:500;}
+        .detail-value a{color:var(--purple);}
+        .youtube-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 22px;border-radius:12px;background:#E05252;color:white;font-size:14px;font-weight:600;text-decoration:none;margin-top:16px;transition:.15s;}
+        .youtube-btn:hover{background:#c93c3c;}
+
+        .section-title{font-family:var(--font-head);font-size:20px;font-weight:700;color:var(--text);margin-bottom:16px;}
+        .conseil-card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:12px;display:flex;align-items:flex-start;gap:14px;}
+        .conseil-num{width:28px;height:28px;border-radius:50%;background:var(--purple-pale);color:var(--purple);font-weight:700;font-size:13px;display:grid;place-items:center;flex-shrink:0;}
+        .conseil-text{flex:1;font-size:14px;color:var(--text);line-height:1.6;}
+        .empty-conseils{text-align:center;padding:30px;color:var(--text-muted);font-size:14px;}
+
+        @media(max-width:640px){.topbar{padding:0 20px;}.nav-links{display:none;}.container{padding:24px 20px 60px;}}
+    </style>
+{% endblock %}
+
+{% block body %}
+    {% include '_planning_topbar.html.twig' %}
+
+    <div class="container">
+        <a href="{{ path('meditation') }}" class="back-link">← Retour aux sessions</a>
+
+        <div class="detail-card">
+            <div class="detail-title">{{ session.theme }}</div>
+            <div class="detail-row">
+                <span class="detail-label">👨‍⚕️ Auteur</span>
+                <span class="detail-value">{{ session.auteur }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">⏱ Durée</span>
+                <span class="detail-value">{{ session.duree }} minutes</span>
+            </div>
+            {% if session.audioUrl %}
+            <a href="{{ session.audioUrl }}" target="_blank" class="youtube-btn">▶ Écouter sur YouTube</a>
+            {% endif %}
+        </div>
+
+        <div class="section-title">💡 Conseils ({{ session.conseils|length }})</div>
+
+        {% for conseil in session.conseils %}
+            <div class="conseil-card">
+                <div class="conseil-num">{{ loop.index }}</div>
+                <div class="conseil-text">{{ conseil.contenu }}</div>
+            </div>
+        {% else %}
+            <div class="empty-conseils">Aucun conseil pour cette session.</div>
+        {% endfor %}
+    </div>
+
+    <script>
+        const btn = document.getElementById('avatarBtn');
+        const drop = document.getElementById('profileDropdown');
+        btn.addEventListener('click', e => { e.stopPropagation(); drop.classList.toggle('open'); });
+        document.addEventListener('click', () => drop.classList.remove('open'));
+    </script>
+{% endblock %}

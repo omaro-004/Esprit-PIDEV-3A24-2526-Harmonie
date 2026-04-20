@@ -1,0 +1,31 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Événement #{{ evenement.id }} — Admin{% endblock %}
+
+{% block body %}
+<div class="admin-topbar">
+    <h1 class="admin-page-title">{{ evenement.titre ?? 'Événement' }}</h1>
+    <div class="admin-actions">
+        <a href="{{ path('admin_evenement_index') }}" class="admin-btn admin-btn-ghost">Liste</a>
+        <a href="{{ path('admin_evenement_edit', {id: evenement.id}) }}" class="admin-btn admin-btn-primary">Modifier</a>
+    </div>
+</div>
+<div class="admin-card admin-table-wrap">
+    <table class="admin-table">
+        <tbody>
+            <tr><th>ID</th><td>{{ evenement.id }}</td></tr>
+            <tr><th>Titre</th><td>{{ evenement.titre }}</td></tr>
+            <tr><th>Type</th><td>{{ evenement.eventType ?? '—' }}</td></tr>
+            <tr><th>Mode lieu</th><td>{{ evenement.lieuType ?? '—' }}</td></tr>
+            <tr><th>Adresse / détail</th><td>{{ evenement.lieuAdresse ?? '—' }}</td></tr>
+            <tr><th>Salle liée</th><td>{{ evenement.salle ? evenement.salle.nom : '—' }}</td></tr>
+            <tr><th>Lieu (synthèse)</th><td>{{ evenement.lieu }}</td></tr>
+            <tr><th>Début</th><td>{{ evenement.dateDebut ? evenement.dateDebut|date('d/m/Y H:i') : '—' }}</td></tr>
+            <tr><th>Fin</th><td>{{ evenement.dateFin ? evenement.dateFin|date('d/m/Y H:i') : '—' }}</td></tr>
+            <tr><th>Propriétaire</th><td>{{ evenement.proprietaire ? (evenement.proprietaire.userEmail) : '—' }}</td></tr>
+            <tr><th>Approuvé</th><td>{{ evenement.approuve ? 'Oui' : 'Non' }}</td></tr>
+            <tr><th>Statut demande salle</th><td>{{ evenement.statutDemandeSalle ?? '—' }}</td></tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

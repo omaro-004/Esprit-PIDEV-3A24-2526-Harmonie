@@ -1,0 +1,553 @@
+{% extends 'base.html.twig' %}
+{% block title %}Forum — Harmony{% endblock %}
+
+{% block stylesheets %}
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+        --purple: #6A5ACD; --purple-dark: #4B3B9E; --purple-soft: #8B7FD4;
+        --purple-pale: #EDE8FA; --purple-ghost: #F7F5FD;
+        --text: #1C1733; --text-mid: #4A4570; --text-muted: #9590B8;
+        --border: rgba(106,90,205,.12); --white: #FFFFFF;
+        --font-head: 'Syne', sans-serif; --font-body: 'Inter', sans-serif;
+    }
+    html, body { font-family: var(--font-body); background: var(--purple-ghost); color: var(--text); }
+
+    .topbar { position: sticky; top: 0; z-index: 200; background: var(--white);
+        border-bottom: 1px solid var(--border); height: 62px; display: flex;
+        align-items: center; padding: 0 40px; gap: 8px; }
+    .topbar-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; margin-right: 32px; }
+    .logo-mark { width: 34px; height: 34px; border-radius: 10px; object-fit: contain; }
+    .logo-name { font-family: var(--font-head); font-size: 18px; font-weight: 700; color: var(--text); }
+    .nav-links { display: flex; align-items: center; gap: 2px; flex: 1; }
+    .nav-link { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px;
+        border-radius: 9px; font-size: 13.5px; font-weight: 500; color: var(--text-mid);
+        text-decoration: none; transition: background .15s, color .15s; }
+    .nav-link:hover, .nav-link.active { background: var(--purple-pale); color: var(--purple); font-weight: 600; }
+    .topbar-right { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+    .logout-btn { padding: 7px 16px; border-radius: 9px; border: 1.5px solid rgba(239,68,68,.2);
+        background: transparent; color: #E05252; font-size: 13px; cursor: pointer; }
+    .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--purple);
+        color: white; font-family: var(--font-head); font-weight: 700; font-size: 14px;
+        display: grid; place-items: center; cursor: pointer; }
+
+    .page { max-width: 1200px; margin: 0 auto; padding: 48px 40px 80px; }
+
+    /* HEADER */
+    .forum-header {
+        background: linear-gradient(135deg, var(--purple) 0%, var(--purple-dark) 100%);
+        border-radius: 22px; padding: 40px 48px; margin-bottom: 36px;
+        display: flex; align-items: center; justify-content: space-between;
+        position: relative; overflow: hidden;
+    }
+    .forum-header::after {
+        content: ''; position: absolute; right: -60px; top: -60px;
+        width: 260px; height: 260px; border-radius: 50%;
+        background: rgba(255,255,255,.06); pointer-events: none;
+    }
+    .fh-left h1 { font-family: var(--font-head); font-size: 32px; font-weight: 800;
+        color: white; margin-bottom: 6px; }
+    .fh-left p { color: rgba(255,255,255,.75); font-size: 14px; }
+    .fh-right { display: flex; align-items: center; gap: 12px; position: relative; z-index: 1; }
+    .fh-badge { background: rgba(255,255,255,.15); color: white;
+        border: 1px solid rgba(255,255,255,.25);
+        padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+    .btn-new-cat {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 10px 20px; background: white; color: var(--purple-dark);
+        border-radius: 10px; font-size: 13px; font-weight: 700;
+        text-decoration: none; transition: opacity .15s;
+    }
+    .btn-new-cat:hover { opacity: .9; }
+
+    /* GRID */
+    .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 18px; }
+
+    /* CARTE catégorie */
+    .cat-card {
+        background: var(--white); border: 1px solid var(--border);
+        border-radius: 18px; overflow: hidden;
+        display: flex; flex-direction: column;
+        transition: border-color .18s, transform .18s, box-shadow .18s;
+        position: relative;
+    }
+    .cat-card:hover { border-color: var(--purple-soft); transform: translateY(-4px);
+        box-shadow: 0 12px 36px rgba(106,90,205,.13); }
+    .cat-card-top-bar {
+        height: 3px;
+        background: linear-gradient(90deg, var(--purple), var(--purple-soft));
+    }
+    .cat-card-body {
+        padding: 22px 20px 14px;
+        flex: 1;
+        display: flex; flex-direction: column; gap: 8px;
+        /* lien cliquable vers les posts */
+        text-decoration: none; color: inherit;
+    }
+    .cat-icon { width: 44px; height: 44px; background: var(--purple-pale);
+        border-radius: 12px; display: grid; place-items: center; font-size: 22px; }
+    .cat-name { font-family: var(--font-head); font-size: 15px; font-weight: 700; color: var(--text); }
+    .cat-desc { font-size: 12px; color: var(--text-muted); line-height: 1.6; flex: 1; }
+    .cat-meta { font-size: 11px; color: var(--purple); font-weight: 600;
+        background: var(--purple-pale); padding: 3px 10px; border-radius: 20px;
+        display: inline-block; width: fit-content; }
+
+    /* ACTIONS CRUD en bas de la carte */
+    .cat-card-actions {
+        display: flex; gap: 6px;
+        padding: 10px 20px 14px;
+        border-top: 1px solid var(--purple-ghost);
+    }
+    .btn-edit { display: inline-flex; align-items: center; gap: 4px;
+        padding: 5px 12px; background: var(--purple-pale); color: var(--purple);
+        border: none; border-radius: 8px; font-size: 12px; font-weight: 600;
+        cursor: pointer; text-decoration: none; transition: background .15s; }
+    .btn-edit:hover { background: #ddd6f7; }
+    .btn-delete { display: inline-flex; align-items: center; gap: 4px;
+        padding: 5px 12px; background: #FEF2F2; color: #E05252;
+        border: none; border-radius: 8px; font-size: 12px; font-weight: 600;
+        cursor: pointer; transition: background .15s; }
+    .btn-delete:hover { background: #fde8e8; }
+
+    @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+    .fade { animation: fadeUp .4s ease both; }
+</style>
+{% endblock %}
+
+{% block body %}
+<header class="topbar">
+    <a href="{{ path('homepage') }}" class="topbar-logo">
+        <img src="{{ asset('images/logo.png') }}" class="logo-mark" alt="Harmony">
+        <span class="logo-name">Harmony</span>
+    </a>
+    <nav class="nav-links">
+        <a href="{{ path('activites') }}"  class="nav-link">🏋 Activités</a>
+        <a href="{{ path('forum') }}"      class="nav-link active">💬 Forum</a>
+        <a href="{{ path('taches') }}"     class="nav-link">📚 Tâches</a>
+        <a href="{{ path('evenements') }}" class="nav-link">📅 Événements</a>
+        <a href="{{ path('nutrition') }}"  class="nav-link">🥗 Nutrition</a>
+        <a href="{{ path('meditation') }}" class="nav-link">🧘 Méditation</a>
+        <a href="{{ path('journal') }}"    class="nav-link">📔 Journal</a>
+        <a href="{{ path('library') }}"    class="nav-link">📖 Library</a>
+    </nav>
+    <div class="topbar-right">
+        <button class="logout-btn">🚪 Déconnexion</button>
+        <div class="avatar">E</div>
+    </div>
+</header>
+
+<main class="page">
+
+    <div class="forum-header fade">
+        {# Trouve le bloc avec le titre du forum et ajoute le bouton #}
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+            <div>
+                <h1 style="font-family:'Syne',sans-serif;font-size:28px;
+                        font-weight:800;color:#1C1733;">
+                    💬 Forum & Communauté
+                </h1>
+                <p style="color:#9590B8;font-size:14px;margin-top:4px;">
+                    Pose tes questions et partage tes connaissances
+                </p>
+            </div>
+            <button onclick="openImageModal()"
+                    style="display:inline-flex;align-items:center;gap:8px;
+                        padding:11px 20px;
+                        background:linear-gradient(135deg,#6A5ACD,#4B3B9E);
+                        color:white;border:none;border-radius:12px;
+                        font-size:14px;font-weight:600;cursor:pointer;
+                        font-family:'Inter',sans-serif;
+                        box-shadow:0 4px 15px rgba(106,90,205,.3);">
+                🎨 Générer une image IA
+            </button>
+        </div>
+
+        <div class="fh-right">
+            <span class="fh-badge">{{ categories|length }} catégories</span>
+            <a href="{{ path('forum_categorie_new') }}" class="btn-new-cat">
+                ➕ Nouvelle catégorie
+            </a>
+        </div>
+    </div>
+
+    <div class="cat-grid">
+        {% for cat in categories %}
+        <div class="cat-card fade">
+
+            <div class="cat-card-top-bar"></div>
+
+            {# Zone cliquable → posts #}
+            <a href="{{ path('forum_posts', {id: cat.idCategorie}) }}" class="cat-card-body">
+                <div class="cat-icon">💬</div>
+                <div class="cat-name">{{ cat.nomCategorie }}</div>
+                {% if cat.description %}
+                    <div class="cat-desc">{{ cat.description }}</div>
+                {% endif %}
+                <span class="cat-meta">Voir les posts →</span>
+            </a>
+
+            {# Boutons CRUD #}
+            <div class="cat-card-actions">
+                <a href="{{ path('forum_categorie_edit', {id: cat.idCategorie}) }}"
+                   class="btn-edit">✏️ Modifier</a>
+                <form method="POST"
+                      action="{{ path('forum_categorie_delete', {id: cat.idCategorie}) }}"
+                      onsubmit="return confirm('Supprimer cette catégorie et tous ses posts ?');"
+                      style="display:inline;">
+                    <button type="submit" class="btn-delete">🗑 Supprimer</button>
+                </form>
+            </div>
+
+        </div>
+        {% else %}
+            <p style="color:var(--text-muted); grid-column:1/-1; text-align:center; padding:40px;">
+                Aucune catégorie pour l'instant.
+            </p>
+        {% endfor %}
+    </div>
+
+    {# MODALE DE CONFIRMATION #}
+    <div id="confirmModal" style="display:none;position:fixed;inset:0;z-index:1000;
+        background:rgba(28,23,51,.45);backdrop-filter:blur(4px);
+        align-items:center;justify-content:center;">
+        <div style="background:white;border-radius:20px;padding:36px 40px;
+            max-width:400px;width:90%;box-shadow:0 20px 60px rgba(106,90,205,.2);
+            font-family:'Inter',sans-serif;">
+            <div style="font-size:32px;text-align:center;margin-bottom:12px;">🗑️</div>
+            <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;
+                color:#1C1733;text-align:center;margin-bottom:8px;" id="modalTitle">
+                Supprimer ?
+            </div>
+            <div style="font-size:14px;color:#9590B8;text-align:center;margin-bottom:28px;"
+                id="modalMessage">
+                Cette action est irréversible.
+            </div>
+            <div style="display:flex;gap:12px;">
+                <button onclick="closeModal()"
+                    style="flex:1;padding:11px;border-radius:10px;border:1.5px solid rgba(106,90,205,.2);
+                    background:white;color:#4A4570;font-size:14px;font-weight:600;cursor:pointer;
+                    font-family:'Inter',sans-serif;">
+                    Annuler
+                </button>
+                <button id="modalConfirmBtn"
+                    style="flex:1;padding:11px;border-radius:10px;border:none;
+                    background:linear-gradient(135deg,#E05252,#c0392b);color:white;
+                    font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;">
+                    🗑 Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {# ══════ MODALE GÉNÉRATION IMAGE IA ══════ #}
+    <div id="imageModal"
+        style="display:none;position:fixed;inset:0;z-index:1000;
+                background:rgba(28,23,51,.6);backdrop-filter:blur(6px);
+                align-items:center;justify-content:center;">
+
+        <div style="background:white;border-radius:24px;padding:40px;
+                    max-width:560px;width:90%;
+                    box-shadow:0 24px 60px rgba(106,90,205,.25);
+                    font-family:'Inter',sans-serif;
+                    max-height:90vh;overflow-y:auto;">
+
+            {# En-tête #}
+            <div style="display:flex;align-items:center;
+                        justify-content:space-between;margin-bottom:24px;">
+                <div>
+                    <div style="font-family:'Syne',sans-serif;font-size:20px;
+                                font-weight:800;color:#1C1733;">
+                        🎨 Génération d'image IA
+                    </div>
+                    <div style="font-size:13px;color:#9590B8;margin-top:3px;">
+                        Décris l'image que tu veux créer
+                    </div>
+                </div>
+                <button onclick="closeImageModal()"
+                        style="width:32px;height:32px;border-radius:50%;
+                            border:none;background:#F7F5FD;color:#4A4570;
+                            font-size:18px;cursor:pointer;">✕</button>
+            </div>
+
+            {# Styles — comme ton Java qui avait styleBox #}
+            <div style="margin-bottom:16px;">
+                <div style="font-size:12px;color:#9590B8;
+                            margin-bottom:8px;font-weight:600;">
+                    🎨 Style artistique :
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;" id="styleBox">
+                    {% set styles = {
+                        '': '✨ Aucun',
+                        'photorealistic, 4k': '📷 Réaliste',
+                        'digital art, vibrant': '🎨 Digital Art',
+                        'oil painting, classic': '🖼️ Peinture',
+                        'anime style, colorful': '🌸 Anime',
+                        'watercolor, soft': '💧 Aquarelle'
+                    } %}
+                    {% for styleValue, styleLabel in styles %}
+                    <button onclick="selectStyle('{{ styleValue }}', this)"
+                            id="style-{{ loop.index }}"
+                            style="padding:6px 14px;border:1.5px solid rgba(106,90,205,.2);
+                                border-radius:20px;font-size:12px;font-weight:600;
+                                cursor:pointer;font-family:'Inter',sans-serif;
+                                background:{{ styleValue == '' ? '#EDE8FA' : 'white' }};
+                                color:{{ styleValue == '' ? '#6A5ACD' : '#4A4570' }};
+                                transition:all .15s;">
+                        {{ styleLabel }}
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {# Exemples de prompts #}
+            <div style="margin-bottom:16px;">
+                <div style="font-size:12px;color:#9590B8;
+                            margin-bottom:8px;font-weight:600;">
+                    💡 Exemples :
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    {% set examples = [
+                        'A peaceful meditation garden with purple flowers',
+                        'Students studying together in a modern library',
+                        'A colorful brain with neural connections',
+                        'A mountain landscape at sunset'
+                    ] %}
+                    {% for ex in examples %}
+                    <button onclick="setPrompt('{{ ex }}')"
+                            style="padding:4px 12px;background:#F7F5FD;
+                                color:#6A5ACD;border:none;border-radius:20px;
+                                font-size:11px;font-weight:600;cursor:pointer;">
+                        {{ ex|slice(0,25) }}...
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {# Champ prompt — comme promptArea en Java #}
+            <div style="margin-bottom:16px;">
+                <label style="display:block;font-size:13px;font-weight:600;
+                            color:#4A4570;margin-bottom:7px;">
+                    Description de l'image (en anglais) *
+                </label>
+                <textarea id="imagePrompt" rows="3"
+                        placeholder="Ex: A beautiful purple forest with glowing trees..."
+                        style="width:100%;padding:11px 14px;
+                                border:1.5px solid rgba(106,90,205,.2);
+                                border-radius:10px;font-family:'Inter',sans-serif;
+                                font-size:14px;color:#1C1733;outline:none;
+                                resize:vertical;box-sizing:border-box;
+                                transition:border-color .15s;"
+                        onfocus="this.style.borderColor='#6A5ACD'"
+                        onblur="this.style.borderColor='rgba(106,90,205,.2)'">
+                </textarea>
+                <div style="text-align:right;font-size:11px;color:#9590B8;margin-top:4px;">
+                    <span id="promptCount">0</span>/500
+                </div>
+            </div>
+
+            {# Bouton générer — comme generateBtn en Java #}
+            <button onclick="generateImage()" id="generateBtn"
+                    style="width:100%;padding:13px;
+                        background:linear-gradient(135deg,#6A5ACD,#4B3B9E);
+                        color:white;border:none;border-radius:12px;
+                        font-size:14px;font-weight:600;cursor:pointer;
+                        font-family:'Inter',sans-serif;margin-bottom:16px;">
+                🎨 Générer l'image
+            </button>
+
+            {# Loading — comme loader ProgressIndicator en Java #}
+            <div id="imageLoading" style="display:none;text-align:center;padding:32px;">
+                <div style="font-size:40px;margin-bottom:12px;
+                            animation:spin 2s linear infinite;display:inline-block;">
+                    ⚙️
+                </div>
+                <div style="font-size:14px;color:#6A5ACD;font-weight:600;">
+                    Génération en cours...
+                </div>
+                <div style="font-size:12px;color:#9590B8;margin-top:6px;">
+                    Peut prendre 30 à 60 secondes
+                </div>
+            </div>
+
+            {# Erreur — comme statusLabel en Java #}
+            <div id="imageError"
+                style="display:none;background:#FEF2F2;
+                        border:1px solid rgba(239,68,68,.2);
+                        border-radius:10px;padding:12px 16px;
+                        color:#E05252;font-size:13px;margin-bottom:16px;">
+            </div>
+
+            {# Résultat — comme resultBox + generatedImage en Java #}
+            <div id="imageResult" style="display:none;">
+                <div style="font-size:13px;font-weight:600;
+                            color:#4A4570;margin-bottom:10px;">
+                    ✅ Image générée :
+                </div>
+
+                {# Image générée — comme ImageView en Java #}
+                <img id="generatedImg" src="" alt="Image IA"
+                    style="width:100%;border-radius:14px;
+                            border:1px solid rgba(106,90,205,.15);
+                            margin-bottom:14px;">
+
+                {# Style + Prompt utilisés #}
+                <div id="promptUsed"
+                    style="font-size:11px;color:#9590B8;
+                            font-style:italic;margin-bottom:14px;">
+                </div>
+
+                {# Actions — comme handleCopyUrl + handleClose en Java #}
+                <div style="display:flex;gap:10px;">
+                    <a id="downloadBtn" href="#" download="harmony-ia.png"
+                    style="flex:1;padding:10px;background:#EDE8FA;
+                            color:#6A5ACD;border-radius:10px;font-size:13px;
+                            font-weight:600;text-align:center;text-decoration:none;">
+                        💾 Télécharger
+                    </a>
+                    <button onclick="resetModal()"
+                            style="flex:1;padding:10px;background:#F7F5FD;
+                                color:#4A4570;border:1.5px solid rgba(106,90,205,.15);
+                                border-radius:10px;font-size:13px;font-weight:600;
+                                cursor:pointer;font-family:'Inter',sans-serif;">
+                        🔄 Nouvelle image
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    {# ══════ SCRIPT ══════ #}
+    <script>
+    // Style sélectionné — comme selectedStyle en Java
+    let selectedStyle = '';
+
+    // Sélection du style — comme selectStyle() en Java
+    function selectStyle(styleValue, btn) {
+        selectedStyle = styleValue;
+        // Reset tous les boutons
+        document.querySelectorAll('#styleBox button').forEach(b => {
+            b.style.background = 'white';
+            b.style.color = '#4A4570';
+            b.style.borderColor = 'rgba(106,90,205,.2)';
+        });
+        // Active le bouton cliqué
+        btn.style.background = '#EDE8FA';
+        btn.style.color = '#6A5ACD';
+        btn.style.borderColor = '#6A5ACD';
+    }
+
+    function openImageModal() {
+        document.getElementById('imageModal').style.display = 'flex';
+        document.getElementById('imagePrompt').focus();
+    }
+
+    function closeImageModal() {
+        document.getElementById('imageModal').style.display = 'none';
+    }
+
+    // Ferme en cliquant en dehors
+    document.getElementById('imageModal').addEventListener('click', function(e) {
+        if (e.target === this) closeImageModal();
+    });
+
+    // Compteur prompt
+    document.getElementById('imagePrompt').addEventListener('input', function() {
+        document.getElementById('promptCount').textContent = this.value.length;
+    });
+
+    function setPrompt(text) {
+        document.getElementById('imagePrompt').value = text;
+        document.getElementById('promptCount').textContent = text.length;
+    }
+
+    // Génération — équivalent de handleGenerate() en Java
+    async function generateImage() {
+        const prompt = document.getElementById('imagePrompt').value.trim();
+
+        if (!prompt) {
+            showError('Merci de décrire l\'image.');
+            return;
+        }
+
+        // UI loading — comme ton Java : loader.setVisible(true)
+        document.getElementById('generateBtn').disabled = true;
+        document.getElementById('generateBtn').textContent = '⏳ Génération...';
+        document.getElementById('imageLoading').style.display = 'block';
+        document.getElementById('imageResult').style.display  = 'none';
+        document.getElementById('imageError').style.display   = 'none';
+
+        try {
+            const formData = new FormData();
+            formData.append('prompt', prompt);
+            formData.append('style', selectedStyle);
+
+            const res  = await fetch('{{ path("forum_generate_image") }}', {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await res.json();
+
+            // Cache loading
+            document.getElementById('imageLoading').style.display = 'none';
+
+            if (data.error) {
+                showError(data.error);
+                resetBtn();
+                return;
+            }
+
+            // Affiche l'image — comme Platform.runLater() en Java
+            const imgSrc = 'data:image/png;base64,' + data.image;
+            document.getElementById('generatedImg').src   = imgSrc;
+            document.getElementById('downloadBtn').href   = imgSrc;
+            document.getElementById('promptUsed').textContent =
+                '📝 ' + data.prompt + (data.style ? ' • Style : ' + data.style : '');
+            document.getElementById('imageResult').style.display = 'block';
+            resetBtn();
+
+        } catch(e) {
+            document.getElementById('imageLoading').style.display = 'none';
+            showError('Erreur de connexion.');
+            resetBtn();
+        }
+    }
+
+    function showError(msg) {
+        const el = document.getElementById('imageError');
+        el.textContent   = '❌ ' + msg;
+        el.style.display = 'block';
+    }
+
+    function resetBtn() {
+        const btn      = document.getElementById('generateBtn');
+        btn.disabled   = false;
+        btn.textContent = '🎨 Générer l\'image';
+    }
+
+    // Réinitialise la modale — comme handleClose() en Java
+    function resetModal() {
+        document.getElementById('imageResult').style.display = 'none';
+        document.getElementById('imageError').style.display  = 'none';
+        document.getElementById('imagePrompt').value         = '';
+        document.getElementById('promptCount').textContent   = '0';
+        selectedStyle = '';
+        document.querySelectorAll('#styleBox button').forEach((b, i) => {
+            b.style.background  = i === 0 ? '#EDE8FA' : 'white';
+            b.style.color       = i === 0 ? '#6A5ACD' : '#4A4570';
+            b.style.borderColor = i === 0 ? '#6A5ACD' : 'rgba(106,90,205,.2)';
+        });
+        if (i === 0) selectedStyle = '';
+    }
+    </script>
+
+    <style>
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to   { transform: rotate(360deg); }
+    }
+    </style>
+
+</main>
+{% endblock %}

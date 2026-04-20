@@ -1,0 +1,344 @@
+{% extends 'base.html.twig' %}
+{% block title %}Inscription — Étape 3 — Harmony{% endblock %}
+
+{% block stylesheets %}
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        :root{
+            --purple:#6A5ACD;--purple-dark:#4B3B9E;--purple-pale:#EDE8FA;
+            --purple-ghost:#F7F5FD;--text:#1C1733;--text-mid:#4A4570;
+            --text-muted:#9590B8;--border:rgba(106,90,205,.15);
+            --green:#10B981;--red:#EF4444;
+            --font-head:'Syne',sans-serif;--font-body:'Inter',sans-serif
+        }
+        html,body{min-height:100vh;font-family:var(--font-body);background:var(--purple-ghost);display:flex;align-items:center;justify-content:center;padding:40px 20px}
+        .wrap{width:100%;max-width:520px}
+
+        .progress-wrap{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:32px}
+        .step-circle{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-size:14px;font-weight:800;transition:.3s}
+        .step-circle.done{background:var(--green);color:#fff}
+        .step-circle.active{background:var(--purple);color:#fff;box-shadow:0 4px 14px rgba(106,90,205,.4)}
+        .step-line{width:60px;height:3px;background:var(--border)}
+        .step-line.done{background:var(--green)}
+        .step-labels{display:flex;justify-content:space-between;margin-bottom:28px;padding:0 4px}
+        .step-label{font-size:11px;font-weight:600;color:var(--text-muted)}
+        .step-label.done{color:var(--green)}
+        .step-label.active{color:var(--purple)}
+
+        .card{background:#fff;border:1px solid var(--border);border-radius:24px;padding:44px;box-shadow:0 20px 60px rgba(106,90,205,.09);animation:fadeUp .4s ease both}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+        .card-logo{display:flex;align-items:center;gap:10px;margin-bottom:24px}
+        .card-logo img{width:32px;height:32px;border-radius:9px;object-fit:contain}
+        .card-logo span{font-family:var(--font-head);font-size:18px;font-weight:800;color:var(--text)}
+        .card-title{font-family:var(--font-head);font-size:26px;font-weight:800;color:var(--text);margin-bottom:4px}
+        .card-sub{font-size:13px;color:var(--text-muted);margin-bottom:24px}
+
+        /* Webcam */
+        .cam-section{position:relative;background:#0f0f1a;border-radius:18px;overflow:hidden;margin-bottom:20px;aspect-ratio:4/3}
+        #video{width:100%;height:100%;object-fit:cover;display:block}
+        #canvas{display:none}
+        .cam-overlay{
+            position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+            width:200px;height:200px;border-radius:50%;
+            border:3px solid rgba(106,90,205,.8);
+            box-shadow:0 0 0 9999px rgba(0,0,0,.45);
+            pointer-events:none;
+        }
+        .cam-overlay::before{
+            content:'';position:absolute;inset:-3px;border-radius:50%;
+            border:3px solid transparent;
+            border-top-color:var(--purple);
+            animation:spin 2s linear infinite;
+        }
+        @keyframes spin{to{transform:rotate(360deg)}}
+
+        .cam-status{
+            position:absolute;bottom:12px;left:0;right:0;text-align:center;
+            font-size:12px;font-weight:600;color:white;
+            background:rgba(0,0,0,.5);padding:6px;
+        }
+        .cam-status.ok{background:rgba(16,185,129,.7)}
+        .cam-status.error{background:rgba(239,68,68,.7)}
+
+        /* Preview capturée */
+        .face-preview{
+            width:80px;height:80px;border-radius:50%;
+            border:3px solid var(--green);
+            overflow:hidden;display:none;
+            margin:0 auto 16px;
+        }
+        .face-preview img{width:100%;height:100%;object-fit:cover}
+
+        /* Buttons */
+        .btn-row{display:flex;gap:12px;margin-top:8px}
+        .btn-capture{
+            flex:1;padding:13px;background:var(--purple);color:#fff;
+            border:none;border-radius:12px;font-family:var(--font-body);
+            font-size:14px;font-weight:600;cursor:pointer;
+            box-shadow:0 4px 18px rgba(106,90,205,.35);transition:.15s;
+            display:flex;align-items:center;justify-content:center;gap:8px;
+        }
+        .btn-capture:hover{background:var(--purple-dark)}
+        .btn-capture:disabled{opacity:.5;cursor:not-allowed}
+        .btn-confirm{
+            flex:1;padding:13px;background:var(--green);color:#fff;
+            border:none;border-radius:12px;font-family:var(--font-body);
+            font-size:14px;font-weight:600;cursor:pointer;
+            box-shadow:0 4px 18px rgba(16,185,129,.3);transition:.15s;
+            display:none;align-items:center;justify-content:center;gap:8px;
+        }
+        .btn-confirm:hover{background:#059669}
+        .btn-skip{
+            width:100%;padding:11px;background:transparent;
+            color:var(--text-muted);border:1.5px solid var(--border);
+            border-radius:12px;font-family:var(--font-body);font-size:13px;
+            font-weight:500;cursor:pointer;margin-top:12px;transition:.15s;
+        }
+        .btn-skip:hover{border-color:var(--purple-soft);color:var(--purple)}
+        .btn-retake{
+            flex:1;padding:13px;background:var(--purple-ghost);color:var(--text-mid);
+            border:1.5px solid var(--border);border-radius:12px;
+            font-family:var(--font-body);font-size:14px;font-weight:500;
+            cursor:pointer;display:none;align-items:center;justify-content:center;gap:8px;
+        }
+        .btn-retake:hover{border-color:var(--purple);color:var(--purple)}
+
+        .info-box{
+            background:var(--purple-ghost);border:1px solid var(--border);
+            border-radius:12px;padding:14px 16px;font-size:12px;
+            color:var(--text-muted);display:flex;align-items:flex-start;
+            gap:10px;margin-bottom:20px;
+        }
+        .info-box .icon{font-size:18px;flex-shrink:0}
+
+        .loading{
+            display:none;text-align:center;padding:20px;
+            font-size:13px;color:var(--text-muted);
+        }
+        .loading.visible{display:block}
+        .spinner{
+            width:32px;height:32px;border:3px solid var(--border);
+            border-top-color:var(--purple);border-radius:50%;
+            animation:spin .8s linear infinite;margin:0 auto 10px;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="wrap">
+        <!-- Progress -->
+        <div class="progress-wrap">
+            <div class="step-circle done">✓</div>
+            <div class="step-line done"></div>
+            <div class="step-circle done">✓</div>
+            <div class="step-line done"></div>
+            <div class="step-circle active">3</div>
+        </div>
+        <div class="step-labels">
+            <span class="step-label done">Compte</span>
+            <span class="step-label done">Profil</span>
+            <span class="step-label active">Face ID</span>
+        </div>
+
+        <div class="card">
+            <div class="card-logo">
+                <img src="{{ asset('images/logo.png') }}" alt="Harmony">
+                <span>Harmony</span>
+            </div>
+            <div class="card-title">Identité faciale 📷</div>
+            <div class="card-sub">Étape 3 sur 3 — Sécurisez votre compte avec la reconnaissance faciale</div>
+
+            <div class="info-box">
+                <span class="icon">🔒</span>
+                <span>Votre image faciale est stockée localement et n'est jamais partagée. Elle sera utilisée pour vérifier votre identité lors de la connexion.</span>
+            </div>
+
+            <!-- Prévisualisation après capture -->
+            <div class="face-preview" id="facePreview">
+                <img id="facePreviewImg" src="" alt="Face capturée">
+            </div>
+
+            <!-- Zone webcam -->
+            <div class="cam-section" id="camSection">
+                <video id="video" autoplay muted playsinline></video>
+                <canvas id="canvas"></canvas>
+                <div class="cam-overlay"></div>
+                <div class="cam-status" id="camStatus">📷 Positionnez votre visage dans le cercle</div>
+            </div>
+
+            <!-- Loading -->
+            <div class="loading" id="loadingDiv">
+                <div class="spinner"></div>
+                <p>Enregistrement en cours…</p>
+            </div>
+
+            <!-- Boutons -->
+            <div class="btn-row">
+                <button class="btn-capture" id="btnCapture" disabled>
+                    📸 Capturer
+                </button>
+                <button class="btn-retake" id="btnRetake">
+                    🔄 Reprendre
+                </button>
+                <button class="btn-confirm" id="btnConfirm">
+                    ✅ Confirmer l'inscription
+                </button>
+            </div>
+
+            <button class="btn-skip" id="btnSkip">
+                Passer cette étape (sans Face ID)
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ── Variables globales ────────────────────────────────────────────────────────
+        let stream       = null;
+        let capturedBlob = null;
+        let capturedB64  = null;
+        const video      = document.getElementById('video');
+        const canvas     = document.getElementById('canvas');
+        const status     = document.getElementById('camStatus');
+        const btnCapture = document.getElementById('btnCapture');
+        const btnRetake  = document.getElementById('btnRetake');
+        const btnConfirm = document.getElementById('btnConfirm');
+        const btnSkip    = document.getElementById('btnSkip');
+        const preview    = document.getElementById('facePreview');
+        const previewImg = document.getElementById('facePreviewImg');
+        const camSection = document.getElementById('camSection');
+        const loadingDiv = document.getElementById('loadingDiv');
+
+        // ── Démarrer la webcam ────────────────────────────────────────────────────────
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 640, height: 480, facingMode: 'user' },
+                    audio: false
+                });
+                video.srcObject = stream;
+                video.onloadedmetadata = () => {
+                    btnCapture.disabled = false;
+                    status.textContent  = '✅ Caméra prête — positionnez votre visage';
+                    status.className    = 'cam-status ok';
+                };
+            } catch (err) {
+                status.textContent = '❌ Impossible d\'accéder à la caméra : ' + err.message;
+                status.className   = 'cam-status error';
+                btnCapture.disabled = true;
+            }
+        }
+
+        // ── Capturer une photo ────────────────────────────────────────────────────────
+        function capturePhoto() {
+            canvas.width  = video.videoWidth  || 640;
+            canvas.height = video.videoHeight || 480;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            capturedB64 = canvas.toDataURL('image/png');
+
+            // Afficher la prévisualisation
+            previewImg.src = capturedB64;
+            preview.style.display = 'block';
+
+            // Masquer la webcam, afficher les boutons
+            camSection.style.display = 'none';
+            btnCapture.style.display = 'none';
+            btnRetake.style.display  = 'flex';
+            btnConfirm.style.display = 'flex';
+            btnSkip.style.display    = 'none';
+
+            // Arrêter la caméra
+            if (stream) {
+                stream.getTracks().forEach(t => t.stop());
+            }
+        }
+
+        // ── Reprendre la capture ──────────────────────────────────────────────────────
+        function retakePhoto() {
+            capturedB64 = null;
+            preview.style.display    = 'none';
+            camSection.style.display = 'block';
+            btnCapture.style.display = 'flex';
+            btnRetake.style.display  = 'none';
+            btnConfirm.style.display = 'none';
+            btnSkip.style.display    = 'block';
+            startCamera();
+        }
+
+        // ── Confirmer et sauvegarder ──────────────────────────────────────────────────
+        async function confirmRegistration() {
+            if (!capturedB64) return;
+
+            loadingDiv.classList.add('visible');
+            btnConfirm.disabled = true;
+            btnRetake.disabled  = true;
+
+            try {
+                const response = await fetch('/register/save-face', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ faceImage: capturedB64 }),
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    window.location.href = '/login?registered=1';
+                } else {
+                    alert('Erreur : ' + (data.error || 'Inconnue'));
+                    loadingDiv.classList.remove('visible');
+                    btnConfirm.disabled = false;
+                    btnRetake.disabled  = false;
+                }
+            } catch (e) {
+                alert('Erreur réseau : ' + e.message);
+                loadingDiv.classList.remove('visible');
+                btnConfirm.disabled = false;
+                btnRetake.disabled  = false;
+            }
+        }
+
+        // ── Ignorer et s'inscrire sans Face ID ───────────────────────────────────────
+        async function skipFace() {
+            if (!confirm('Continuer sans reconnaissance faciale ? Vous pourrez l\'activer plus tard dans vos paramètres.')) {
+                return;
+            }
+
+            btnSkip.disabled    = true;
+            btnSkip.textContent = 'Enregistrement…';
+
+            try {
+                const response = await fetch('/register/skip-face', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    window.location.href = '/login?registered=1';
+                } else {
+                    alert('Erreur : ' + (data.error || 'Inconnue'));
+                    btnSkip.disabled    = false;
+                    btnSkip.textContent = 'Passer cette étape (sans Face ID)';
+                }
+            } catch (e) {
+                alert('Erreur réseau : ' + e.message);
+                btnSkip.disabled    = false;
+                btnSkip.textContent = 'Passer cette étape (sans Face ID)';
+            }
+        }
+
+        // ── Événements ────────────────────────────────────────────────────────────────
+        btnCapture.addEventListener('click', capturePhoto);
+        btnRetake.addEventListener('click',  retakePhoto);
+        btnConfirm.addEventListener('click', confirmRegistration);
+        btnSkip.addEventListener('click',    skipFace);
+
+        // Démarrer la caméra au chargement
+        startCamera();
+    </script>
+{% endblock %}

@@ -1,0 +1,1797 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ course.title }} – Harmony{% endblock %}
+
+{% block stylesheets %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/course-details.css') }}">
+    <style>
+        /* ── BACK BUTTON ───────────────────────────────────────────────── */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--color-text-muted, #6b7280);
+            background: var(--color-surface-subtle, #f3f4f6);
+            border: 1px solid var(--color-border, #e5e7eb);
+            text-decoration: none;
+            transition: background .14s, color .14s, border-color .14s, box-shadow .14s;
+            white-space: nowrap;
+        }
+        .back-btn:hover {
+            background: var(--color-surface-hover, #e9eaec);
+            color: var(--color-text, #111);
+            border-color: #d1d5db;
+            box-shadow: 0 1px 4px rgba(0,0,0,.06);
+        }
+        .back-btn svg { flex-shrink: 0; }
+
+        /* ── DETAIL HEADER LAYOUT ──────────────────────────────────────── */
+        .detail-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            padding: 20px 32px 16px;
+        }
+        .detail-header-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 0;
+        }
+        .detail-header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+        }
+
+        /* ── OWNER ACTION BUTTONS GROUP ────────────────────────────────── */
+        .owner-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .owner-actions .btn-divider {
+            width: 1px;
+            height: 28px;
+            background: var(--color-border, #e5e7eb);
+            margin: 0 2px;
+            flex-shrink: 0;
+        }
+
+        /* ── PUBLISH ROW ────────────────────────────────────────────────── */
+        .publish-row {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--color-border, #e5e7eb);
+            background: var(--color-surface-subtle, #f9fafb);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--color-text-muted, #6b7280);
+        }
+        .publish-row label:first-child { cursor: default; user-select: none; }
+
+        /* ── REFINED BTN BASE ───────────────────────────────────────────── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid transparent;
+            cursor: pointer;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: background .14s, color .14s, border-color .14s, box-shadow .14s, opacity .14s;
+            line-height: 1;
+        }
+        .btn:disabled { opacity: .5; cursor: not-allowed; }
+        .btn svg { flex-shrink: 0; }
+
+        .btn-primary {
+            background: var(--purple, #6a5acd);
+            color: #fff;
+            border-color: var(--purple, #6a5acd);
+        }
+        .btn-primary:hover:not(:disabled) {
+            background: var(--purple-dark, #5a4abf);
+            border-color: var(--purple-dark, #5a4abf);
+            box-shadow: 0 2px 8px rgba(106,90,205,.25);
+        }
+
+        .btn-secondary {
+            background: var(--color-surface, #fff);
+            color: var(--color-text, #111);
+            border-color: var(--color-border, #e5e7eb);
+        }
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--color-surface-subtle, #f3f4f6);
+            border-color: #d1d5db;
+            box-shadow: 0 1px 4px rgba(0,0,0,.06);
+        }
+
+        .btn-danger {
+            background: #fff;
+            color: #dc2626;
+            border-color: #fca5a5;
+        }
+        .btn-danger:hover:not(:disabled) {
+            background: #fef2f2;
+            border-color: #f87171;
+            box-shadow: 0 1px 4px rgba(220,38,38,.1);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--color-text-muted, #6b7280);
+            border-color: transparent;
+        }
+        .btn-ghost:hover:not(:disabled) {
+            background: var(--color-surface-subtle, #f3f4f6);
+            color: var(--color-text, #111);
+        }
+
+        .btn-save-library {
+            background: var(--color-surface, #fff);
+            color: var(--purple, #6a5acd);
+            border-color: var(--purple, #6a5acd);
+        }
+        .btn-save-library:hover:not(:disabled) {
+            background: var(--purple-pale, #ede9fe);
+            box-shadow: 0 2px 8px rgba(106,90,205,.15);
+        }
+        .btn-save-library.saved {
+            background: var(--purple, #6a5acd);
+            color: #fff;
+        }
+        .btn-save-library.saved:hover:not(:disabled) {
+            background: var(--purple-dark, #5a4abf);
+        }
+
+        .btn-report {
+            background: var(--color-surface, #fff);
+            color: #9ca3af;
+            border-color: #e5e7eb;
+        }
+        .btn-report:hover:not(:disabled) {
+            background: #fef2f2;
+            color: #dc2626;
+            border-color: #fca5a5;
+            box-shadow: 0 1px 4px rgba(220,38,38,.08);
+        }
+
+        /* ── REPORT MODAL ───────────────────────────────────────────────── */
+        .report-modal-backdrop {
+            position: fixed; inset: 0; z-index: 600;
+            background: rgba(0,0,0,.55); backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity .18s ease;
+        }
+        .report-modal-backdrop.open { opacity: 1; pointer-events: all; }
+
+        .report-modal {
+            background: var(--color-surface, #fff);
+            border-radius: 18px;
+            box-shadow: 0 24px 64px rgba(0,0,0,.22);
+            width: min(92vw, 480px);
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            transform: translateY(20px) scale(.97);
+            transition: transform .18s ease;
+        }
+        .report-modal-backdrop.open .report-modal { transform: translateY(0) scale(1); }
+
+        .report-modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 20px 22px 0;
+        }
+        .report-modal-header h2 {
+            font-size: 16px; font-weight: 700;
+            color: var(--color-text, #111); margin: 0;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .report-modal-header h2 .report-icon {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: #fef2f2; display: grid; place-items: center;
+            font-size: 15px; flex-shrink: 0;
+        }
+
+        .report-modal-body { padding: 18px 22px 6px; }
+
+        .report-subtitle {
+            font-size: 13px; color: var(--color-text-muted, #6b7280);
+            margin: 0 0 16px; line-height: 1.5;
+        }
+
+        .report-reasons {
+            display: grid; gap: 8px; margin-bottom: 16px;
+        }
+        .report-reason-option {
+            display: flex; align-items: flex-start; gap: 10px;
+            padding: 11px 13px; border-radius: 10px;
+            border: 1.5px solid var(--color-border, #e5e7eb);
+            cursor: pointer; transition: border-color .13s, background .13s;
+            position: relative;
+        }
+        .report-reason-option:hover {
+            border-color: #fca5a5; background: #fff5f5;
+        }
+        .report-reason-option input[type=radio] {
+            position: absolute; opacity: 0; pointer-events: none;
+        }
+        .report-reason-option.selected {
+            border-color: #dc2626; background: #fef2f2;
+        }
+        .report-reason-option .reason-radio {
+            width: 16px; height: 16px; border-radius: 50%;
+            border: 2px solid #d1d5db; flex-shrink: 0; margin-top: 1px;
+            display: flex; align-items: center; justify-content: center;
+            transition: border-color .13s, background .13s;
+        }
+        .report-reason-option.selected .reason-radio {
+            border-color: #dc2626; background: #dc2626;
+        }
+        .report-reason-option.selected .reason-radio::after {
+            content: ''; width: 6px; height: 6px; border-radius: 50%;
+            background: #fff; display: block;
+        }
+        .report-reason-label { display: flex; flex-direction: column; gap: 2px; }
+        .report-reason-title { font-size: 13.5px; font-weight: 600; color: var(--color-text, #111); }
+        .report-reason-desc  { font-size: 12px; color: var(--color-text-muted, #6b7280); line-height: 1.4; }
+
+        .report-details-label {
+            font-size: 12.5px; font-weight: 600;
+            color: var(--color-text-muted, #6b7280);
+            display: block; margin-bottom: 6px;
+        }
+        .report-details-textarea {
+            width: 100%; box-sizing: border-box;
+            border: 1.5px solid var(--color-border, #e5e7eb);
+            border-radius: 10px; padding: 10px 12px;
+            font-size: 13px; font-family: inherit;
+            color: var(--color-text, #111);
+            background: var(--color-surface, #fff);
+            resize: vertical; min-height: 72px;
+            outline: none; transition: border-color .13s;
+        }
+        .report-details-textarea:focus { border-color: #dc2626; }
+        .report-details-textarea::placeholder { color: #9ca3af; }
+
+        .report-modal-footer {
+            display: flex; justify-content: flex-end; gap: 8px;
+            padding: 16px 22px 20px;
+        }
+
+        .btn-report-submit {
+            background: #dc2626; color: #fff; border-color: #dc2626;
+        }
+        .btn-report-submit:hover:not(:disabled) {
+            background: #b91c1c; border-color: #b91c1c;
+            box-shadow: 0 2px 8px rgba(220,38,38,.25);
+        }
+        .btn-report-submit:disabled { opacity: .5; cursor: not-allowed; }
+
+        .btn-icon {
+            padding: 7px 9px;
+            border-radius: 9px;
+            font-size: 13px;
+        }
+
+        /* ── NOTE MODAL OVERRIDES ──────────────────────────────────────── */
+        .note-modal-backdrop {
+            position: fixed; inset: 0; z-index: 500;
+            background: rgba(0,0,0,.55); backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity .18s ease;
+        }
+        .note-modal-backdrop.open { opacity: 1; pointer-events: all; }
+
+        .note-modal {
+            background: var(--color-surface, #fff);
+            border-radius: 16px;
+            box-shadow: 0 24px 64px rgba(0,0,0,.22);
+            width: min(92vw, 1060px);
+            height: min(88vh, 780px);
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            transform: translateY(18px); transition: transform .18s ease;
+        }
+        .note-modal-backdrop.open .note-modal { transform: translateY(0); }
+
+        .note-toolbar {
+            display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--color-border, #e5e7eb);
+            background: var(--color-surface-subtle, #f9fafb);
+            flex-shrink: 0;
+        }
+        .note-name-input {
+            font-size: 14px; font-weight: 600; border: none; outline: none;
+            background: transparent; color: var(--color-text, #111);
+            min-width: 160px; flex: 1;
+        }
+        .note-toolbar-sep { width: 1px; height: 20px; background: var(--color-border, #e5e7eb); margin: 0 2px; flex-shrink: 0; }
+        .note-toolbar select,
+        .note-toolbar input[type=number] {
+            border: 1px solid var(--color-border, #e5e7eb);
+            border-radius: 6px; padding: 4px 6px; font-size: 12px;
+            background: var(--color-surface, #fff); color: var(--color-text, #111);
+            outline: none;
+        }
+        .note-toolbar input[type=number] { width: 54px; }
+        .note-toolbar .tb-btn {
+            border: none; background: none; cursor: pointer;
+            padding: 5px 8px; border-radius: 6px; font-size: 13px;
+            color: var(--color-text-muted, #6b7280);
+            transition: background .12s, color .12s;
+            display: inline-flex; align-items: center; gap: 4px;
+        }
+        .note-toolbar .tb-btn:hover { background: var(--color-surface-hover, #f3f4f6); color: var(--color-text, #111); }
+        .note-toolbar .tb-btn.active { background: var(--purple-pale, #ede9fe); color: var(--purple, #6a5acd); }
+        .note-toolbar .tb-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+        .note-editor-wrap {
+            flex: 1; overflow-y: auto; padding: 32px 48px;
+            background: var(--color-surface, #fff);
+        }
+        .note-editor-area {
+            min-height: 100%;
+            outline: none;
+            font-family: Inter, sans-serif;
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--color-text, #111);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .note-editor-area[contenteditable="false"] { color: var(--color-text-muted, #6b7280); }
+        .note-editor-area p { margin: 0 0 4px; }
+
+        .note-modal-footer {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 16px;
+            border-top: 1px solid var(--color-border, #e5e7eb);
+            background: var(--color-surface-subtle, #f9fafb);
+            flex-shrink: 0; gap: 8px; flex-wrap: wrap;
+        }
+        .note-footer-left, .note-footer-right { display: flex; gap: 8px; align-items: center; }
+
+        .note-find-highlight { background: #fde68a; border-radius: 2px; }
+
+        /* ── PREVIEW MODAL — PDF SIZING ────────────────────────────────────
+           When viewing a PDF the modal expands to fill nearly the full viewport
+           so the embedded viewer has enough room to be useful.                */
+        .preview-modal-backdrop.pdf-mode .preview-modal {
+            width:  min(98vw, 1400px);
+            height: min(96vh, 1080px);
+            max-width:  none;
+            max-height: none;
+        }
+        .preview-modal-backdrop.pdf-mode .preview-modal-body {
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* ── FULLSCREEN BUTTON ──────────────────────────────────────────────  */
+        #previewFullscreenBtn {
+            display: none;
+        }
+        .preview-modal-backdrop.pdf-mode #previewFullscreenBtn {
+            display: inline-flex;
+        }
+
+        /* ── PREVIEW MODAL FOOTER ───────────────────────────────────────── */
+        .preview-modal-footer {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding: 12px 20px;
+        }
+        .preview-modal-footer .footer-spacer { flex: 1; }
+
+        /* ── FILES GRID SPACING ─────────────────────────────────────────── */
+        .files-grid {
+            padding: 24px 32px 40px;
+            gap: 16px;
+        }
+        .file-card {
+            padding: 14px;
+        }
+
+        /* ── CONFIRM MODAL FOOTER ───────────────────────────────────────── */
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        /* ── PUBLISH TOGGLE — ON STATE ──────────────────────────────────── */
+        /*
+         * When checked, the publish-row container lights up with a green tint
+         * and the track switches to a vivid green so the "on" state is
+         * immediately obvious at a glance.
+         */
+        #publishToggle:checked ~ .toggle-track,
+        .toggle-switch:has(#publishToggle:checked) .toggle-track {
+            background: #16a34a;          /* green-600 */
+            border-color: #16a34a;
+            box-shadow: 0 0 0 3px rgba(22, 163, 74, .18);
+        }
+
+        /* Thumb slides to the right */
+        #publishToggle:checked ~ .toggle-thumb,
+        .toggle-switch:has(#publishToggle:checked) .toggle-thumb {
+            transform: translateX(20px);
+        }
+
+        /* Whole publish-row gets a soft green wash */
+        .publish-row:has(#publishToggle:checked) {
+            background: #f0fdf4;          /* green-50 */
+            border-color: #86efac;        /* green-300 */
+            color: #15803d;               /* green-700 */
+        }
+
+        /* "Publish" label turns green too */
+        .publish-row:has(#publishToggle:checked) label:first-child {
+            color: #15803d;
+            font-weight: 600;
+        }
+
+        /* Pill track + circular thumb */
+        .toggle-track {
+            border-radius: 999px;
+            transition: background .2s, border-color .2s, box-shadow .2s;
+        }
+        .toggle-thumb {
+            border-radius: 50%;
+            transition: transform .2s;
+        }
+        .publish-row {
+            transition: background .2s, border-color .2s, color .2s;
+        }
+
+        /* ── SUGGESTIONS ────────────────────────────────────────────────── */
+        .suggestions-section {
+            padding: 0 32px 48px;
+        }
+        .suggestions-section-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--color-text, #111);
+            margin: 0 0 14px;
+        }
+        .suggestions-scroll-wrapper {
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+        .suggestions-scroll-wrapper::-webkit-scrollbar { height: 4px; }
+        .suggestions-scroll-wrapper::-webkit-scrollbar-thumb { background: var(--color-border, #e5e7eb); border-radius: 4px; }
+        .suggestions-row {
+            display: flex;
+            gap: 14px;
+            width: max-content;
+        }
+        .suggestion-card {
+            border-radius: 12px;
+            border: 1px solid var(--color-border, #e5e7eb);
+            background: var(--color-surface, #fff);
+            overflow: hidden;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            transition: box-shadow .15s, transform .15s;
+            flex-shrink: 0;
+        }
+        .suggestion-card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,.10);
+            transform: translateY(-2px);
+        }
+        .suggestion-card-thumb {
+            background: var(--color-surface-subtle, #f3f4f6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            overflow: hidden;
+            position: relative;
+        }
+        .suggestion-card-thumb img {
+            width: 100%; height: 100%;
+            object-fit: cover; display: block;
+        }
+        .suggestion-card-body {
+            padding: 8px 10px 10px;
+        }
+        .suggestion-card-title {
+            font-size: 11.5px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--color-text, #111);
+        }
+        .suggestion-card-sub {
+            font-size: 10.5px;
+            color: var(--color-text-muted, #6b7280);
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .suggestion-play-overlay {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            background: rgba(0,0,0,.45);
+            border-radius: 50%;
+            width: 42px; height: 42px;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff;
+            pointer-events: none;
+        }
+        .suggestions-sub-section { margin-bottom: 32px; }
+    </style>
+{% endblock %}
+
+{% block body %}
+    {% set current_route = app.request.attributes.get('_route') %}
+    <header class="topbar">
+        <a href="{{ path('homepage') }}" class="topbar-logo">
+            <img src="{{ asset('images/logo.png') }}" class="logo-mark" alt="Harmony">
+        </a>
+        <nav class="nav-links">
+            <a href="{{ path('activites') }}"   class="nav-link {{ current_route == 'activites'   ? 'active' }}"><span class="nav-emoji">🏋</span> Activités</a>
+            <a href="{{ path('forum') }}"       class="nav-link {{ current_route == 'forum'       ? 'active' }}"><span class="nav-emoji">💬</span> Forum</a>
+            <a href="{{ path('taches') }}"      class="nav-link {{ current_route == 'taches'      ? 'active' }}"><span class="nav-emoji">📚</span> Tâches</a>
+            <a href="{{ path('evenements') }}"  class="nav-link {{ current_route == 'evenements'  ? 'active' }}"><span class="nav-emoji">📅</span> Événements</a>
+            <a href="{{ path('nutrition') }}"   class="nav-link {{ current_route == 'nutrition'   ? 'active' }}"><span class="nav-emoji">🥗</span> Nutrition</a>
+            <a href="{{ path('meditation') }}"  class="nav-link {{ current_route == 'meditation'  ? 'active' }}"><span class="nav-emoji">🧘</span> Méditation</a>
+            <a href="{{ path('journal') }}"     class="nav-link {{ current_route == 'journal'     ? 'active' }}"><span class="nav-emoji">📔</span> Journal</a>
+            <a href="{{ path('app_courses') }}"  class="nav-link {{ current_route starts with 'app_courses' ? 'active' }}"><span class="nav-emoji">📖</span> My Courses</a>
+        </nav>
+        <div class="topbar-right">
+            <form method="post" action="{{ path('app_logout') }}" style="margin: 0;">
+                <input type="hidden" name="_token" value="{{ csrf_token('logout') }}">
+                <button type="submit" class="logout-btn">Déconnexion</button>
+            </form>
+            <div class="profile-wrap">
+                <div class="avatar" id="avatarBtn">
+                    {{ app.user ? app.user.firstName|first|upper : 'E' }}
+                </div>
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="pd-name">{{ app.user ? app.user.firstName ~ ' ' ~ app.user.lastName : 'Étudiant' }}</div>
+                    <div class="pd-email">{{ app.user ? app.user.email : 'email@exemple.com' }}</div>
+                    <div class="pd-divider"></div>
+                    <div class="pd-hint">Double-clic pour modifier</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+
+        {# ── DETAIL HEADER ────────────────────────────────────────────── #}
+        <div class="detail-header">
+            <div class="detail-header-left">
+
+                {# ── BACK BUTTON — goes to library or courses depending on origin ── #}
+                <a href="{{ origin == 'library' ? path('library') : path('app_courses') }}"
+                   class="back-btn" aria-label="Back to {{ origin == 'library' ? 'Library' : 'Courses' }}">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="15 18 9 12 15 6"/>
+                    </svg>
+                    {{ origin == 'library' ? 'Library' : 'Courses' }}
+                </a>
+
+                <div>
+                    {% if isOwner|default(false) %}
+                        <span class="page-title editable-label" id="courseTitleLabel"
+                              title="Double-click to rename" data-value="{{ course.title|e('html_attr') }}">
+                            {{ course.title }}
+                        </span>
+                    {% else %}
+                        <span class="page-title">{{ course.title }}</span>
+                    {% endif %}
+                    <span style="font-size:var(--text-sm);color:var(--color-text-muted);margin-left:8px;">
+                        {% if isOwner|default(false) %}
+                            <span class="editable-label" id="courseSubjectLabel"
+                                  title="Double-click to change subject"
+                                  data-value="{{ course.subject_name|default('')|e('html_attr') }}">
+                                {{ course.subject_name|default('No subject') }}
+                            </span>
+                        {% else %}
+                            {{ course.subject_name|default('') }}
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+
+            {# ── RIGHT-SIDE ACTIONS ── #}
+            <div class="detail-header-right">
+                {% if isOwner|default(false) %}
+                    <div class="owner-actions">
+
+                        {# Publish toggle #}
+                        <div class="publish-row">
+                            <label for="publishToggle">Publish</label>
+                            <label class="toggle-switch" title="Publish to Library">
+                                <input type="checkbox" id="publishToggle" {{ course.is_published ? 'checked' }}>
+                                <span class="toggle-track"></span>
+                                <span class="toggle-thumb"></span>
+                            </label>
+                        </div>
+
+                        <div class="btn-divider"></div>
+
+                        {# Create note #}
+                        <button class="btn btn-secondary" id="createNoteBtn" type="button">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                            </svg>
+                            New note
+                        </button>
+
+                        {# Add files #}
+                        <button class="btn btn-primary" id="addFilesBtn" type="button">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+                                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                            Add files
+                        </button>
+
+                    </div>
+                {% else %}
+                    {# Save to Library toggle #}
+                    <button class="btn btn-save-library {{ (isSaved|default(false)) ? 'saved' : '' }}"
+                            id="saveToLibraryBtn" type="button"
+                            data-saved="{{ (isSaved|default(false)) ? '1' : '0' }}">
+                        {% if isSaved|default(false) %}
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                            </svg>
+                            Saved
+                        {% else %}
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                            </svg>
+                            Save to Library
+                        {% endif %}
+                    </button>
+
+                    {# Report button — only visible to non-owners #}
+                    <button class="btn btn-report" id="reportCourseBtn" type="button"
+                            title="Report this course" aria-label="Report this course">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+                            <line x1="4" y1="22" x2="4" y2="15"/>
+                        </svg>
+                        Report
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+
+        {# ── FILES GRID ───────────────────────────────────────────────── #}
+        <div class="files-grid" id="filesGrid">
+            {% if files is not empty %}
+                {% for file in files %}
+                    {% set lname = file.originalname|lower %}
+                    {% set isWord  = lname ends with '.docx' or lname ends with '.doc' %}
+                    {% set isPpt   = lname ends with '.pptx' or lname ends with '.ppt' %}
+                    {% set isXls   = lname ends with '.xlsx' or lname ends with '.xls' %}
+                    {% set isNote  = lname ends with '.rtfx' or lname ends with '.txt' or lname ends with '.md' or file.mimetype starts with 'text/' or file.mimetype == 'application/json' %}
+                    <div class="file-card"
+                         data-id="{{ file.id }}"
+                         data-name="{{ file.originalname|e('html_attr') }}"
+                         data-mime="{{ file.mimetype|e('html_attr') }}"
+                         data-is-note="{{ (isNote or isWord) ? '1' : '0' }}"
+                         data-is-word="{{ isWord ? '1' : '0' }}"
+                         data-preview-url="{{ path('app_courses_detail_file_preview', {id: course.id, fileId: file.id}) }}"
+                         data-download-url="{{ path('app_courses_detail_file_download', {id: course.id, fileId: file.id}) }}"
+                         data-content-url="{{ path('app_courses_detail_note_content', {id: course.id, fileId: file.id}) }}"
+                         data-export-url="{{ path('app_courses_detail_note_export_pdf', {id: course.id, fileId: file.id}) }}"
+                         tabindex="0" role="button" aria-label="Open {{ file.originalname }}">
+                        <div class="file-card-thumb" id="thumb-{{ file.id }}">
+                            {% if file.mimetype starts with 'image/' %}
+                                <img src="{{ path('app_courses_detail_file_preview', {id: course.id, fileId: file.id}) }}"
+                                     alt="{{ file.originalname }}" loading="lazy">
+                            {% elseif file.mimetype == 'application/pdf' %}
+                                📄
+                            {% elseif isWord %}
+                                📝
+                            {% elseif isPpt %}
+                                📊
+                            {% elseif isXls %}
+                                📈
+                            {% elseif isNote %}
+                                📝
+                            {% else %}
+                                📎
+                            {% endif %}
+                        </div>
+                        <div class="file-card-body">
+                            <p class="file-card-name">{{ file.originalname|replace({'.rtfx': '', '.txt': '', '.md': ''}) }}</p>
+                            <p class="file-card-meta">{{ (file.sizebytes / 1024)|round(1) }} KB</p>
+                        </div>
+                        {% if isOwner|default(false) %}
+                            <button class="file-delete-btn" data-action="delete-file"
+                                    data-id="{{ file.id }}" data-name="{{ file.originalname|e('html_attr') }}"
+                                    type="button" aria-label="Delete {{ file.originalname }}">✕</button>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="files-empty">
+                    <div class="empty-icon">📂</div>
+                    <h3>No files yet</h3>
+                    <p>{% if isOwner|default(false) %}Add files or create a note to get started.{% else %}This course has no files.{% endif %}</p>
+                </div>
+            {% endif %}
+        </div>
+
+    </main>
+
+    {# ── SUGGESTIONS — Open Library + YouTube ─────────────────────────── #}
+    <section class="suggestions-section" id="suggestionsSection" style="display:none;">
+
+        <div class="suggestions-sub-section" id="booksSection" style="display:none;">
+            <h2 class="suggestions-section-title">📚 Related Books</h2>
+            <div class="suggestions-scroll-wrapper">
+                <div class="suggestions-row" id="booksContainer"></div>
+            </div>
+        </div>
+
+        <div class="suggestions-sub-section" id="videosSection" style="display:none;">
+            <h2 class="suggestions-section-title">▶ Related Videos</h2>
+            <div class="suggestions-scroll-wrapper">
+                <div class="suggestions-row" id="videosContainer"></div>
+            </div>
+        </div>
+
+    </section>
+
+    {# ── FILE PREVIEW MODAL ───────────────────────────────────────── #}
+    <div class="preview-modal-backdrop" id="previewModal" role="dialog" aria-modal="true" aria-labelledby="previewTitle">
+        <div class="preview-modal">
+            <div class="preview-modal-header">
+                <span class="preview-modal-title" id="previewTitle">File</span>
+                <button class="btn btn-icon btn-ghost" id="previewFullscreenBtn" type="button" aria-label="Fullscreen">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+                        <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+                    </svg>
+                </button>
+                <button class="btn btn-icon btn-ghost" id="previewCloseBtn" type="button" aria-label="Close">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="preview-modal-body" id="previewBody"><!-- content injected --></div>
+            <div class="preview-modal-footer">
+                {% if isOwner|default(false) %}
+                    <button class="btn btn-secondary" id="previewRenameBtn" type="button">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                        </svg>
+                        Rename
+                    </button>
+                    <button class="btn btn-danger" id="previewDeleteBtn" type="button">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+                        </svg>
+                        Delete
+                    </button>
+                {% endif %}
+
+                <div class="footer-spacer"></div>
+
+                <a id="previewDownloadLink" class="btn btn-secondary" download>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    Download
+                </a>
+                <button class="btn btn-primary" id="previewCloseBtn2" type="button">Close</button>
+            </div>
+        </div>
+    </div>
+
+    {# ── NOTE EDITOR MODAL ────────────────────────────────────────── #}
+    <div class="note-modal-backdrop" id="noteModal" role="dialog" aria-modal="true" aria-labelledby="noteModalTitle">
+        <div class="note-modal">
+
+            {# ── Toolbar ── #}
+            <div class="note-toolbar">
+                <input class="note-name-input" type="text" id="noteNameInput" placeholder="Note name" aria-label="Note name"
+                       {% if not isOwner|default(false) %}readonly{% endif %}>
+
+                <div class="note-toolbar-sep"></div>
+
+                <select id="noteFontSelect" aria-label="Font family" {% if not isOwner|default(false) %}disabled{% endif %}>
+                    <option value="Inter">Inter</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="'Courier New'">Courier New</option>
+                    <option value="Arial">Arial</option>
+                    <option value="'Times New Roman'">Times New Roman</option>
+                </select>
+
+                <input type="number" id="noteSizeInput" value="14" min="8" max="72" aria-label="Font size"
+                       {% if not isOwner|default(false) %}disabled{% endif %}>
+
+                <div class="note-toolbar-sep"></div>
+
+                <button class="tb-btn" id="noteBoldBtn"      type="button" title="Bold (Ctrl+B)"      {% if not isOwner|default(false) %}disabled{% endif %}><b>B</b></button>
+                <button class="tb-btn" id="noteItalicBtn"    type="button" title="Italic (Ctrl+I)"    {% if not isOwner|default(false) %}disabled{% endif %}><i>I</i></button>
+                <button class="tb-btn" id="noteUnderlineBtn" type="button" title="Underline (Ctrl+U)" {% if not isOwner|default(false) %}disabled{% endif %}><u>U</u></button>
+
+                <div class="note-toolbar-sep"></div>
+
+                <button class="tb-btn" id="noteAlignLeft"    data-align="left"    type="button" title="Align left"    {% if not isOwner|default(false) %}disabled{% endif %}>⬅</button>
+                <button class="tb-btn" id="noteAlignCenter"  data-align="center"  type="button" title="Center"        {% if not isOwner|default(false) %}disabled{% endif %}>↔</button>
+                <button class="tb-btn" id="noteAlignRight"   data-align="right"   type="button" title="Align right"   {% if not isOwner|default(false) %}disabled{% endif %}>➡</button>
+                <button class="tb-btn" id="noteAlignJustify" data-align="justify" type="button" title="Justify"       {% if not isOwner|default(false) %}disabled{% endif %}>☰</button>
+
+                <div class="note-toolbar-sep"></div>
+
+                <button class="tb-btn" id="noteFindBtn" type="button">🔍 Find</button>
+            </div>
+
+            {# ── Editor area ── #}
+            <div class="note-editor-wrap">
+                <div class="note-editor-area"
+                     id="noteEditorArea"
+                     contenteditable="{{ isOwner|default(false) ? 'true' : 'false' }}"
+                     spellcheck="true"
+                     aria-label="Note content"
+                     aria-multiline="true"></div>
+            </div>
+
+            {# ── Footer ── #}
+            <div class="note-modal-footer">
+                <div class="note-footer-left">
+                    {% if isOwner|default(false) %}
+                        <button class="btn btn-primary" id="noteSaveBtn" type="button">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+                            </svg>
+                            Save
+                        </button>
+                        <button class="btn btn-secondary" id="noteSaveAsNewBtn" type="button">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                            </svg>
+                            Save as new
+                        </button>
+                    {% endif %}
+                    <a id="noteDownloadPdfBtn" class="btn btn-secondary" style="display:none;" title="Export as PDF">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Export PDF
+                    </a>
+                </div>
+                <div class="note-footer-right">
+                    {% if isOwner|default(false) %}
+                        <button class="btn btn-secondary" id="noteRenameBtn" type="button">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                            </svg>
+                            Rename
+                        </button>
+                        <button class="btn btn-danger" id="noteDeleteBtn" type="button">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+                            </svg>
+                            Delete
+                        </button>
+                    {% endif %}
+                    <button class="btn btn-ghost" id="noteCloseBtn" type="button">Close</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    {# ── DELETE CONFIRM MODAL ─────────────────────────────────────── #}
+    <div class="modal-backdrop" id="confirmModal" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
+        <div class="modal" style="max-width:380px;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="confirmTitle">Confirm deletion</h2>
+            </div>
+            <p id="confirmMsg" style="font-size:13.5px;color:var(--color-text-muted);line-height:1.6;margin-bottom:28px;"></p>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="confirmCancelBtn" type="button">Cancel</button>
+                <button class="btn btn-danger"    id="confirmDeleteBtn" type="button">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+                    </svg>
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {# ── REPORT COURSE MODAL ──────────────────────────────────────── #}
+    <div class="report-modal-backdrop" id="reportModal" role="dialog" aria-modal="true" aria-labelledby="reportModalTitle">
+        <div class="report-modal">
+            <div class="report-modal-header">
+                <h2 id="reportModalTitle">
+                    <span class="report-icon">🚩</span>
+                    Report Course
+                </h2>
+                <button class="btn btn-icon btn-ghost" id="reportModalCloseBtn" type="button" aria-label="Close">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="report-modal-body">
+                <p class="report-subtitle">Help us understand what's wrong with this course. Your report is anonymous.</p>
+
+                <div class="report-reasons" id="reportReasons">
+                    <label class="report-reason-option" data-value="Inappropriate content">
+                        <input type="radio" name="reportReason" value="Inappropriate content">
+                        <span class="reason-radio"></span>
+                        <span class="report-reason-label">
+                            <span class="report-reason-title">Inappropriate Content</span>
+                            <span class="report-reason-desc">Contains offensive, harmful or adult material.</span>
+                        </span>
+                    </label>
+                    <label class="report-reason-option" data-value="Spam or misleading">
+                        <input type="radio" name="reportReason" value="Spam or misleading">
+                        <span class="reason-radio"></span>
+                        <span class="report-reason-label">
+                            <span class="report-reason-title">Spam or Misleading</span>
+                            <span class="report-reason-desc">Fake, misleading, or promotional content.</span>
+                        </span>
+                    </label>
+                    <label class="report-reason-option" data-value="Copyright violation">
+                        <input type="radio" name="reportReason" value="Copyright violation">
+                        <span class="reason-radio"></span>
+                        <span class="report-reason-label">
+                            <span class="report-reason-title">Copyright Violation</span>
+                            <span class="report-reason-desc">Uses copyrighted material without permission.</span>
+                        </span>
+                    </label>
+                    <label class="report-reason-option" data-value="Incorrect information">
+                        <input type="radio" name="reportReason" value="Incorrect information">
+                        <span class="reason-radio"></span>
+                        <span class="report-reason-label">
+                            <span class="report-reason-title">Incorrect Information</span>
+                            <span class="report-reason-desc">Contains factual errors or outdated content.</span>
+                        </span>
+                    </label>
+                    <label class="report-reason-option" data-value="Other">
+                        <input type="radio" name="reportReason" value="Other">
+                        <span class="reason-radio"></span>
+                        <span class="report-reason-label">
+                            <span class="report-reason-title">Other</span>
+                            <span class="report-reason-desc">Something else not listed above.</span>
+                        </span>
+                    </label>
+                </div>
+
+                <label class="report-details-label" for="reportDetails">Additional details <span style="font-weight:400;font-size:11.5px;">(optional)</span></label>
+                <textarea class="report-details-textarea" id="reportDetails"
+                          placeholder="Describe the issue in more detail…" rows="3" maxlength="1000"></textarea>
+            </div>
+            <div class="report-modal-footer">
+                <button class="btn btn-secondary" id="reportCancelBtn" type="button">Cancel</button>
+                <button class="btn btn-report-submit" id="reportSubmitBtn" type="button" disabled>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+                        <line x1="4" y1="22" x2="4" y2="15"/>
+                    </svg>
+                    Submit Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+    <input type="file" id="addFilesInput" multiple style="display:none;" aria-label="Add files"
+           accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.md,.jpg,.jpeg,.png,.gif,.webp,.svg">
+
+    <datalist id="subjectsList">
+        {% for s in subjects|default([]) %}
+        <option value="{{ s.name|e('html_attr') }}">
+            {% endfor %}
+    </datalist>
+
+    <script>
+        (function () {
+            'use strict';
+
+            const COURSE_ID = {{ course.id }};
+            const IS_OWNER  = {{ (isOwner|default(false)) ? 'true' : 'false' }};
+
+            // ── UTILITIES ────────────────────────────────────────────────────
+            function toast(msg, type) {
+                const t = document.createElement('div');
+                t.className = 'toast toast-' + (type || 'success');
+                t.textContent = msg;
+                document.getElementById('toastContainer').appendChild(t);
+                setTimeout(() => t.remove(), 3500);
+            }
+            async function post(url, body) {
+                if (!(body instanceof FormData) && body) {
+                    const f = new FormData();
+                    Object.entries(body).forEach(([k, v]) => f.append(k, v));
+                    return fetch(url, { method: 'POST', body: f, headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                }
+                return fetch(url, { method: 'POST', body, headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            }
+
+            // ── AVATAR DROPDOWN ──────────────────────────────────────────────
+            const avatarBtn = document.getElementById('avatarBtn');
+            const dropdown  = document.getElementById('profileDropdown');
+            if (avatarBtn) {
+                avatarBtn.addEventListener('click', e => { e.stopPropagation(); dropdown.classList.toggle('open'); });
+                document.addEventListener('click', () => dropdown.classList.remove('open'));
+            }
+
+            // ── PUBLISH TOGGLE ───────────────────────────────────────────────
+            const publishToggle = document.getElementById('publishToggle');
+            if (publishToggle) {
+                publishToggle.addEventListener('change', async () => {
+                    const published = publishToggle.checked ? 1 : 0;
+                    const res  = await post(`/courses/${COURSE_ID}/publish`, { published });
+                    const data = await res.json();
+                    if (!res.ok) { toast(data.message || 'Failed to update', 'error'); publishToggle.checked = !publishToggle.checked; }
+                    else toast(published ? 'Course published to Library' : 'Course unpublished', 'success');
+                });
+            }
+
+            // ── INLINE EDIT — TITLE ──────────────────────────────────────────
+            const titleLabel = document.getElementById('courseTitleLabel');
+            if (titleLabel) {
+                titleLabel.addEventListener('dblclick', () => {
+                    const inp = document.createElement('input');
+                    inp.type = 'text'; inp.className = 'inline-input page-title';
+                    inp.value = titleLabel.textContent.trim();
+                    inp.style.minWidth = '200px';
+                    titleLabel.replaceWith(inp); inp.focus(); inp.select();
+                    async function commit() {
+                        const v = inp.value.trim();
+                        if (!v) { inp.replaceWith(titleLabel); return; }
+                        const res  = await post(`/courses/${COURSE_ID}/rename`, { title: v });
+                        const data = await res.json();
+                        if (!res.ok) { toast(data.message || 'Rename failed', 'error'); inp.replaceWith(titleLabel); return; }
+                        titleLabel.textContent = v; titleLabel.dataset.value = v;
+                        inp.replaceWith(titleLabel);
+                    }
+                    inp.addEventListener('keydown', e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') inp.replaceWith(titleLabel); });
+                    inp.addEventListener('blur', commit);
+                });
+            }
+
+            // ── INLINE EDIT — SUBJECT ────────────────────────────────────────
+            const subjectLabel = document.getElementById('courseSubjectLabel');
+            if (subjectLabel) {
+                subjectLabel.addEventListener('dblclick', () => {
+                    const inp = document.createElement('input');
+                    inp.type = 'text'; inp.className = 'inline-input';
+                    inp.value = subjectLabel.textContent.trim();
+                    inp.setAttribute('list', 'subjectsList');
+                    inp.style.width = '180px';
+                    subjectLabel.replaceWith(inp); inp.focus(); inp.select();
+                    async function commit() {
+                        const v = inp.value.trim();
+                        if (!v) { inp.replaceWith(subjectLabel); return; }
+                        const res  = await post(`/courses/${COURSE_ID}/subject`, { subject: v });
+                        const data = await res.json();
+                        if (!res.ok) { toast(data.message || 'Update failed', 'error'); inp.replaceWith(subjectLabel); return; }
+                        subjectLabel.textContent = v; inp.replaceWith(subjectLabel);
+                    }
+                    inp.addEventListener('keydown', e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') inp.replaceWith(subjectLabel); });
+                    inp.addEventListener('blur', commit);
+                });
+            }
+
+            // ── FILE CARDS ───────────────────────────────────────────────────
+            const filesGrid = document.getElementById('filesGrid');
+            let pendingDeleteFileId = null;
+
+            function bindDeleteButton(btn) {
+                if (!btn) return;
+                btn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    pendingDeleteFileId = btn.dataset.id;
+                    document.getElementById('confirmMsg').textContent = `Delete "${btn.dataset.name}"?`;
+                    openModal('confirmModal');
+                });
+            }
+
+            function bindFileCard(card) {
+                if (!card || card.dataset.bound === '1') return;
+                card.dataset.bound = '1';
+                card.addEventListener('click', e => {
+                    if (e.target.closest('[data-action="delete-file"]')) return;
+                    if (card.dataset.isNote === '1') {
+                        openNoteEditor({
+                            id:         card.dataset.id,
+                            name:       card.dataset.name,
+                            contentUrl: card.dataset.contentUrl,
+                            exportUrl:  card.dataset.exportUrl,
+                            downloadUrl:card.dataset.downloadUrl,
+                            isWord:     card.dataset.isWord === '1',
+                        });
+                    } else {
+                        openFilePreview({
+                            id:          card.dataset.id,
+                            name:        card.dataset.name,
+                            mime:        card.dataset.mime,
+                            previewUrl:  card.dataset.previewUrl,
+                            downloadUrl: card.dataset.downloadUrl,
+                        });
+                    }
+                });
+                card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); } });
+            }
+
+            function addNoteCardToGrid(fileId, fileName) {
+                if (!filesGrid) return;
+
+                const empty = filesGrid.querySelector('.files-empty');
+                if (empty) empty.remove();
+
+                const card = document.createElement('div');
+                card.className = 'file-card';
+                card.dataset.id = String(fileId);
+                card.dataset.name = fileName;
+                card.dataset.mime = 'application/json';
+                card.dataset.isNote = '1';
+                card.dataset.isWord = '0';
+                card.dataset.previewUrl = `/courses/${COURSE_ID}/file/${fileId}/preview`;
+                card.dataset.downloadUrl = `/courses/${COURSE_ID}/file/${fileId}/download`;
+                card.dataset.contentUrl = `/courses/${COURSE_ID}/note/${fileId}/content`;
+                card.dataset.exportUrl = `/courses/${COURSE_ID}/note/${fileId}/export-pdf`;
+                card.tabIndex = 0;
+                card.setAttribute('role', 'button');
+                card.setAttribute('aria-label', `Open ${fileName}`);
+
+                const thumb = document.createElement('div');
+                thumb.className = 'file-card-thumb';
+                thumb.id = `thumb-${fileId}`;
+                thumb.textContent = '📝';
+
+                const body = document.createElement('div');
+                body.className = 'file-card-body';
+
+                const nameEl = document.createElement('p');
+                nameEl.className = 'file-card-name';
+                nameEl.textContent = fileName.replace(/\.(rtfx|txt|md)$/i, '');
+
+                const metaEl = document.createElement('p');
+                metaEl.className = 'file-card-meta';
+                metaEl.textContent = '0 KB';
+
+                body.appendChild(nameEl);
+                body.appendChild(metaEl);
+
+                card.appendChild(thumb);
+                card.appendChild(body);
+
+                if (IS_OWNER) {
+                    const del = document.createElement('button');
+                    del.className = 'file-delete-btn';
+                    del.dataset.action = 'delete-file';
+                    del.dataset.id = String(fileId);
+                    del.dataset.name = fileName;
+                    del.type = 'button';
+                    del.setAttribute('aria-label', `Delete ${fileName}`);
+                    del.textContent = '✕';
+                    card.appendChild(del);
+                    bindDeleteButton(del);
+                }
+
+                filesGrid.prepend(card);
+                bindFileCard(card);
+            }
+
+            document.querySelectorAll('.file-card').forEach(bindFileCard);
+
+            // ── DELETE FILE ──────────────────────────────────────────────────
+            document.querySelectorAll('[data-action="delete-file"]').forEach(bindDeleteButton);
+            document.getElementById('confirmCancelBtn').addEventListener('click', () => closeModal('confirmModal'));
+            document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+                if (!pendingDeleteFileId) return;
+                closeModal('confirmModal');
+                const res = await post(`/courses/${COURSE_ID}/file/${pendingDeleteFileId}/delete`);
+                if (res.ok) {
+                    document.querySelectorAll(`[data-id="${pendingDeleteFileId}"]`).forEach(el => el.closest('.file-card')?.remove() || el.remove());
+                    toast('File deleted', 'success');
+                } else { toast('Delete failed', 'error'); }
+                pendingDeleteFileId = null;
+            });
+
+            // ── ADD FILES ────────────────────────────────────────────────────
+            const addFilesBtn   = document.getElementById('addFilesBtn');
+            const addFilesInput = document.getElementById('addFilesInput');
+            if (addFilesBtn) {
+                addFilesBtn.addEventListener('click', () => addFilesInput.click());
+                addFilesInput.addEventListener('change', async () => {
+                    if (!addFilesInput.files.length) return;
+                    const fd = new FormData();
+                    Array.from(addFilesInput.files).forEach(f => fd.append('files[]', f));
+                    const res  = await post(`/courses/${COURSE_ID}/upload`, fd);
+                    const data = await res.json();
+                    if (res.ok) {
+                        if (data.uploaded.length) toast(`${data.uploaded.length} file(s) uploaded`, 'success');
+                        if (data.rejected && data.rejected.length) toast(`Skipped unsupported file(s): ${data.rejected.join(', ')}`, 'error');
+                        if (data.uploaded.length) setTimeout(() => location.reload(), 800);
+                    } else {
+                        toast(data.message || 'Upload failed', 'error');
+                    }
+                });
+            }
+
+            // ── SAVE TO LIBRARY ──────────────────────────────────────────────
+            const saveToLibraryBtn = document.getElementById('saveToLibraryBtn');
+            if (saveToLibraryBtn) {
+                saveToLibraryBtn.addEventListener('click', async () => {
+                    const res  = await post(`/courses/${COURSE_ID}/save-to-library`);
+                    const data = await res.json();
+                    if (!res.ok) { toast(data.message || 'Failed', 'error'); return; }
+                    const saved = data.saved;
+                    saveToLibraryBtn.dataset.saved = saved ? '1' : '0';
+                    saveToLibraryBtn.classList.toggle('saved', saved);
+                    saveToLibraryBtn.innerHTML = saved
+                        ? `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Saved`
+                        : `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Save to Library`;
+                    toast(saved ? 'Saved to Library' : 'Removed from Library', 'success');
+                });
+            }
+
+            // ── FILE PREVIEW ─────────────────────────────────────────────────
+            const previewModal      = document.getElementById('previewModal');
+            const previewTitle      = document.getElementById('previewTitle');
+            const previewBody       = document.getElementById('previewBody');
+            const previewDownload   = document.getElementById('previewDownloadLink');
+            const previewRenameBtn  = document.getElementById('previewRenameBtn');
+            const previewDeleteBtn  = document.getElementById('previewDeleteBtn');
+            let previewFileId = null;
+
+            function openFilePreview({ id, name, mime, previewUrl, downloadUrl }) {
+                previewFileId = id;
+                previewTitle.textContent = name;
+                previewDownload.href = downloadUrl;
+                previewDownload.download = name;
+                previewBody.innerHTML = '';
+
+                const isPdf  = mime === 'application/pdf';
+                const isWord = name.match(/\.(docx?)\s*$/i);
+
+                previewModal.classList.toggle('pdf-mode', isPdf || !!isWord);
+
+                if (mime && mime.startsWith('image/')) {
+                    const img = document.createElement('img');
+                    img.src = previewUrl; img.alt = name;
+                    img.style.cssText = 'max-width:100%;max-height:100%;object-fit:contain;';
+                    previewBody.appendChild(img);
+                } else if (isPdf || isWord) {
+                    // PDFs and Word docs both render via iframe
+                    // (Word docs: server returns converted HTML; PDFs: serve inline)
+                    const iframe = document.createElement('iframe');
+                    iframe.src = previewUrl;
+                    iframe.style.cssText = 'width:100%;height:100%;border:none;';
+                    previewBody.appendChild(iframe);
+                } else {
+                    previewBody.innerHTML = `<p style="color:var(--color-text-muted);text-align:center;padding:40px 20px;">Preview not available.<br>Use the Download button below.</p>`;
+                }
+
+                openModal2('previewModal');
+            }
+
+            if (previewRenameBtn) {
+                previewRenameBtn.addEventListener('click', async () => {
+                    const name = prompt('New name:', previewTitle.textContent.trim());
+                    if (!name || !name.trim()) return;
+                    const res = await post(`/courses/${COURSE_ID}/file/${previewFileId}/rename`, { name: name.trim() });
+                    if (res.ok) { previewTitle.textContent = name.trim(); toast('Renamed', 'success'); }
+                    else toast('Rename failed', 'error');
+                });
+            }
+            if (previewDeleteBtn) {
+                previewDeleteBtn.addEventListener('click', () => {
+                    pendingDeleteFileId = previewFileId;
+                    document.getElementById('confirmMsg').textContent = `Delete "${previewTitle.textContent}"?`;
+                    closeModal2('previewModal');
+                    openModal('confirmModal');
+                });
+            }
+            document.getElementById('previewCloseBtn').addEventListener('click',  () => closeModal2('previewModal'));
+            document.getElementById('previewCloseBtn2').addEventListener('click', () => closeModal2('previewModal'));
+
+            // Fullscreen — uses the iframe element so the PDF fills the whole screen
+            const previewFullscreenBtn = document.getElementById('previewFullscreenBtn');
+            previewFullscreenBtn.addEventListener('click', () => {
+                const iframe = previewBody.querySelector('iframe');
+                const target = iframe || previewModal;
+                if (target.requestFullscreen) target.requestFullscreen();
+                else if (target.webkitRequestFullscreen) target.webkitRequestFullscreen();
+            });
+            document.addEventListener('fullscreenchange', () => {
+                const isFs = !!document.fullscreenElement;
+                previewFullscreenBtn.setAttribute('aria-label', isFs ? 'Exit fullscreen' : 'Fullscreen');
+                previewFullscreenBtn.innerHTML = isFs
+                    ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="10" y1="14" x2="3" y2="21"/><line x1="21" y1="3" x2="14" y2="10"/></svg>`
+                    : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>`;
+            });
+
+            function openModal2(id) {
+                const el = document.getElementById(id);
+                el.classList.add('open');
+                el._cb2 = e => { if (e.target === el) closeModal2(id); };
+                el.addEventListener('click', el._cb2);
+            }
+            function closeModal2(id) {
+                const el = document.getElementById(id);
+                el.classList.remove('open');
+                el.classList.remove('pdf-mode');
+                if (el._cb2) { el.removeEventListener('click', el._cb2); el._cb2 = null; }
+            }
+
+            // ── NOTE EDITOR ──────────────────────────────────────────────────
+            const noteModal      = document.getElementById('noteModal');
+            const noteNameInp    = document.getElementById('noteNameInput');
+            const noteArea       = document.getElementById('noteEditorArea');
+            const noteFontSel    = document.getElementById('noteFontSelect');
+            const noteSizeInp    = document.getElementById('noteSizeInput');
+            const noteBoldBtn    = document.getElementById('noteBoldBtn');
+            const noteItalicBtn  = document.getElementById('noteItalicBtn');
+            const noteUnderBtn   = document.getElementById('noteUnderlineBtn');
+            const noteAlignBtns  = document.querySelectorAll('[data-align]');
+            const noteFindBtn    = document.getElementById('noteFindBtn');
+            const saveBtn        = document.getElementById('noteSaveBtn');
+            const saveAsNewBtn   = document.getElementById('noteSaveAsNewBtn');
+            const noteCloseBtn   = document.getElementById('noteCloseBtn');
+            const noteRenameBtn  = document.getElementById('noteRenameBtn');
+            const noteDeleteBtn  = document.getElementById('noteDeleteBtn');
+            const noteDownloadPdfBtn = document.getElementById('noteDownloadPdfBtn');
+
+            let noteFileId = null;
+            let noteDirty  = false;
+            let noteBusy   = false;
+            let findHighlights = [];
+
+            function markDirty() { noteDirty = true; }
+
+            function paragraphsToHtml(paragraphs) {
+                return paragraphs.map(p => {
+                    const text  = (p.text || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                    const font  = p.font  || 'Inter';
+                    const size  = p.size  || 14;
+                    const align = p.align || 'left';
+                    return `<p style="font-family:${font};font-size:${size}px;text-align:${align};">${text || '<br>'}</p>`;
+                }).join('');
+            }
+
+            function collectDoc() {
+                const paragraphs = [];
+                noteArea.querySelectorAll('p').forEach(p => {
+                    const style = p.style;
+                    paragraphs.push({
+                        text:  p.innerText.replace(/\n$/, ''),
+                        align: style.textAlign  || 'left',
+                        font:  style.fontFamily ? style.fontFamily.replace(/['"]/g,'') : 'Inter',
+                        size:  style.fontSize   ? parseInt(style.fontSize) : 14,
+                    });
+                });
+                if (!paragraphs.length) paragraphs.push({ text:'', align:'left', font:'Inter', size:14 });
+                return { paragraphs };
+            }
+
+            function updateFormatBtns() {
+                if (noteBoldBtn)   noteBoldBtn.classList.toggle('active',   document.queryCommandState('bold'));
+                if (noteItalicBtn) noteItalicBtn.classList.toggle('active', document.queryCommandState('italic'));
+                if (noteUnderBtn)  noteUnderBtn.classList.toggle('active',  document.queryCommandState('underline'));
+            }
+
+            function openNoteEditor({ id, name, contentUrl, exportUrl, downloadUrl }) {
+                noteFileId = id;
+                noteNameInp.value = name.replace(/\.(rtfx|txt|md)$/i, '');
+                noteArea.innerHTML = '<p><br></p>';
+                noteDirty = false;
+
+                if (noteDownloadPdfBtn) {
+                    noteDownloadPdfBtn.href = exportUrl;
+                    noteDownloadPdfBtn.download = name.replace(/\.(rtfx|txt|md)$/i, '') + '.pdf';
+                    noteDownloadPdfBtn.style.display = '';
+                }
+
+                fetch(contentUrl).then(r => r.json()).then(doc => {
+                    if (doc.paragraphs) noteArea.innerHTML = paragraphsToHtml(doc.paragraphs);
+                    else noteArea.innerHTML = '<p><br></p>';
+                }).catch(() => { noteArea.innerHTML = '<p><br></p>'; });
+
+                noteModal.classList.add('open');
+            }
+
+            function closeNoteModal() {
+                noteModal.classList.remove('open');
+                noteFileId = null; noteDirty = false;
+                clearFindHighlights();
+            }
+
+            function clearFindHighlights() {
+                findHighlights.forEach(span => {
+                    if (span.parentNode) span.parentNode.replaceChild(document.createTextNode(span.textContent), span);
+                });
+                findHighlights = [];
+            }
+
+            if (noteCloseBtn) noteCloseBtn.addEventListener('click', () => {
+                if (noteDirty && !confirm('Unsaved changes — close anyway?')) return;
+                closeNoteModal();
+            });
+
+            noteArea.addEventListener('input', markDirty);
+            noteArea.addEventListener('keyup',  updateFormatBtns);
+            noteArea.addEventListener('mouseup', updateFormatBtns);
+
+            if (noteFontSel) noteFontSel.addEventListener('change', () => {
+                document.execCommand('fontName', false, noteFontSel.value); markDirty();
+            });
+            if (noteSizeInp) noteSizeInp.addEventListener('change', () => {
+                document.execCommand('fontSize', false, '7');
+                noteArea.querySelectorAll('font[size="7"]').forEach(f => {
+                    f.removeAttribute('size');
+                    f.style.fontSize = noteSizeInp.value + 'px';
+                });
+                markDirty();
+            });
+
+            if (noteBoldBtn)   noteBoldBtn.addEventListener('click',   () => { document.execCommand('bold');      updateFormatBtns(); markDirty(); });
+            if (noteItalicBtn) noteItalicBtn.addEventListener('click', () => { document.execCommand('italic');    updateFormatBtns(); markDirty(); });
+            if (noteUnderBtn)  noteUnderBtn.addEventListener('click',  () => { document.execCommand('underline'); updateFormatBtns(); markDirty(); });
+
+            noteAlignBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const align = btn.dataset.align;
+                    const sel = window.getSelection();
+                    let p = sel.anchorNode;
+                    while (p && p.tagName !== 'P') p = p.parentNode;
+                    if (p) p.style.textAlign = align;
+                    noteAlignBtns.forEach(b => b.classList.toggle('active', b.dataset.align === align));
+                    markDirty();
+                });
+            });
+
+            if (noteFindBtn) {
+                noteFindBtn.addEventListener('click', () => {
+                    clearFindHighlights();
+                    const q = prompt('Find:');
+                    if (!q) return;
+
+                    const walker = document.createTreeWalker(noteArea, NodeFilter.SHOW_TEXT);
+                    const hits   = [];
+                    let node;
+                    while ((node = walker.nextNode())) {
+                        let idx = node.nodeValue.indexOf(q);
+                        while (idx !== -1) {
+                            hits.push({ node, idx });
+                            idx = node.nodeValue.indexOf(q, idx + 1);
+                        }
+                    }
+
+                    if (!hits.length) { alert('Not found'); return; }
+
+                    hits.reverse().forEach(({ node, idx }) => {
+                        const after  = node.splitText(idx + q.length);
+                        const match  = node.splitText(idx);
+                        const span   = document.createElement('mark');
+                        span.className = 'note-find-highlight';
+                        span.textContent = q;
+                        match.parentNode.replaceChild(span, match);
+                        findHighlights.push(span);
+                        after;
+                    });
+
+                    if (findHighlights.length) findHighlights[findHighlights.length - 1].scrollIntoView({ block: 'center' });
+                    toast(`${hits.length} match(es) found`, 'success');
+                });
+            }
+
+            if (saveBtn) {
+                saveBtn.addEventListener('click', async () => {
+                    if (noteBusy) return;
+                    const name = noteNameInp.value.trim();
+                    if (!name) { toast('Name required', 'error'); return; }
+                    noteBusy = true; saveBtn.disabled = true;
+                    const doc     = collectDoc();
+                    const content = JSON.stringify(doc);
+                    const finalName = name.replace(/\.(rtfx|txt|md)$/i, '') + '.rtfx';
+                    const fd = new FormData();
+                    fd.append('content', content);
+                    fd.append('name',    finalName);
+                    const res = await post(`/courses/${COURSE_ID}/note/${noteFileId}/save`, fd);
+                    noteBusy = false; saveBtn.disabled = false;
+                    if (res.ok) {
+                        toast('Saved', 'success');
+                        noteDirty = false;
+                        setTimeout(() => location.reload(), 350);
+                    }
+                    else toast('Save failed', 'error');
+                });
+            }
+
+            if (saveAsNewBtn) {
+                saveAsNewBtn.addEventListener('click', async () => {
+                    if (noteBusy) return;
+                    const n = prompt('New note name:', noteNameInp.value.trim() + ' copy');
+                    if (!n || !n.trim()) return;
+                    noteBusy = true; saveAsNewBtn.disabled = true;
+                    const finalName = n.trim().replace(/\.(rtfx|txt|md)$/i, '') + '.rtfx';
+                    const doc       = collectDoc();
+                    const content   = JSON.stringify(doc);
+                    const fd = new FormData();
+                    fd.append('name',    finalName);
+                    fd.append('content', content);
+                    const res  = await post(`/courses/${COURSE_ID}/note`, fd);
+                    const data = await res.json();
+                    noteBusy = false; saveAsNewBtn.disabled = false;
+                    if (res.ok) { toast('Saved as new note', 'success'); }
+                    else toast(data.message || 'Failed', 'error');
+                });
+            }
+
+            if (noteRenameBtn) {
+                noteRenameBtn.addEventListener('click', async () => {
+                    const name = prompt('New name:', noteNameInp.value.trim());
+                    if (!name || !name.trim()) return;
+                    const finalName = name.trim().replace(/\.(rtfx|txt|md)$/i, '') + '.rtfx';
+                    const res = await post(`/courses/${COURSE_ID}/file/${noteFileId}/rename`, { name: finalName });
+                    if (res.ok) { noteNameInp.value = name.trim(); toast('Renamed', 'success'); }
+                    else toast('Rename failed', 'error');
+                });
+            }
+
+            if (noteDeleteBtn) {
+                noteDeleteBtn.addEventListener('click', () => {
+                    pendingDeleteFileId = noteFileId;
+                    document.getElementById('confirmMsg').textContent = `Delete "${noteNameInp.value.trim()}"?`;
+                    closeNoteModal();
+                    openModal('confirmModal');
+                });
+            }
+
+            const createNoteBtn = document.getElementById('createNoteBtn');
+            if (createNoteBtn) {
+                createNoteBtn.addEventListener('click', async () => {
+                    const name = prompt('Note name:', 'note');
+                    if (!name || !name.trim()) return;
+                    const res  = await post(`/courses/${COURSE_ID}/note`, { name: name.trim() });
+                    const data = await res.json();
+                    if (!res.ok) { toast(data.message || 'Failed', 'error'); return; }
+                    const contentUrl  = `/courses/${COURSE_ID}/note/${data.id}/content`;
+                    const exportUrl   = `/courses/${COURSE_ID}/note/${data.id}/export-pdf`;
+                    const downloadUrl = `/courses/${COURSE_ID}/file/${data.id}/download`;
+                    addNoteCardToGrid(data.id, data.name);
+                    openNoteEditor({ id: String(data.id), name: data.name, contentUrl, exportUrl, downloadUrl });
+                });
+            }
+
+            noteArea.addEventListener('keydown', e => {
+                if (!IS_OWNER) return;
+                if (e.ctrlKey || e.metaKey) {
+                    if (e.key === 'b') { e.preventDefault(); document.execCommand('bold');      updateFormatBtns(); }
+                    if (e.key === 'i') { e.preventDefault(); document.execCommand('italic');    updateFormatBtns(); }
+                    if (e.key === 'u') { e.preventDefault(); document.execCommand('underline'); updateFormatBtns(); }
+                    if (e.key === 's') { e.preventDefault(); saveBtn?.click(); }
+                }
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const sel   = window.getSelection();
+                    const range = sel.getRangeAt(0);
+                    range.deleteContents();
+                    let currentP = sel.anchorNode;
+                    while (currentP && currentP.tagName !== 'P') currentP = currentP.parentNode;
+                    const newP = document.createElement('p');
+                    newP.style.cssText = currentP ? currentP.style.cssText : '';
+                    newP.innerHTML     = '<br>';
+                    range.collapse(false);
+                    if (currentP && currentP.parentNode === noteArea) {
+                        currentP.after(newP);
+                    } else {
+                        noteArea.appendChild(newP);
+                    }
+                    const newRange = document.createRange();
+                    newRange.setStart(newP, 0);
+                    newRange.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(newRange);
+                    markDirty();
+                }
+            });
+
+            // ── MODAL HELPERS ────────────────────────────────────────────────
+            function openModal(id) {
+                const el = document.getElementById(id);
+                el.classList.add('open');
+                el._cb = e => { if (e.target === el) closeModal(id); };
+                el.addEventListener('click', el._cb);
+            }
+            function closeModal(id) {
+                const el = document.getElementById(id);
+                el.classList.remove('open');
+                if (el._cb) { el.removeEventListener('click', el._cb); el._cb = null; }
+            }
+
+            // ── GLOBAL ESCAPE ────────────────────────────────────────────────
+            document.addEventListener('keydown', e => {
+                if (e.key !== 'Escape') return;
+                closeModal('confirmModal');
+                closeModal2('previewModal');
+                closeReportModal();
+                if (noteModal.classList.contains('open')) {
+                    if (noteDirty && !confirm('Unsaved changes — close anyway?')) return;
+                    closeNoteModal();
+                }
+            });
+
+            // ── REPORT COURSE ─────────────────────────────────────────────────
+            const reportCourseBtn    = document.getElementById('reportCourseBtn');
+            const reportModal        = document.getElementById('reportModal');
+            const reportModalClose   = document.getElementById('reportModalCloseBtn');
+            const reportCancelBtn    = document.getElementById('reportCancelBtn');
+            const reportSubmitBtn    = document.getElementById('reportSubmitBtn');
+            const reportReasons      = document.getElementById('reportReasons');
+            const reportDetailsArea  = document.getElementById('reportDetails');
+
+            function openReportModal() {
+                // Reset state
+                reportReasons.querySelectorAll('.report-reason-option').forEach(opt => opt.classList.remove('selected'));
+                reportDetailsArea.value = '';
+                reportSubmitBtn.disabled = true;
+                reportModal.classList.add('open');
+            }
+            function closeReportModal() {
+                reportModal.classList.remove('open');
+            }
+
+            if (reportCourseBtn) reportCourseBtn.addEventListener('click', openReportModal);
+            if (reportModalClose) reportModalClose.addEventListener('click', closeReportModal);
+            if (reportCancelBtn)  reportCancelBtn.addEventListener('click', closeReportModal);
+
+            // Reason selection
+            if (reportReasons) {
+                reportReasons.addEventListener('click', e => {
+                    const option = e.target.closest('.report-reason-option');
+                    if (!option) return;
+                    reportReasons.querySelectorAll('.report-reason-option').forEach(o => o.classList.remove('selected'));
+                    option.classList.add('selected');
+                    option.querySelector('input[type=radio]').checked = true;
+                    reportSubmitBtn.disabled = false;
+                });
+            }
+
+            // Submit
+            if (reportSubmitBtn) {
+                reportSubmitBtn.addEventListener('click', async () => {
+                    const selected = reportReasons.querySelector('.report-reason-option.selected');
+                    if (!selected) { toast('Please select a reason.', 'error'); return; }
+                    const reason  = selected.dataset.value;
+                    const details = reportDetailsArea.value.trim();
+
+                    reportSubmitBtn.disabled = true;
+                    reportSubmitBtn.textContent = 'Submitting…';
+
+                    const res  = await post(`/courses/${COURSE_ID}/report`, { reason, details });
+                    const data = await res.json();
+
+                    reportSubmitBtn.disabled = false;
+                    reportSubmitBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg> Submit Report`;
+
+                    if (res.ok) {
+                        closeReportModal();
+                        toast('Report submitted. Thank you!', 'success');
+                        // Disable the report button so user can't re-report
+                        if (reportCourseBtn) {
+                            reportCourseBtn.disabled = true;
+                            reportCourseBtn.title = 'You have already reported this course';
+                        }
+                    } else {
+                        toast(data.message || 'Failed to submit report.', 'error');
+                        if (res.status === 409 && reportCourseBtn) {
+                            reportCourseBtn.disabled = true;
+                            reportCourseBtn.title = 'You have already reported this course';
+                            closeReportModal();
+                        }
+                    }
+                });
+            }
+
+            // Close report modal on backdrop click or Escape
+            if (reportModal) {
+                reportModal.addEventListener('click', e => { if (e.target === reportModal) closeReportModal(); });
+            }
+
+            // ── SUGGESTIONS — Open Library + YouTube ─────────────────────────
+            (function loadSuggestions() {
+                fetch(`/courses/${COURSE_ID}/suggestions`)
+                    .then(r => r.json())
+                    .then(({ books, videos }) => {
+                        const section = document.getElementById('suggestionsSection');
+
+                        if (books && books.length) {
+                            const container = document.getElementById('booksContainer');
+                            books.forEach(b => container.appendChild(makeBookCard(b)));
+                            document.getElementById('booksSection').style.display = '';
+                            section.style.display = '';
+                        }
+
+                        if (videos && videos.length) {
+                            const container = document.getElementById('videosContainer');
+                            videos.forEach(v => container.appendChild(makeVideoCard(v)));
+                            document.getElementById('videosSection').style.display = '';
+                            section.style.display = '';
+                        }
+                    })
+                    .catch(() => {}); // silently fail — suggestions are non-critical
+            })();
+
+            function makeBookCard(b) {
+                const a = document.createElement('a');
+                a.href = b.openLibUrl || 'https://openlibrary.org';
+                a.target = '_blank'; a.rel = 'noopener noreferrer';
+                a.className = 'suggestion-card';
+                a.style.width = '160px';
+                a.innerHTML = `
+                    <div class="suggestion-card-thumb" style="width:160px;height:220px;">
+                        ${b.coverUrl
+                    ? `<img src="${esc(b.coverUrl)}" alt="${esc(b.title)}" loading="lazy">`
+                    : '📖'}
+                    </div>
+                    <div class="suggestion-card-body" style="max-width:160px;">
+                        <div class="suggestion-card-title">${esc(b.title)}</div>
+                        ${b.author ? `<div class="suggestion-card-sub">${esc(b.author)}</div>` : ''}
+                    </div>`;
+                return a;
+            }
+
+            function makeVideoCard(v) {
+                const a = document.createElement('a');
+                a.href = v.videoUrl;
+                a.target = '_blank'; a.rel = 'noopener noreferrer';
+                a.className = 'suggestion-card';
+                a.style.width = '240px';
+                a.innerHTML = `
+                    <div class="suggestion-card-thumb" style="width:240px;height:135px;">
+                        ${v.thumbnailUrl
+                    ? `<img src="${esc(v.thumbnailUrl)}" alt="${esc(v.title)}" loading="lazy">`
+                    : '▶'}
+                        <span class="suggestion-play-overlay">▶</span>
+                    </div>
+                    <div class="suggestion-card-body" style="max-width:240px;">
+                        <div class="suggestion-card-title">${esc(v.title)}</div>
+                        ${v.channelName ? `<div class="suggestion-card-sub">${esc(v.channelName)}</div>` : ''}
+                    </div>`;
+                return a;
+            }
+
+            function esc(str) {
+                return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+            }
+
+        })();
+    </script>
+{% endblock %}

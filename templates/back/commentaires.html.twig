@@ -1,0 +1,142 @@
+{% extends 'admin/base.html.twig' %}
+{% block title %}Commentaires — Back Harmony{% endblock %}
+{% block topbar_icon %}💬{% endblock %}
+{% block page_title %}Gestion des commentaires{% endblock %}
+
+{% block stylesheets %}
+<style>
+.page-header{display:flex;align-items:center;gap:12px;margin-bottom:24px;}
+.page-header h1{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#1C1733;flex:1;}
+.kpi-mini{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:24px;}
+.kpi-mini-card{background:white;border:1px solid rgba(106,90,205,.12);border-radius:14px;padding:18px 20px;display:flex;align-items:center;gap:14px;}
+.kpi-mini-icon{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:20px;flex-shrink:0;}
+.kpi-mini-icon.purple{background:#EDE8FA;}
+.kpi-mini-icon.amber{background:#FEF3C7;}
+.kpi-mini-val{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:#1C1733;line-height:1;}
+.kpi-mini-lbl{font-size:11px;color:#9590B8;margin-top:3px;}
+.search-bar{display:flex;align-items:center;gap:8px;background:white;border:1.5px solid rgba(106,90,205,.15);border-radius:10px;padding:10px 16px;margin-bottom:20px;transition:border-color .15s;}
+.search-bar:focus-within{border-color:#6A5ACD;}
+.search-bar input{border:none;outline:none;font-size:13.5px;color:#1C1733;width:100%;background:transparent;}
+.data-table{background:white;border:1px solid rgba(106,90,205,.12);border-radius:16px;overflow:hidden;}
+.data-table-head{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid rgba(106,90,205,.08);}
+.data-table-head h3{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:#1C1733;}
+table{width:100%;border-collapse:collapse;}
+th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#9590B8;padding:10px 18px;text-align:left;background:#F7F5FD;border-bottom:1px solid rgba(106,90,205,.08);}
+td{padding:13px 18px;font-size:13.5px;color:#1C1733;border-bottom:1px solid rgba(106,90,205,.06);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#FAFAFE;}
+.td-muted{color:#9590B8;font-size:12px;}
+.td-desc{color:#4A4570;font-size:12.5px;max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.badge-post{background:#EDE8FA;color:#6A5ACD;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;text-decoration:none;display:inline-block;}
+.badge-post:hover{background:#ddd6f7;}
+.actions{display:flex;gap:6px;align-items:center;}
+.btn-sm{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;border:none;cursor:pointer;text-decoration:none;transition:all .15s;font-family:'Inter',sans-serif;}
+.btn-del{background:#FEF2F2;color:#E05252;}
+.btn-del:hover{background:#fee2e2;}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="page-header">
+    <span style="font-size:24px">💬</span>
+    <h1>Commentaires du Forum</h1>
+</div>
+
+<div class="kpi-mini">
+    <div class="kpi-mini-card">
+        <div class="kpi-mini-icon purple">💬</div>
+        <div><div class="kpi-mini-val">{{ commentaires|length }}</div><div class="kpi-mini-lbl">Total commentaires</div></div>
+    </div>
+    <div class="kpi-mini-card">
+        <div class="kpi-mini-icon amber">📅</div>
+        <div>
+            <div class="kpi-mini-val">
+                {{ commentaires|filter(c => c.dateCommentaire is not null and c.dateCommentaire.format('Y-m') == 'now'|date('Y-m'))|length }}
+            </div>
+            <div class="kpi-mini-lbl">Ce mois-ci</div>
+        </div>
+    </div>
+</div>
+
+<div class="search-bar">
+    <span style="font-size:15px;color:#9590B8">🔍</span>
+    <input type="text" placeholder="Rechercher dans les commentaires…" oninput="filterTable(this.value)">
+</div>
+
+<div class="data-table">
+    <div class="data-table-head">
+        <h3>💬 Tous les commentaires</h3>
+        <span style="font-size:12px;color:#9590B8">{{ commentaires|length }} commentaire(s)</span>
+    </div>
+
+    {% if commentaires is empty %}
+        <div style="text-align:center;padding:56px;color:#9590B8">
+            <div style="font-size:48px;margin-bottom:12px">💬</div>
+            <p>Aucun commentaire pour l'instant.</p>
+        </div>
+    {% else %}
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Contenu</th>
+                <th>Post associé</th>
+                <th>Catégorie</th>
+                <th>Auteur</th>
+                <th>Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="com-tbody">
+            {% for com in commentaires %}
+            <tr data-search="{{ com.contenu|lower }}">
+                <td class="td-muted">#{{ com.idCommentaire }}</td>
+                <td class="td-desc">{{ com.contenu }}</td>
+                <td>
+                    {% if com.idPost and postsMap[com.idPost] is defined and postsMap[com.idPost] %}
+                        <a href="{{ path('forum_posts', {id: postsMap[com.idPost].idCategorie}) }}"
+                           class="badge-post">
+                            {{ postsMap[com.idPost].titre|slice(0,25) }}…
+                        </a>
+                    {% else %}
+                        <span class="td-muted">—</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if com.idPost and postsMap[com.idPost] is defined and postsMap[com.idPost] %}
+                        <span style="font-size:12px;color:#4A4570;">
+                            {{ catMap[postsMap[com.idPost].idCategorie] ?? '—' }}
+                        </span>
+                    {% else %}
+                        <span class="td-muted">—</span>
+                    {% endif %}
+                </td>
+                <td>{{ usersMap[com.userId] ?? 'User #' ~ com.userId }}</td>
+                <td class="td-muted">{{ com.dateCommentaire ? com.dateCommentaire|date('d/m/Y') : '—' }}</td>
+                <td>
+                    <div class="actions">
+                        <form method="POST"
+                              action="{{ path('back_commentaire_delete', {id: com.idCommentaire}) }}"
+                              onsubmit="return confirm('Supprimer ce commentaire ?')"
+                              style="display:inline">
+                            <button type="submit" class="btn-sm btn-del">🗑 Supprimer</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+function filterTable(q) {
+    document.querySelectorAll('#com-tbody tr').forEach(row => {
+        row.style.display = (row.dataset.search||'').includes(q.toLowerCase()) ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}

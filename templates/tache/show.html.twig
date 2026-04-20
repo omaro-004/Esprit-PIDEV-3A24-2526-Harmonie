@@ -1,0 +1,47 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tache{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="{{ asset('harmonie/css/harmony-theme.css') }}" rel="stylesheet">
+    <link href="{{ asset('harmonie/css/harmony-forms.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+{% include '_planning_topbar.html.twig' %}
+<main class="page">
+    <h1>Tache</h1>
+
+    <table class="table">
+        <tbody>
+            <tr>
+                <th>Id</th>
+                <td>{{ tache.id }}</td>
+            </tr>
+            <tr>
+                <th>Nom</th>
+                <td>{{ tache.nom }}</td>
+            </tr>
+            <tr>
+                <th>Deadline</th>
+                <td>{{ tache.deadline ? tache.deadline|date('Y-m-d') : '' }}</td>
+            </tr>
+            <tr>
+                <th>Notes</th>
+                <td>{{ tache.notes }}</td>
+            </tr>
+            <tr>
+                <th>StatutTache</th>
+                <td>{{ tache.statutTache }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div style="display:flex;gap:10px;margin-top:16px;align-items:center;flex-wrap:wrap;">
+        <a href="{{ path('app_tache_index') }}" class="harmony-btn-submit" style="text-decoration:none;width:auto;padding:12px 20px;font-size:14px;">← Retour</a>
+        <a href="{{ path('app_tache_edit', {'id': tache.id}) }}" class="harmony-btn-submit" style="text-decoration:none;width:auto;padding:12px 20px;font-size:14px;background:linear-gradient(135deg,#667eea,#764ba2);box-shadow:0 4px 14px rgba(102,126,234,.35);">✏️ Modifier</a>
+        {{ include('tache/_delete_form.html.twig') }}
+    </div>
+</main>
+{% endblock %}

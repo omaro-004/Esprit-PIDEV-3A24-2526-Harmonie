@@ -1,0 +1,659 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ categorie.nomCategorie }} — Forum Harmony{% endblock %}
+
+{% block stylesheets %}
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{
+        --purple:#6A5ACD;--purple-dark:#4B3B9E;--purple-soft:#8B7FD4;
+        --purple-pale:#EDE8FA;--purple-ghost:#F7F5FD;
+        --text:#1C1733;--text-mid:#4A4570;--text-muted:#9590B8;
+        --border:rgba(106,90,205,.12);--white:#FFFFFF;
+        --font-head:'Syne',sans-serif;--font-body:'Inter',sans-serif;
+    }
+    html,body{font-family:var(--font-body);background:var(--purple-ghost);color:var(--text);}
+
+    .topbar{position:sticky;top:0;z-index:200;background:var(--white);
+        border-bottom:1px solid var(--border);height:62px;display:flex;
+        align-items:center;padding:0 40px;gap:8px;}
+    .topbar-logo{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:32px;}
+    .logo-mark{width:34px;height:34px;border-radius:10px;object-fit:contain;}
+    .nav-links{display:flex;align-items:center;gap:2px;flex:1;}
+    .nav-link{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;
+        border-radius:9px;font-size:13.5px;font-weight:500;color:var(--text-mid);
+        text-decoration:none;transition:background .15s,color .15s;}
+    .nav-link:hover,.nav-link.active{background:var(--purple-pale);color:var(--purple);font-weight:600;}
+    .topbar-right{display:flex;align-items:center;gap:10px;margin-left:auto;}
+    .logout-btn{padding:7px 16px;border-radius:9px;border:1.5px solid rgba(239,68,68,.2);
+        background:transparent;color:#E05252;font-size:13px;cursor:pointer;}
+    .avatar{width:36px;height:36px;border-radius:50%;background:var(--purple);
+        color:white;font-family:var(--font-head);font-weight:700;font-size:14px;
+        display:grid;place-items:center;}
+
+    .page{max-width:860px;margin:0 auto;padding:48px 40px 80px;}
+
+    .breadcrumb{display:flex;align-items:center;gap:8px;font-size:13px;
+        color:var(--text-muted);margin-bottom:24px;}
+    .breadcrumb a{color:var(--purple);text-decoration:none;font-weight:500;}
+
+    /* CAT HEADER */
+    .cat-header{background:linear-gradient(135deg,var(--purple) 0%,var(--purple-dark) 100%);
+        border-radius:18px;padding:28px 36px;margin-bottom:22px;
+        display:flex;align-items:center;justify-content:space-between;}
+    .cat-header h1{font-family:var(--font-head);font-size:24px;font-weight:800;color:white;}
+    .cat-header p{color:rgba(255,255,255,.75);font-size:13px;margin-top:4px;}
+    .btn-new-post{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;
+        background:white;color:var(--purple-dark);border-radius:10px;font-size:13px;
+        font-weight:700;text-decoration:none;transition:opacity .15s;}
+    .btn-new-post:hover{opacity:.9;}
+
+    /* BARRE RECHERCHE + TRI */
+    .toolbar{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
+    .search-wrap{flex:1;min-width:200px;position:relative;}
+    .search-input{width:100%;padding:10px 14px 10px 38px;border:1.5px solid var(--border);
+        border-radius:10px;font-family:var(--font-body);font-size:13.5px;color:var(--text);
+        background:var(--white);outline:none;transition:border-color .15s;}
+    .search-input:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(106,90,205,.08);}
+    .search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);
+        font-size:14px;pointer-events:none;}
+    .search-btn{padding:10px 18px;background:var(--purple);color:white;border:none;
+        border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;
+        font-family:var(--font-body);transition:background .15s;}
+    .search-btn:hover{background:var(--purple-dark);}
+
+    .tri-group{display:flex;gap:6px;flex-wrap:wrap;}
+    .btn-tri{padding:8px 14px;border:1.5px solid var(--border);border-radius:9px;
+        background:var(--white);color:var(--text-mid);font-size:12px;font-weight:600;
+        cursor:pointer;text-decoration:none;transition:all .15s;white-space:nowrap;}
+    .btn-tri:hover{border-color:var(--purple-soft);color:var(--purple);}
+    .btn-tri.active{background:var(--purple-pale);border-color:var(--purple);color:var(--purple);}
+
+    /* RÉSULTATS */
+    .results-info{font-size:12px;color:var(--text-muted);margin-bottom:14px;}
+    .results-info strong{color:var(--purple);}
+
+    /* POST CARD */
+    .posts-list{display:flex;flex-direction:column;gap:16px;}
+    .post-card{background:var(--white);border:1px solid var(--border);
+        border-radius:16px;overflow:hidden;transition:border-color .18s,box-shadow .18s;}
+    .post-card:hover{border-color:var(--purple-soft);box-shadow:0 8px 28px rgba(106,90,205,.1);}
+
+    .post-author-row{display:flex;align-items:center;justify-content:space-between;padding:16px 24px 0;}
+    .post-author-left{display:flex;align-items:center;gap:10px;}
+    .post-avatar{width:34px;height:34px;border-radius:50%;background:var(--purple);
+        color:white;font-size:13px;font-weight:700;display:grid;place-items:center;
+        font-family:var(--font-head);flex-shrink:0;}
+    .post-author-name{font-size:13px;font-weight:600;color:var(--text);}
+    .post-author-date{font-size:11px;color:var(--text-muted);}
+    .post-actions-top{display:flex;gap:6px;}
+    .btn-edit{display:inline-flex;align-items:center;gap:4px;padding:5px 11px;
+        background:var(--purple-pale);color:var(--purple);border:none;border-radius:8px;
+        font-size:12px;font-weight:600;cursor:pointer;text-decoration:none;transition:background .15s;}
+    .btn-edit:hover{background:#ddd6f7;}
+    .btn-delete{display:inline-flex;align-items:center;gap:4px;padding:5px 11px;
+        background:#FEF2F2;color:#E05252;border:none;border-radius:8px;
+        font-size:12px;font-weight:600;cursor:pointer;transition:background .15s;}
+    .btn-delete:hover{background:#fde8e8;}
+
+    .post-body{padding:12px 24px 0;}
+    .post-title{font-family:var(--font-head);font-size:17px;font-weight:700;
+        color:var(--text);margin-bottom:6px;line-height:1.3;}
+    .post-excerpt{font-size:13.5px;color:var(--text-mid);line-height:1.7;}
+
+    /* FOOTER LIKE + COMMENTAIRE */
+    .post-footer{display:flex;align-items:center;gap:10px;
+        padding:14px 24px;margin-top:12px;border-top:1px solid var(--purple-ghost);}
+    .btn-like{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;
+        background:var(--purple-ghost);color:var(--text-muted);border:1px solid var(--border);
+        border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;
+        transition:all .2s;font-family:var(--font-body);}
+    .btn-like:hover{background:var(--purple-pale);color:var(--purple);border-color:var(--purple-soft);}
+    .btn-like.liked{background:#FEE2E2;color:#E05252;border-color:#fca5a5;}
+    .btn-comment-toggle{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;
+        background:var(--purple-ghost);color:var(--text-muted);border:1px solid var(--border);
+        border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;
+        transition:all .15s;font-family:var(--font-body);}
+    .btn-comment-toggle:hover,.btn-comment-toggle.open{background:var(--purple-pale);
+        color:var(--purple);border-color:var(--purple-soft);}
+
+    /* COMMENTAIRES REDDIT */
+    .comments-section{display:none;padding:0 24px 20px;border-top:1px solid var(--purple-ghost);}
+    .comments-section.open{display:block;}
+    .add-comment-form{display:flex;gap:10px;align-items:flex-start;padding:16px 0 12px;}
+    .add-comment-avatar{width:32px;height:32px;border-radius:50%;background:var(--purple-soft);
+        color:white;font-size:12px;font-weight:700;display:grid;place-items:center;
+        font-family:var(--font-head);flex-shrink:0;margin-top:2px;}
+    .add-comment-right{flex:1;display:flex;flex-direction:column;gap:8px;}
+    .add-comment-input{width:100%;padding:10px 14px;border:1.5px solid var(--border);
+        border-radius:10px;font-family:var(--font-body);font-size:13.5px;color:var(--text);
+        background:var(--purple-ghost);outline:none;resize:none;min-height:60px;
+        transition:border-color .15s,background .15s;}
+    .add-comment-input:focus{border-color:var(--purple);background:var(--white);}
+    .add-comment-input.error{border-color:#E05252;}
+    .add-comment-actions{display:flex;justify-content:flex-end;gap:8px;}
+    .btn-send-comment{padding:6px 16px;background:var(--purple);color:white;border:none;
+        border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-body);}
+    .comments-divider{height:1px;background:var(--purple-ghost);margin:4px 0 12px;}
+    .comment-row{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--purple-ghost);}
+    .comment-row:last-child{border-bottom:none;}
+    .comment-thread-line{width:2px;background:var(--border);border-radius:2px;flex-shrink:0;margin:4px 0;}
+    .comment-main{flex:1;}
+    .comment-header{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+    .comment-avatar{width:26px;height:26px;border-radius:50%;background:var(--purple-soft);
+        color:white;font-size:10px;font-weight:700;display:grid;place-items:center;font-family:var(--font-head);}
+    .comment-author{font-size:12px;font-weight:700;color:var(--text);}
+    .comment-date{font-size:11px;color:var(--text-muted);}
+    .comment-body{font-size:13.5px;color:var(--text-mid);line-height:1.65;padding-left:2px;margin-bottom:6px;}
+    .comment-actions{display:flex;align-items:center;gap:8px;}
+    .btn-comment-edit{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;
+        background:var(--purple-pale);color:var(--purple);border:none;border-radius:6px;
+        font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;}
+    .btn-comment-delete{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;
+        background:#FEF2F2;color:#E05252;border:none;border-radius:6px;
+        font-size:11px;font-weight:600;cursor:pointer;}
+    .no-comments{font-size:13px;color:var(--text-muted);text-align:center;padding:20px 0;font-style:italic;}
+
+    /* PAGINATION */
+    .pagination{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:32px;}
+    .pag-btn{display:inline-flex;align-items:center;padding:8px 16px;border:1.5px solid var(--border);
+        border-radius:9px;background:var(--white);color:var(--text-mid);font-size:13px;
+        font-weight:500;text-decoration:none;transition:all .15s;}
+    .pag-btn:hover{border-color:var(--purple-soft);color:var(--purple);}
+    .pag-btn.active{background:var(--purple);border-color:var(--purple);color:white;font-weight:700;}
+    .pag-btn.disabled{opacity:.4;pointer-events:none;}
+    .pag-info{font-size:12px;color:var(--text-muted);padding:0 8px;}
+
+    .empty-state{text-align:center;padding:60px 20px;color:var(--text-muted);}
+
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+    .fade{animation:fadeUp .4s ease both;}
+</style>
+{% endblock %}
+
+{% block body %}
+<header class="topbar">
+    <a href="{{ path('homepage') }}" class="topbar-logo">
+        <img src="{{ asset('images/logo.png') }}" class="logo-mark" alt="Harmony">
+    </a>
+    <nav class="nav-links">
+        <a href="{{ path('activites') }}"  class="nav-link">🏋 Activités</a>
+        <a href="{{ path('forum') }}"      class="nav-link active">💬 Forum</a>
+        <a href="{{ path('taches') }}"     class="nav-link">📚 Tâches</a>
+        <a href="{{ path('evenements') }}" class="nav-link">📅 Événements</a>
+        <a href="{{ path('nutrition') }}"  class="nav-link">🥗 Nutrition</a>
+        <a href="{{ path('meditation') }}" class="nav-link">🧘 Méditation</a>
+        <a href="{{ path('journal') }}"    class="nav-link">📔 Journal</a>
+        <a href="{{ path('library') }}"    class="nav-link">📖 Library</a>
+    </nav>
+    <div class="topbar-right">
+        <button class="logout-btn">🚪 Déconnexion</button>
+        <div class="avatar">E</div>
+    </div>
+</header>
+
+<main class="page">
+
+    <div class="breadcrumb fade">
+        <a href="{{ path('forum') }}">💬 Forum</a>
+        <span>›</span>
+        <span>{{ categorie.nomCategorie }}</span>
+    </div>
+
+    <div class="cat-header fade">
+        <div>
+            <h1>{{ categorie.nomCategorie }}</h1>
+            {% if categorie.description %}<p>{{ categorie.description }}</p>{% endif %}
+        </div>
+        <a href="{{ path('forum_post_new', {idCat: categorie.idCategorie}) }}"
+           class="btn-new-post">✏️ Nouveau post</a>
+    </div>
+
+    {# ── BARRE RECHERCHE + TRI ── #}
+    <form method="GET" action="{{ path('forum_posts', {id: categorie.idCategorie}) }}">
+        <div class="toolbar fade">
+            <div class="search-wrap">
+                <span class="search-icon">🔍</span>
+                <input type="text" name="search" class="search-input"
+                       placeholder="Rechercher dans les posts..."
+                       value="{{ search }}">
+            </div>
+            <button type="submit" class="search-btn">Rechercher</button>
+
+            {# Tri — garde le search dans l'URL #}
+            <div class="tri-group">
+                <a href="{{ path('forum_posts', {id: categorie.idCategorie, tri: 'date_desc', search: search}) }}"
+                   class="btn-tri {{ tri == 'date_desc' ? 'active' }}">🕐 Plus récent</a>
+                <a href="{{ path('forum_posts', {id: categorie.idCategorie, tri: 'date_asc', search: search}) }}"
+                   class="btn-tri {{ tri == 'date_asc' ? 'active' }}">🕐 Plus ancien</a>
+                <a href="{{ path('forum_posts', {id: categorie.idCategorie, tri: 'likes', search: search}) }}"
+                   class="btn-tri {{ tri == 'likes' ? 'active' }}">🔥 Populaire</a>
+            </div>
+        </div>
+    </form>
+
+    {# APRÈS — KnpPaginator fournit ces infos via pagination #}
+    <div class="results-info">
+        {% if search %}
+            <strong>{{ pagination.getTotalItemCount() }}</strong> résultat(s) pour "<strong>{{ search }}</strong>"
+        {% else %}
+            <strong>{{ pagination.getTotalItemCount() }}</strong> post(s) au total
+        {% endif %}
+    </div>
+
+    {# ── LISTE POSTS ── #}
+    <div class="posts-list">
+        {% for post in posts %}
+        {% set postComments = commentairesMap[post.idPost] ?? [] %}
+        {% set liked = likedByMe[post.idPost] ?? false %}
+        {% set nbLikes = likesMap[post.idPost] ?? 0 %}
+
+        <div class="post-card fade">
+
+            {# AUTEUR + CRUD #}
+            <div class="post-author-row">
+                <div class="post-author-left">
+
+                    <div class="post-avatar">{{ (usersMap[post.userId] ?? 'U')|first|upper }}</div>
+<div>
+    <div class="post-author-name">{{ usersMap[post.userId] ?? 'Utilisateur #' ~ post.userId }}</div>
+
+                        <div class="post-author-date">
+                            {{ post.dateCreation ? post.dateCreation|date('d/m/Y à H:i') : '' }}
+                        </div>
+                    </div>
+                </div>
+                <div class="post-actions-top">
+                    <a href="{{ path('forum_post_edit', {id: post.idPost}) }}" class="btn-edit">✏️ Modifier</a>
+                    <form method="POST" action="{{ path('forum_post_delete', {id: post.idPost}) }}"
+                          onsubmit="return confirm('Supprimer ce post ?');" style="display:inline;">
+                        <button type="submit" class="btn-delete">🗑 Supprimer</button>
+                    </form>
+                </div>
+            </div>
+
+    
+
+            {# TITRE + CONTENU #}
+            <div class="post-body">
+                {# Titre — avec version traduite cachée #}
+                <div class="post-title" id="titre-{{ post.idPost }}">
+                    {{ post.titre }}
+                </div>
+
+                {# Contenu — avec version traduite cachée #}
+                <div class="post-excerpt" id="contenu-{{ post.idPost }}">
+                    {{ post.contenu }}
+                </div>
+
+                {# IMAGE DU POST #}
+                {% if post.imagePath %}
+                    <div style="margin-top:12px;">
+                        <img src="{{ asset('uploads/posts/' ~ post.imagePath) }}"
+                            alt="Image du post"
+                            style="max-width:100%;max-height:300px;border-radius:12px;
+                                    object-fit:cover;border:1px solid var(--border);">
+                    </div>
+                {% endif %}
+
+                {# Badge langue active #}
+                <div id="lang-badge-{{ post.idPost }}" style="display:none;margin-top:8px;">
+                    <span style="font-size:11px;background:#EDE8FA;color:#6A5ACD;
+                                padding:3px 10px;border-radius:20px;font-weight:600;">
+                        🌍 Traduit en <span id="lang-name-{{ post.idPost }}"></span>
+                    </span>
+                    <button onclick="resetTranslation({{ post.idPost }}, '{{ post.titre|e('js') }}', '{{ post.contenu|e('js') }}')"
+                            style="font-size:11px;background:none;border:none;color:#9590B8;
+                                cursor:pointer;text-decoration:underline;margin-left:6px;">
+                        Voir original
+                    </button>
+                </div>
+            </div>            
+
+            {# FOOTER : LIKE + COMMENTAIRES + TRADUCTION #}
+            <div class="post-footer">
+                <button type="button"
+                    class="btn-like {{ liked ? 'liked' }}"
+                    data-post-id="{{ post.idPost }}"
+                    onclick="toggleLike(this)">
+                    {{ liked ? '❤️' : '🤍' }} <span class="like-count">{{ nbLikes }}</span>
+                </button>
+
+                <button type="button"
+                    class="btn-comment-toggle"
+                    onclick="toggleComments('comments-{{ post.idPost }}', this)">
+                    💬 {{ postComments|length }} commentaire(s)
+                </button>
+
+                {# Bouton traduction avec dropdown #}
+                <div style="position:relative;display:inline-block;" id="translate-wrap-{{ post.idPost }}">
+                    <button type="button"
+                        onclick="toggleTranslateMenu({{ post.idPost }})"
+                        id="translate-btn-{{ post.idPost }}"
+                        style="display:inline-flex;align-items:center;gap:6px;padding:6px 16px;
+                            background:var(--purple-ghost);color:var(--text-muted);
+                            border:1px solid var(--border);border-radius:20px;font-size:13px;
+                            font-weight:600;cursor:pointer;transition:all .15s;
+                            font-family:var(--font-body);">
+                        🌍 Traduire
+                    </button>
+
+                    {# Menu dropdown des langues #}
+                    <div id="translate-menu-{{ post.idPost }}"
+                        style="display:none;position:absolute;bottom:calc(100% + 8px);left:0;
+                                background:white;border:1px solid var(--border);border-radius:12px;
+                                box-shadow:0 8px 24px rgba(0,0,0,.1);padding:8px;z-index:100;
+                                min-width:160px;">
+                        <div style="font-size:11px;color:var(--text-muted);
+                                    padding:4px 8px;margin-bottom:4px;font-weight:600;">
+                            Choisir la langue
+                        </div>
+                        {% set langs = {
+                            'en': '🇬🇧 Anglais',
+                            'ar': '🇸🇦 Arabe',
+                            'es': '🇪🇸 Espagnol',
+                            'de': '🇩🇪 Allemand',
+                            'it': '🇮🇹 Italien'
+                        } %}
+                        {% for code, label in langs %}
+                        <button onclick="translatePost({{ post.idPost }}, '{{ code }}', '{{ label }}')"
+                                style="display:block;width:100%;text-align:left;padding:7px 10px;
+                                    border:none;background:none;border-radius:8px;font-size:13px;
+                                    color:#1C1733;cursor:pointer;font-family:var(--font-body);
+                                    transition:background .15s;"
+                                onmouseover="this.style.background='#EDE8FA'"
+                                onmouseout="this.style.background='none'">
+                            {{ label }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            {# COMMENTAIRES STYLE REDDIT #}
+
+            <div class="comments-section" id="comments-{{ post.idPost }}">
+
+                <form method="POST"
+                      action="{{ path('forum_comment_new', {idPost: post.idPost}) }}"
+                      class="add-comment-form"
+                      onsubmit="return validateComment(this)">
+                    <div class="add-comment-avatar">
+                        {{ app.user ? app.user.getUserPrenom()|first|upper : 'U' }}
+                    </div>
+                    
+
+                 <div class="add-comment-right">
+                    <textarea name="contenu"
+                            class="add-comment-input"
+                            placeholder="Rejoindre la conversation..." rows="2"></textarea>
+                    <div class="add-comment-actions">
+                        <button type="submit" class="btn-send-comment">💬 Commenter</button>
+                    </div>
+                </div>
+
+                </form>
+
+                <div class="comments-divider"></div>
+
+                {% if postComments is empty %}
+                    <div class="no-comments">Aucun commentaire — sois le premier ! 👋</div>
+                {% else %}
+                    {% for c in postComments %}
+                    <div class="comment-row">
+                        <div class="comment-thread-line"></div>
+                        <div class="comment-main">
+                            <div class="comment-header">
+
+                                <div class="comment-avatar">{{ (usersMap[c.userId] ?? 'U')|first|upper }}</div>
+                                <span class="comment-author">{{ usersMap[c.userId] ?? 'Utilisateur #' ~ c.userId }}</span>
+
+                                <span class="comment-date">
+                                    • {{ c.dateCommentaire ? c.dateCommentaire|date('d/m/Y à H:i') : '' }}
+                                </span>
+                            </div>
+                            <div class="comment-body">{{ c.contenu }}</div>
+                            <div class="comment-actions">
+                                <a href="{{ path('forum_comment_edit', {id: c.idCommentaire}) }}"
+                                   class="btn-comment-edit">✏️ Modifier</a>
+                                <form method="POST"
+                                      action="{{ path('forum_comment_delete', {id: c.idCommentaire}) }}"
+                                      onsubmit="return confirm('Supprimer ?');" style="display:inline;">
+                                    <button type="submit" class="btn-comment-delete">🗑</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+        </div>
+        {% else %}
+        <div class="empty-state fade">
+            <div style="font-size:48px;">{{ search ? '🔍' : '💬' }}</div>
+            <p>{{ search ? 'Aucun post trouvé pour "' ~ search ~ '"' : 'Aucun post dans cette catégorie.' }}</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    {# ── PAGINATION ── #}
+    {# APRÈS — remplacer par ces 2 lignes #}
+    {{ knp_pagination_render(pagination) }}
+
+{# MODALE #}
+<div id="confirmModal" style="display:none;position:fixed;inset:0;z-index:1000;
+    background:rgba(28,23,51,.45);backdrop-filter:blur(4px);
+    align-items:center;justify-content:center;">
+    <div style="background:white;border-radius:20px;padding:36px 40px;
+        max-width:400px;width:90%;box-shadow:0 20px 60px rgba(106,90,205,.2);
+        font-family:'Inter',sans-serif;">
+        <div style="font-size:32px;text-align:center;margin-bottom:12px;">🗑️</div>
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;
+            color:#1C1733;text-align:center;margin-bottom:8px;" id="modalTitle">
+            Supprimer ?
+        </div>
+        <div style="font-size:14px;color:#9590B8;text-align:center;margin-bottom:28px;"
+             id="modalMessage">
+            Cette action est irréversible.
+        </div>
+        <div style="display:flex;gap:12px;">
+            <button onclick="closeModal()"
+                style="flex:1;padding:11px;border-radius:10px;border:1.5px solid rgba(106,90,205,.2);
+                background:white;color:#4A4570;font-size:14px;font-weight:600;cursor:pointer;">
+                Annuler
+            </button>
+            <button id="modalConfirmBtn"
+                style="flex:1;padding:11px;border-radius:10px;border:none;
+                background:linear-gradient(135deg,#E05252,#c0392b);color:white;
+                font-size:14px;font-weight:600;cursor:pointer;">
+                🗑 Supprimer
+            </button>
+        </div>
+    </div>
+</div>
+
+
+</main>
+
+<script>
+    // ── LIKE AJAX ──────────────────────────────────────
+    async function toggleLike(btn) {
+        const postId = btn.dataset.postId;
+        try {
+            const res = await fetch(`/forum/post/${postId}/like`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: '_token='
+            });
+            const data = await res.json();
+            if (data.liked) {
+                btn.classList.add('liked');
+                btn.innerHTML = '❤️ <span class="like-count">' + data.count + '</span>';
+            } else {
+                btn.classList.remove('liked');
+                btn.innerHTML = '🤍 <span class="like-count">' + data.count + '</span>';
+            }
+            btn.dataset.liked = data.liked ? '1' : '0';
+        } catch(e) { console.error('Like error', e); }
+    }
+    //--------------------------------------------------
+
+    // Auto-ouvrir la section commentaires si erreur flash
+    (function() {
+        const params = new URLSearchParams(window.location.search);
+        const openPost = params.get('open_post');
+        if (openPost) {
+            const section = document.getElementById('comments-' + openPost);
+            const btn = document.querySelector(`[onclick*="comments-${openPost}"]`);
+            if (section) {
+                section.classList.add('open');
+                if (btn) btn.classList.add('open');
+            }
+        }
+    })();
+
+    // ── TOGGLE COMMENTAIRES ────────────────────────────
+
+    function toggleComments(id, btn) {
+        const section = document.getElementById(id);
+        const isOpen  = section.classList.toggle('open');
+        btn.classList.toggle('open', isOpen);
+
+    }
+
+    // ── VALIDATION COMMENTAIRE ─────────────────────────
+    function validateComment(form) {
+        const ta = form.querySelector('textarea');
+        
+        // Supprimer l'ancien message d'erreur s'il existe
+        const oldError = form.querySelector('.comment-error-msg');
+        if (oldError) oldError.remove();
+
+        if (ta.value.trim().length < 3) {
+            ta.classList.add('error');
+            ta.focus();
+
+            // Créer et insérer le message d'erreur
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'comment-error-msg';
+            errorDiv.style.cssText = 'color:#E05252;font-size:12px;font-weight:600;margin-top:6px;';
+            errorDiv.textContent = '⚠️ Le commentaire doit contenir au moins 3 caractères.';
+            ta.insertAdjacentElement('afterend', errorDiv);
+
+            return false;
+        }
+
+        ta.classList.remove('error');
+        return true;
+    }
+    // ── MODALE DE CONFIRMATION ── ← AJOUTER ICI
+    let pendingForm = null;
+
+    function openModal(btn, title, message) {
+        pendingForm = btn.closest('form');
+        document.getElementById('modalTitle').textContent   = title;
+        document.getElementById('modalMessage').textContent = message;
+        const modal = document.getElementById('confirmModal');
+        modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('confirmModal').style.display = 'none';
+        pendingForm = null;
+    }
+
+    document.getElementById('modalConfirmBtn').addEventListener('click', function() {
+        if (pendingForm) pendingForm.submit();
+        closeModal();
+    });
+
+    document.getElementById('confirmModal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+    // ── TRADUCTION ─────────────────────────────────────
+
+    // Ouvre/ferme le menu de sélection de langue
+    function toggleTranslateMenu(postId) {
+        const menu = document.getElementById('translate-menu-' + postId);
+        const isOpen = menu.style.display === 'block';
+        
+        // Ferme tous les menus ouverts
+        document.querySelectorAll('[id^="translate-menu-"]').forEach(m => {
+            m.style.display = 'none';
+        });
+        
+        // Ouvre le menu cliqué (si pas déjà ouvert)
+        if (!isOpen) {
+            menu.style.display = 'block';
+        }
+    }
+
+    // Ferme les menus si on clique ailleurs
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('[id^="translate-wrap-"]')) {
+            document.querySelectorAll('[id^="translate-menu-"]').forEach(m => {
+                m.style.display = 'none';
+            });
+        }
+    });
+
+    // Appelle l'API de traduction via AJAX
+    async function translatePost(postId, langCode, langLabel) {
+        // Ferme le menu
+        document.getElementById('translate-menu-' + postId).style.display = 'none';
+        
+        // Change le bouton en "chargement"
+        const btn = document.getElementById('translate-btn-' + postId);
+        btn.textContent = '⏳ Traduction...';
+        btn.disabled = true;
+
+        try {
+            const formData = new FormData();
+            formData.append('lang', langCode);
+
+            const res = await fetch(`/forum/post/${postId}/translate`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            const data = await res.json();
+
+            if (data.error) {
+                btn.textContent = '❌ Erreur';
+                btn.disabled = false;
+                return;
+            }
+
+            // Met à jour le titre et le contenu avec la traduction
+            document.getElementById('titre-' + postId).textContent   = data.titre;
+            document.getElementById('contenu-' + postId).textContent = data.contenu;
+
+            // Affiche le badge de langue
+            document.getElementById('lang-badge-' + postId).style.display = 'block';
+            document.getElementById('lang-name-' + postId).textContent = langLabel;
+
+            // Remet le bouton à la normale
+            btn.textContent = '🌍 Traduit';
+            btn.disabled = false;
+
+        } catch(e) {
+            btn.textContent = '❌ Erreur';
+            btn.disabled = false;
+            console.error('Translation error:', e);
+        }
+    }
+
+    // Remet le texte original
+    function resetTranslation(postId, originalTitre, originalContenu) {
+        document.getElementById('titre-' + postId).textContent   = originalTitre;
+        document.getElementById('contenu-' + postId).textContent = originalContenu;
+        document.getElementById('lang-badge-' + postId).style.display = 'none';
+        document.getElementById('translate-btn-' + postId).textContent = '🌍 Traduire';
+}
+
+</script>
+{% endblock %}

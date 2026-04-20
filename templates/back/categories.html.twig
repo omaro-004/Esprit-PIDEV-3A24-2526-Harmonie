@@ -1,0 +1,181 @@
+{% extends 'admin/base.html.twig' %}
+{% block title %}Catégories — Back Harmony{% endblock %}
+{% block page_title %}Gestion des catégories{% endblock %}
+
+{% block stylesheets %}
+<style>
+.page-header {
+    display:flex; align-items:center; gap:12px; margin-bottom:24px;
+}
+.page-header h1 { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:#1C1733; flex:1; }
+.btn-add {
+    display:inline-flex; align-items:center; gap:8px;
+    padding:10px 20px; background:#6A5ACD; color:white;
+    border-radius:10px; font-size:13px; font-weight:600;
+    text-decoration:none; transition:background .15s;
+}
+.btn-add:hover { background:#4B3B9E; }
+
+.kpi-mini { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:24px; }
+.kpi-mini-card {
+    background:white; border:1px solid rgba(106,90,205,.12);
+    border-radius:14px; padding:18px 20px;
+    display:flex; align-items:center; gap:14px;
+}
+.kpi-mini-icon { width:44px; height:44px; border-radius:12px; display:grid; place-items:center; font-size:20px; flex-shrink:0; }
+.kpi-mini-icon.purple { background:#EDE8FA; }
+.kpi-mini-icon.green  { background:#D1FAE5; }
+.kpi-mini-icon.amber  { background:#FEF3C7; }
+.kpi-mini-val { font-family:'Syne',sans-serif; font-size:24px; font-weight:800; color:#1C1733; line-height:1; }
+.kpi-mini-lbl { font-size:11px; color:#9590B8; margin-top:3px; }
+
+.search-bar {
+    display:flex; align-items:center; gap:8px;
+    background:white; border:1.5px solid rgba(106,90,205,.15);
+    border-radius:10px; padding:10px 16px; margin-bottom:20px;
+    transition:border-color .15s;
+}
+.search-bar:focus-within { border-color:#6A5ACD; }
+.search-bar input { border:none; outline:none; font-size:13.5px; color:#1C1733; width:100%; background:transparent; }
+.search-bar input::placeholder { color:#9590B8; }
+
+.data-table {
+    background:white; border:1px solid rgba(106,90,205,.12);
+    border-radius:16px; overflow:hidden;
+}
+.data-table-head {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 22px; border-bottom:1px solid rgba(106,90,205,.08);
+}
+.data-table-head h3 { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; color:#1C1733; }
+.data-table-count { font-size:12px; color:#9590B8; }
+
+table { width:100%; border-collapse:collapse; }
+th {
+    font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.07em;
+    color:#9590B8; padding:10px 18px; text-align:left;
+    background:#F7F5FD; border-bottom:1px solid rgba(106,90,205,.08);
+}
+td { padding:13px 18px; font-size:13.5px; color:#1C1733; border-bottom:1px solid rgba(106,90,205,.06); }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:#FAFAFE; }
+
+.badge-cat { background:#EDE8FA; color:#6A5ACD; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+.td-muted  { color:#9590B8; font-size:12px; }
+.td-name   { font-weight:600; }
+.td-desc   { color:#4A4570; font-size:12.5px; max-width:280px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+.actions { display:flex; gap:6px; align-items:center; }
+.btn-sm {
+    display:inline-flex; align-items:center; gap:4px;
+    padding:5px 12px; border-radius:8px; font-size:12px; font-weight:600;
+    border:none; cursor:pointer; text-decoration:none; transition:all .15s;
+    font-family:'Inter',sans-serif;
+}
+.btn-view   { background:#EDE8FA; color:#6A5ACD; }
+.btn-view:hover { background:#ddd6f7; }
+.btn-edit   { background:#F0FDF4; color:#16A34A; }
+.btn-edit:hover { background:#dcfce7; }
+.btn-del    { background:#FEF2F2; color:#E05252; }
+.btn-del:hover { background:#fee2e2; }
+</style>
+{% endblock %}
+
+{% block body %}
+
+<div class="page-header">
+    <span style="font-size:24px">🗂️</span>
+    <h1>Catégories du Forum</h1>
+    <a href="{{ path('back_categorie_new') }}" class="btn-add">➕ Nouvelle catégorie</a>
+</div>
+
+<div class="kpi-mini">
+    <div class="kpi-mini-card">
+        <div class="kpi-mini-icon purple">🗂️</div>
+        <div><div class="kpi-mini-val">{{ categories|length }}</div><div class="kpi-mini-lbl">Total catégories</div></div>
+    </div>
+    <div class="kpi-mini-card">
+        <div class="kpi-mini-icon green">📝</div>
+        <div>
+            <div class="kpi-mini-val">{{ postCounts|reduce((carry, v) => carry + v, 0) }}</div>
+            <div class="kpi-mini-lbl">Posts associés</div>
+        </div>
+    </div>
+    <div class="kpi-mini-card">
+        <div class="kpi-mini-icon amber">📅</div>
+        <div>
+            <div class="kpi-mini-val">
+                {{ categories|filter(c => c.dateCreation is not null and c.dateCreation.format('Y-m') == 'now'|date('Y-m'))|length }}
+            </div>
+            <div class="kpi-mini-lbl">Créées ce mois</div>
+        </div>
+    </div>
+</div>
+
+<div class="search-bar">
+    <span style="font-size:15px;color:#9590B8">🔍</span>
+    <input type="text" placeholder="Rechercher une catégorie…" oninput="filterTable(this.value,'cat-tbody')">
+</div>
+
+<div class="data-table">
+    <div class="data-table-head">
+        <h3>🗂️ Toutes les catégories</h3>
+        <span class="data-table-count">{{ categories|length }} catégorie(s)</span>
+    </div>
+
+    {% if categories is empty %}
+        <div style="text-align:center;padding:56px;color:#9590B8">
+            <div style="font-size:48px;margin-bottom:12px">🗂️</div>
+            <p style="font-size:14px;margin-bottom:16px">Aucune catégorie pour l'instant.</p>
+            <a href="{{ path('back_categorie_new') }}" class="btn-add">➕ Créer la première</a>
+        </div>
+    {% else %}
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Nom</th>
+                <th>Description</th>
+                <th>Posts</th>
+                <th>Créée le</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="cat-tbody">
+            {% for cat in categories %}
+            <tr data-search="{{ cat.nomCategorie|lower }} {{ cat.description|lower }}">
+                <td class="td-muted">#{{ cat.idCategorie }}</td>
+                <td><span class="td-name">{{ cat.nomCategorie }}</span></td>
+                <td class="td-desc">{{ cat.description ?: '—' }}</td>
+                <td><span class="badge-cat">{{ postCounts[cat.idCategorie] ?? 0 }} post(s)</span></td>
+                <td class="td-muted">{{ cat.dateCreation ? cat.dateCreation|date('d/m/Y') : '—' }}</td>
+                <td>
+                    <div class="actions">
+                        
+                        <a href="{{ path('back_categorie_edit', {id: cat.idCategorie}) }}" class="btn-sm btn-edit">✏️ Modifier</a>
+                        <form method="POST"
+                              action="{{ path('back_categorie_delete', {id: cat.idCategorie}) }}"
+                              onsubmit="return confirm('Supprimer « {{ cat.nomCategorie }} » ?')"
+                              style="display:inline">
+                            <button type="submit" class="btn-sm btn-del">🗑 Supprimer</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+<script>
+function filterTable(q, tbodyId) {
+    document.getElementById(tbodyId).querySelectorAll('tr').forEach(row => {
+        row.style.display = (row.dataset.search||'').includes(q.toLowerCase()) ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,924 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Chercheur de Recettes — Harmony{% endblock %}
+
+{% block stylesheets %}
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --pu:#6A5ACD;--pu-dk:#4B3B9E;--pu-lt:#8B7FD4;--pu-pale:#EDE8FA;--pu-ghost:#F7F5FD;--pu-deep:#2D2060;
+  --tx:#1C1733;--tx-mid:#4A4570;--tx-muted:#9590B8;
+  --border:rgba(106,90,205,.12);--white:#FFFFFF;--shadow:0 8px 32px rgba(106,90,205,.14);
+  --green:#22C55E;--red:#EF4444;--orange:#F59E0B;--blue:#3B82F6;
+  --card-r:18px;
+  --font-h:'Syne',sans-serif;--font-b:'DM Sans',sans-serif;--font-m:'JetBrains Mono',monospace;
+}
+
+html,body{font-family:var(--font-b);background:var(--pu-ghost);color:var(--tx);overflow-x:hidden;min-height:100vh}
+
+/* ── HERO ── */
+.hero{
+  background:linear-gradient(135deg,var(--pu-deep) 0%,#5B45C0 35%,#7E6DD4 75%,#A98FFF 100%);
+  padding:60px 44px 70px;position:relative;overflow:hidden;
+  box-shadow:inset 0 -30px 60px rgba(0,0,0,.15);
+}
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 20% 50%, rgba(255,255,255,.1) 0%, transparent 50%),
+             radial-gradient(circle at 80% 80%, rgba(255,255,255,.08) 0%, transparent 50%);
+  animation:heroFloat 25s ease-in-out infinite;
+}
+@keyframes heroFloat{
+  0%,100%{transform:translate(0,0)}
+  50%{transform:translate(-30px,20px)}
+}
+.hero::after{
+  content:'';position:absolute;bottom:0;right:0;width:300px;height:300px;
+  background:radial-gradient(circle, rgba(255,255,255,.05) 0%, transparent 70%);
+  filter:blur(40px);
+  animation:heroFloat 30s ease-in-out infinite reverse;
+}
+.hero-inner{position:relative;z-index:1;max-width:1100px;margin:0 auto;}
+.hero-back{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:12px;
+  border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:rgba(255,255,255,.9);
+  font-size:13px;font-weight:600;text-decoration:none;margin-bottom:22px;transition:all .25s;
+  backdrop-filter:blur(8px);
+}
+.hero-back:hover{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.4);transform:translateX(-2px)}
+.hero-title{font-family:var(--font-h);font-size:42px;font-weight:900;color:white;margin-bottom:12px;
+  text-shadow:0 4px 20px rgba(0,0,0,.3);letter-spacing:-1px;line-height:1.2}
+.hero-subtitle{font-size:15px;color:rgba(255,255,255,.75);max-width:600px;line-height:1.7;font-weight:400}
+.hero-badge{display:inline-flex;align-items:center;gap:7px;margin-top:20px;background:rgba(255,255,255,.15);
+  border:1px solid rgba(255,255,255,.3);border-radius:24px;padding:7px 16px;
+  font-size:12.5px;font-weight:600;color:rgba(255,255,255,.95);backdrop-filter:blur(8px);
+  transition:all .25s;
+}
+.hero-badge:hover{background:rgba(255,255,255,.25);border-color:rgba(255,255,255,.45)}
+
+/* ── MAIN LAYOUT ── */
+.page{max-width:1100px;margin:0 auto;padding:32px 36px 80px}
+
+/* ── SEARCH CARD ── */
+.search-card{
+  background:linear-gradient(135deg, #FFFFFF 0%, #F7F5FD 100%);
+  border:2px solid rgba(106,90,205,.15);border-radius:24px;
+  padding:42px 40px;margin-bottom:38px;
+  box-shadow:0 12px 48px rgba(106,90,205,.12), 
+            0 2px 8px rgba(106,90,205,.06);
+  position:relative;overflow:hidden;
+  transition:all .4s cubic-bezier(.4,0,.2,1);
+}
+.search-card::before{
+  content:'';position:absolute;top:-50%;right:-50%;width:400px;height:400px;
+  background:radial-gradient(circle, rgba(106,90,205,.08) 0%, transparent 70%);
+  border-radius:50%;pointer-events:none;
+}
+.search-card:hover{
+  box-shadow:0 16px 56px rgba(106,90,205,.16), 
+            0 4px 12px rgba(106,90,205,.08);
+  border-color:rgba(106,90,205,.25);
+}
+.search-card-title{font-family:var(--font-h);font-size:20px;font-weight:800;color:var(--tx);
+  margin-bottom:8px;position:relative;z-index:1}
+.search-card-desc{font-size:14px;color:var(--tx-muted);margin-bottom:28px;position:relative;z-index:1;line-height:1.6}
+.search-row{display:flex;gap:12px;align-items:flex-start;position:relative;z-index:1}
+.search-field-wrap{flex:1;position:relative;display:flex;align-items:center}
+.search-icon-abs{position:absolute;left:18px;top:50%;transform:translateY(-50%);font-size:20px;pointer-events:none;
+  display:flex;align-items:center;justify-content:center}
+.search-field{
+  width:100%;padding:16px 20px 16px 52px;
+  border:2px solid rgba(106,90,205,.12);border-radius:16px;
+  font-family:var(--font-b);font-size:15px;color:var(--tx);
+  background:rgba(255,255,255,.9);outline:none;
+  transition:all .3s cubic-bezier(.4,0,.2,1);
+  backdrop-filter:blur(4px);
+}
+.search-field:focus{
+  border-color:var(--pu);
+  background:rgba(255,255,255,1);
+  box-shadow:0 0 0 5px rgba(106,90,205,.15);
+  transform:translateY(-2px);
+}
+.search-field::placeholder{color:var(--tx-muted);opacity:.7}
+.btn-search{
+  padding:16px 32px;border-radius:16px;border:none;
+  background:linear-gradient(135deg, var(--pu) 0%, var(--pu-lt) 100%);
+  color:white;
+  font-family:var(--font-h);font-size:15px;font-weight:700;
+  cursor:pointer;white-space:nowrap;
+  transition:all .3s cubic-bezier(.4,0,.2,1);
+  display:flex;align-items:center;gap:8px;flex-shrink:0;
+  box-shadow:0 6px 20px rgba(106,90,205,.35);
+  position:relative;overflow:hidden;
+}
+.btn-search::before{
+  content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);
+  transition:left .5s;
+}
+.btn-search:hover{
+  background:linear-gradient(135deg, var(--pu-dk) 0%, #6347C4 100%);
+  transform:translateY(-3px);
+  box-shadow:0 10px 28px rgba(106,90,205,.4);
+}
+.btn-search:hover::before{left:100%}
+.btn-search:disabled{background:var(--tx-muted);cursor:not-allowed;transform:none;box-shadow:none}
+.search-tips{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px;position:relative;z-index:1}
+.search-tips-label{
+  font-size:12px;color:var(--tx-muted);align-self:center;margin-right:6px;font-weight:600;
+  text-transform:uppercase;letter-spacing:.5px;}
+.tip-chip{
+  padding:8px 16px;border-radius:12px;border:1.5px solid rgba(106,90,205,.2);
+  background:rgba(106,90,205,.05);font-size:13px;color:var(--pu);font-weight:600;
+  cursor:pointer;transition:all .25s cubic-bezier(.4,0,.2,1);
+  position:relative;overflow:hidden;
+}
+.tip-chip::before{
+  content:'';position:absolute;inset:0;background:rgba(106,90,205,.08);
+  transform:scaleX(0);transform-origin:left;transition:transform .3s cubic-bezier(.4,0,.2,1);
+}
+.tip-chip:hover{
+  background:rgba(106,90,205,.1);
+  border-color:rgba(106,90,205,.35);
+  transform:translateY(-2px);
+  box-shadow:0 4px 12px rgba(106,90,205,.15);
+}
+.tip-chip:hover::before{transform:scaleX(1)}
+
+/* ── RESULTS ── */
+.results-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.results-title{font-family:var(--font-h);font-size:17px;font-weight:700;color:var(--tx)}
+.results-count{font-family:var(--font-m);font-size:12px;color:var(--tx-muted);
+  background:var(--pu-ghost);padding:3px 10px;border-radius:20px}
+
+.recipes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
+
+/* ── RECIPE CARD ── */
+.recipe-card{
+  background:var(--white);border:1.5px solid rgba(106,90,205,.1);border-radius:20px;
+  overflow:hidden;cursor:pointer;
+  transition:all .35s cubic-bezier(.4,0,.2,1);
+  position:relative;
+  box-shadow:0 4px 12px rgba(106,90,205,.06);
+  will-change:transform,box-shadow;
+}
+.recipe-card::before{
+  content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent,rgba(106,90,205,.05));
+  opacity:0;transition:opacity .3s;z-index:1;pointer-events:none;
+}
+.recipe-card:hover{
+  box-shadow:0 14px 36px rgba(106,90,205,.15);
+  transform:translateY(-8px);
+  border-color:rgba(106,90,205,.2);
+}
+.recipe-card:hover::before{opacity:1}
+.recipe-img{width:100%;height:200px;object-fit:cover;display:block;background:var(--pu-ghost);
+  transition:transform .4s cubic-bezier(.4,0,.2,1);}
+.recipe-card:hover .recipe-img{transform:scale(1.08)}
+.recipe-img-placeholder{width:100%;height:200px;background:linear-gradient(135deg,var(--pu-ghost),var(--pu-pale));
+  display:grid;place-items:center;font-size:52px}
+.recipe-body{padding:18px}
+.recipe-title{font-family:var(--font-h);font-size:15px;font-weight:700;color:var(--tx);
+  margin-bottom:10px;line-height:1.35;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  transition:color .2s}
+.recipe-card:hover .recipe-title{color:var(--pu)}
+.recipe-badges{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:4px 11px;border-radius:10px;
+  font-size:11px;font-weight:600;animation:fadeUp .3s ease both}
+.badge.used{background:#D1FAE5;color:#065F46}
+.badge.missed{background:#FEE2E2;color:#991B1B}
+.badge.likes{background:var(--pu-ghost);color:var(--pu)}
+.recipe-ingr-preview{font-size:11.5px;color:var(--tx-muted);line-height:1.5;margin-bottom:12px}
+.recipe-ingr-preview span.hit{color:var(--green);font-weight:600}
+.recipe-ingr-preview span.miss{color:var(--red);font-weight:600}
+.recipe-footer{border-top:1px solid rgba(106,90,205,.08);padding-top:12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.btn-detail{padding:8px 14px;border-radius:10px;border:none;
+  background:linear-gradient(135deg, var(--pu) 0%, var(--pu-lt) 100%);
+  color:white;font-family:var(--font-b);font-size:12px;font-weight:600;cursor:pointer;
+  transition:all .25s cubic-bezier(.4,0,.2,1);
+  box-shadow:0 2px 8px rgba(106,90,205,.2);
+}
+.btn-detail:hover{
+  transform:translateY(-2px);
+  box-shadow:0 6px 16px rgba(106,90,205,.3);
+}
+.recipe-score{font-size:11px;color:var(--tx-muted);background:var(--pu-ghost);padding:4px 10px;border-radius:8px;}
+
+/* ── ÉTATS ── */
+.state-box{text-align:center;padding:80px 30px;color:var(--tx-muted);animation:fadeUp .5s ease}
+.state-icon{font-size:64px;margin-bottom:16px;opacity:.6;animation:bounce 3s ease-in-out infinite}
+.state-title{font-family:var(--font-h);font-size:20px;font-weight:700;color:var(--tx-mid);margin-bottom:8px}
+.state-text{font-size:14px;line-height:1.7;max-width:440px;margin:0 auto}
+@keyframes bounce{
+  0%,100%{transform:translateY(0)}
+  25%{transform:translateY(-8px)}
+  75%{transform:translateY(4px)}
+}
+#loadingState .spinner{width:44px;height:44px;border:3px solid var(--pu-pale);border-top-color:var(--pu);
+  border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 18px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(20,15,50,.68);backdrop-filter:blur(12px);
+  z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;overflow-y:auto;
+  animation:fadeOverlay .3s ease;
+}
+@keyframes fadeOverlay{from{background-color:rgba(20,15,50,0);backdrop-filter:blur(0px)}to{background-color:rgba(20,15,50,.68);backdrop-filter:blur(12px)}}
+.modal-overlay.open{display:flex}
+.modal{background:var(--white);border-radius:28px;width:100%;max-width:740px;overflow-y:auto;
+  max-height:95vh;display:flex;flex-direction:column;
+  animation:slideUp .35s cubic-bezier(.34,.1,.68,.55);
+  box-shadow:0 20px 60px rgba(20,15,50,.25);
+}
+@keyframes slideUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+.modal-img{width:100%;height:240px;object-fit:cover;display:block;background:var(--pu-ghost);
+  flex-shrink:0;position:relative;
+}
+.modal-img::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:80px;
+  background:linear-gradient(to bottom,transparent,rgba(255,255,255,.4));
+}
+.modal-img-placeholder{width:100%;height:240px;background:linear-gradient(135deg,var(--pu-ghost),var(--pu-pale));
+  display:grid;place-items:center;font-size:64px;flex-shrink:0}
+.modal-scroll{padding:28px 32px 36px}
+.modal::-webkit-scrollbar{width:7px}
+.modal::-webkit-scrollbar-track{background:transparent}
+.modal::-webkit-scrollbar-thumb{background:rgba(106,90,205,.15);border-radius:6px;transition:background .2s}
+.modal::-webkit-scrollbar-thumb:hover{background:rgba(106,90,205,.3)}
+.modal-close-bar{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px}
+.modal-title{font-family:var(--font-h);font-size:22px;font-weight:800;color:var(--tx);flex:1;
+  margin-right:12px;line-height:1.35}
+.modal-close{width:36px;height:36px;border-radius:12px;border:1.5px solid rgba(106,90,205,.15);
+  background:var(--pu-ghost);cursor:pointer;font-size:18px;display:grid;place-items:center;
+  color:var(--tx-muted);flex-shrink:0;transition:all .2s cubic-bezier(.4,0,.2,1);
+}
+.modal-close:hover{background:rgba(106,90,205,.1);border-color:rgba(106,90,205,.3);color:var(--pu);transform:rotate(90deg)}
+
+/* Macros strip */
+.macro-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;animation:fadeUp .4s ease .1s both}
+.macro-tile{background:linear-gradient(135deg,var(--pu-ghost),var(--pu-pale));border-radius:16px;
+  padding:16px;text-align:center;border:1px solid rgba(106,90,205,.1);
+  transition:all .3s cubic-bezier(.4,0,.2,1);
+  position:relative;overflow:hidden;
+}
+.macro-tile::before{
+  content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(255,255,255,.5),transparent);
+  opacity:0;transition:opacity .3s;
+}
+.macro-tile:hover{
+  transform:translateY(-4px);
+  box-shadow:0 8px 20px rgba(106,90,205,.15);
+  background:linear-gradient(135deg,rgba(106,90,205,.1),rgba(106,90,205,.05));
+}
+.macro-tile:hover::before{opacity:1}
+.macro-tile-val{font-family:var(--font-h);font-size:20px;font-weight:800;color:var(--pu);position:relative;z-index:1}
+.macro-tile-lbl{font-size:10px;color:var(--tx-muted);text-transform:uppercase;letter-spacing:.6px;margin-top:3px;font-weight:600;position:relative;z-index:1}
+.macro-tile.cal .macro-tile-val{color:#F59E0B}
+.macro-tile.prot .macro-tile-val{color:#E53E3E}
+.macro-tile.gluc .macro-tile-val{color:#38A169}
+.macro-tile.lip .macro-tile-val{color:#5A67D8}
+
+/* Meta infos */
+.meta-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:22px;animation:fadeUp .4s ease .15s both}
+.meta-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:12px;
+  background:linear-gradient(135deg,var(--pu-ghost),rgba(106,90,205,.05));
+  font-size:13px;font-weight:600;color:var(--pu);border:1px solid rgba(106,90,205,.12);
+  transition:all .25s cubic-bezier(.4,0,.2,1);
+}
+.meta-chip:hover{background:linear-gradient(135deg,rgba(106,90,205,.1),rgba(106,90,205,.08));border-color:rgba(106,90,205,.25)}
+
+/* Resume */
+.resume-text{font-size:13.5px;color:var(--tx-mid);line-height:1.75;margin-bottom:24px;
+  padding:18px 20px;background:linear-gradient(135deg,rgba(106,90,205,.04),rgba(106,90,205,.02));
+  border-radius:13px;border-left:4px solid var(--pu-lt);
+  animation:fadeUp .4s ease .2s both;
+}
+
+/* Ingredients list */
+.ingr-section-title{font-family:var(--font-h);font-size:15px;font-weight:700;color:var(--tx);
+  margin-bottom:14px;display:flex;align-items:center;gap:8px;animation:fadeUp .4s ease .25s both}
+.ingr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;
+  margin-bottom:24px;animation:fadeUp .4s ease .3s both}
+.ingr-item{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:12px;
+  background:linear-gradient(135deg,var(--pu-ghost),rgba(106,90,205,.04));
+  border:1px solid rgba(106,90,205,.1);
+  transition:all .25s cubic-bezier(.4,0,.2,1);
+}
+.ingr-item:hover{
+  background:linear-gradient(135deg,rgba(106,90,205,.08),rgba(106,90,205,.05));
+  border-color:rgba(106,90,205,.2);
+  transform:translateX(2px);
+}
+.ingr-dot{width:8px;height:8px;border-radius:50%;background:linear-gradient(135deg, var(--pu), var(--pu-lt));
+  flex-shrink:0;box-shadow:0 2px 6px rgba(106,90,205,.3)}
+.ingr-name{font-size:13px;color:var(--tx);font-weight:500;flex:1;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.ingr-qty{font-family:var(--font-m);font-size:11px;color:var(--tx-muted);flex-shrink:0;font-weight:500}
+
+/* Modal actions */
+.modal-actions{display:flex;gap:12px;margin-top:8px;animation:fadeUp .4s ease .35s both}
+.btn-source{flex:1;padding:14px;border-radius:13px;border:2px solid rgba(106,90,205,.15);
+  background:var(--white);font-family:var(--font-b);font-size:13px;font-weight:600;
+  color:var(--tx-mid);cursor:pointer;text-align:center;text-decoration:none;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  transition:all .3s cubic-bezier(.4,0,.2,1);
+}
+.btn-source:hover{background:linear-gradient(135deg,var(--pu-ghost),rgba(106,90,205,.05));
+  border-color:rgba(106,90,205,.3);color:var(--pu);transform:translateY(-2px)}
+.btn-add-journal{flex:1;padding:14px;border-radius:13px;border:none;
+  background:linear-gradient(135deg, var(--pu) 0%, var(--pu-lt) 100%);
+  font-family:var(--font-h);font-size:13px;font-weight:700;color:white;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;
+  transition:all .3s cubic-bezier(.4,0,.2,1);
+  box-shadow:0 6px 20px rgba(106,90,205,.35);
+}
+.btn-add-journal:hover{
+  transform:translateY(-3px);
+  box-shadow:0 10px 28px rgba(106,90,205,.4);
+}
+.btn-add-journal:disabled{background:var(--tx-muted);cursor:not-allowed;box-shadow:none;transform:none}
+
+/* Loader dans modal */
+.modal-loader{text-align:center;padding:70px 20px}
+.modal-loader .spinner{width:40px;height:40px;border:3px solid var(--pu-pale);border-top-color:var(--pu);
+  border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+.modal-loader p{font-size:13.5px;color:var(--tx-muted)}
+
+/* ── PAGE LAYOUT ── */
+.page{max-width:1100px;margin:0 auto;padding:40px 36px 90px}
+
+/* ── RESULTS ── */
+.results-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;animation:fadeUp .4s ease}
+.results-title{font-family:var(--font-h);font-size:18px;font-weight:800;color:var(--tx)}
+.results-count{font-family:var(--font-m);font-size:12px;color:white;
+  background:linear-gradient(135deg, var(--pu) 0%, var(--pu-lt) 100%);
+  padding:4px 12px;border-radius:20px;font-weight:600;box-shadow:0 2px 8px rgba(106,90,205,.2)}
+
+.recipes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:26px;right:26px;z-index:3000;padding:14px 20px;border-radius:14px;
+  font-family:var(--font-b);font-size:13.5px;font-weight:500;
+  transform:translateY(80px);opacity:0;transition:all .4s cubic-bezier(.34,.1,.68,.55);
+  max-width:360px;box-shadow:0 8px 24px rgba(20,15,50,.2);
+  display:flex;align-items:center;gap:10px;
+}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:#ECFDF5;color:#065F46;border:1.5px solid #A7F3D0}
+.toast.error{background:#FEF2F2;color:#991B1B;border:1.5px solid #FCA5A5}
+.toast.info{background:linear-gradient(135deg,var(--pu-pale),rgba(106,90,205,.05));
+  color:var(--pu-dk);border:1.5px solid rgba(106,90,205,.3)}
+.toast::before{content:'';display:inline-block;width:4px;height:4px;border-radius:50%;background:currentColor;flex-shrink:0}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.recipe-card{animation:fadeUp .4s ease both}
+.recipe-card:nth-child(2){animation-delay:.05s}
+.recipe-card:nth-child(3){animation-delay:.1s}
+.recipe-card:nth-child(4){animation-delay:.15s}
+.recipe-card:nth-child(5){animation-delay:.2s}
+.recipe-card:nth-child(6){animation-delay:.25s}
+.recipe-card:nth-child(7){animation-delay:.3s}
+.recipe-card:nth-child(8){animation-delay:.35s}
+.recipe-card:nth-child(9){animation-delay:.4s}
+.recipe-card:nth-child(10){animation-delay:.45s}
+.recipe-card:nth-child(11){animation-delay:.5s}
+.recipe-card:nth-child(12){animation-delay:.55s}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1024px){
+  .recipes-grid{grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
+}
+@media(max-width:768px){
+  .hero{padding:40px 20px 50px;border-radius:0}
+  .hero-title{font-size:32px}
+  .page{padding:24px 16px 60px}
+  .search-row{flex-direction:column}
+  .btn-search{width:100%;justify-content:center}
+  .recipes-grid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+  .macro-strip{grid-template-columns:repeat(2,1fr)}
+  .ingr-grid{grid-template-columns:1fr}
+  .modal-actions{flex-direction:column-reverse}
+  .search-tips{justify-content:center}
+  .search-tips-label{display:none}
+  .modal{border-radius:20px 20px 0 0 !important}
+}
+</style>
+{% endblock %}
+
+{% block body %}
+{% include '_planning_topbar.html.twig' %}
+
+<!-- ═══ HERO ═══ -->
+<div class="hero">
+  <div class="hero-inner">
+    <a href="{{ path('nutrition', {'date': date}) }}" class="hero-back">← Retour au journal</a>
+    <h1 class="hero-title">🍳 Chercheur de Recettes Saines</h1>
+    <p class="hero-subtitle">
+      Entrez les ingrédients que vous avez dans votre frigo et découvrez des recettes équilibrées
+      avec leurs macros (Protéines, Glucides, Lipides) calculées automatiquement.
+    </p>
+    <div class="hero-badge">
+      ⚡ Propulsé par Spoonacular API
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PAGE ═══ -->
+<div class="page">
+
+  <!-- ── CARTE RECHERCHE ── -->
+  <div class="search-card">
+    <div class="search-card-title">🛒 Quels ingrédients avez-vous ?</div>
+    <div class="search-card-desc">Séparez les ingrédients par des virgules. Ex : apple, oats, milk, banana</div>
+
+    <div class="search-row">
+      <div class="search-field-wrap">
+        <span class="search-icon-abs">🥦</span>
+        <input
+          type="text"
+          id="ingredientInput"
+          class="search-field"
+          placeholder="Ex : chicken, rice, tomato, garlic…"
+          autocomplete="off"
+        >
+      </div>
+      <button class="btn-search" id="btnSearch" onclick="searchRecipes()">
+        <span>🔍</span> Chercher des recettes
+      </button>
+    </div>
+
+    <!-- Suggestions rapides -->
+    <div class="search-tips">
+      <span class="search-tips-label">✨ Essayez :</span>
+      <span class="tip-chip" onclick="setIngredients('chicken, garlic, lemon, olive oil')">🍗 Poulet &amp; ail</span>
+      <span class="tip-chip" onclick="setIngredients('oats, banana, milk, honey')">🥣 Avoine &amp; banane</span>
+      <span class="tip-chip" onclick="setIngredients('eggs, cheese, spinach, tomato')">🥚 Oeufs &amp; épinards</span>
+      <span class="tip-chip" onclick="setIngredients('salmon, lemon, dill, capers')">🐟 Saumon &amp; citron</span>
+      <span class="tip-chip" onclick="setIngredients('pasta, tomato, basil, garlic')">🍝 Pâtes &amp; tomate</span>
+    </div>
+  </div>
+
+  <!-- ── ÉTAT INITIAL ── -->
+  <div id="initialState" class="state-box">
+    <div class="state-icon">🥗</div>
+    <div class="state-title">À vos ingrédients !</div>
+    <div class="state-text">
+      Entrez ce que vous avez chez vous, l'API Spoonacular vous trouvera
+      les meilleures recettes qui utilisent au maximum vos ingrédients.
+    </div>
+  </div>
+
+  <!-- ── ÉTAT CHARGEMENT ── -->
+  <div id="loadingState" class="state-box" style="display:none">
+    <div class="spinner"></div>
+    <div class="state-title">Recherche en cours…</div>
+    <div class="state-text">Spoonacular analyse vos ingrédients et cherche les meilleures recettes.</div>
+  </div>
+
+  <!-- ── ÉTAT ERREUR ── -->
+  <div id="errorState" class="state-box" style="display:none">
+    <div class="state-icon">⚠️</div>
+    <div class="state-title" id="errorTitle">Erreur</div>
+    <div class="state-text" id="errorText">Une erreur est survenue.</div>
+  </div>
+
+  <!-- ── ÉTAT AUCUN RÉSULTAT ── -->
+  <div id="emptyState" class="state-box" style="display:none">
+    <div class="state-icon">🤷</div>
+    <div class="state-title">Aucune recette trouvée</div>
+    <div class="state-text">Essayez d'autres ingrédients ou utilisez les suggestions rapides ci-dessus.</div>
+  </div>
+
+  <!-- ── RÉSULTATS ── -->
+  <div id="resultsSection" style="display:none">
+    <div class="results-header">
+      <div class="results-title">🍽️ Recettes suggérées</div>
+      <span class="results-count" id="resultsCount">0 recette</span>
+    </div>
+    <div class="recipes-grid" id="recipesGrid"></div>
+  </div>
+
+</div><!-- /page -->
+
+<!-- ═══ MODAL DÉTAILS RECETTE ═══ -->
+<div class="modal-overlay" id="recipeModal">
+  <div class="modal" id="recipeModalContent">
+
+    <!-- Loader -->
+    <div id="modalLoader" class="modal-loader">
+      <div class="spinner"></div>
+      <p>Chargement des détails…</p>
+    </div>
+
+    <!-- Contenu chargé -->
+    <div id="modalData" style="display:none">
+      <div id="modalImgWrap"></div>
+      <div class="modal-scroll">
+        <div class="modal-close-bar">
+          <div class="modal-title" id="modalTitle">—</div>
+          <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+
+        <!-- Meta : temps + portions -->
+        <div class="meta-row" id="modalMeta"></div>
+
+        <!-- Macros -->
+        <div class="macro-strip" id="modalMacros">
+          <div class="macro-tile cal">
+            <div class="macro-tile-val" id="macCal">—</div>
+            <div class="macro-tile-lbl">Calories</div>
+          </div>
+          <div class="macro-tile prot">
+            <div class="macro-tile-val" id="macProt">—</div>
+            <div class="macro-tile-lbl">Protéines</div>
+          </div>
+          <div class="macro-tile gluc">
+            <div class="macro-tile-val" id="macGluc">—</div>
+            <div class="macro-tile-lbl">Glucides</div>
+          </div>
+          <div class="macro-tile lip">
+            <div class="macro-tile-val" id="macLip">—</div>
+            <div class="macro-tile-lbl">Lipides</div>
+          </div>
+        </div>
+
+        <!-- Résumé -->
+        <div class="resume-text" id="modalResume" style="display:none"></div>
+
+        <!-- Ingrédients -->
+        <div class="ingr-section-title">🧾 Ingrédients <span style="font-size:11px;color:var(--tx-muted);font-weight:400" id="ingrCount"></span></div>
+        <div class="ingr-grid" id="ingrGrid"></div>
+
+        <!-- Actions -->
+        <div class="modal-actions">
+          <a href="#" id="btnSource" class="btn-source" target="_blank" rel="noopener">
+            🔗 Voir la recette complète
+          </a>
+          <button class="btn-add-journal" id="btnAddJournal" onclick="addRecipeToJournal()">
+            ＋ Ajouter au journal
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══ MODALE SÉLECTION REPAS ═══ -->
+<div class="modal-overlay" id="selectMealModal">
+  <div class="modal" style="max-width:500px">
+    <div style="flex-direction:column;align-items:center;padding:40px 30px;text-align:center;display:flex;gap:20px">
+      <div style="font-size:40px">🍽️</div>
+      <div style="font-family:var(--font-h);font-size:20px;font-weight:800;color:var(--tx)">Dans quel repas ?</div>
+      <div style="font-size:14px;color:var(--tx-muted);margin-bottom:10px">Sélectionnez le type de repas pour ajouter cette recette au journal</div>
+      
+      <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:300px">
+        <button onclick="selectMealAndAdd('Petit-déjeuner')" style="padding:12px;border-radius:11px;border:2px solid var(--border);background:var(--white);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;color:var(--tx);font-family:var(--font-b);" onmouseover="this.style.background='var(--pu-ghost)';this.style.borderColor='var(--pu)'" onmouseout="this.style.background='var(--white)';this.style.borderColor='var(--border)'">
+          🌅 Petit-déjeuner
+        </button>
+        <button onclick="selectMealAndAdd('Déjeuner')" style="padding:12px;border-radius:11px;border:2px solid var(--border);background:var(--white);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;color:var(--tx);font-family:var(--font-b);" onmouseover="this.style.background='var(--pu-ghost)';this.style.borderColor='var(--pu)'" onmouseout="this.style.background='var(--white)';this.style.borderColor='var(--border)'">
+          ☀️ Déjeuner
+        </button>
+        <button onclick="selectMealAndAdd('Dîner')" style="padding:12px;border-radius:11px;border:2px solid var(--border);background:var(--white);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;color:var(--tx);font-family:var(--font-b);" onmouseover="this.style.background='var(--pu-ghost)';this.style.borderColor='var(--pu)'" onmouseout="this.style.background='var(--white)';this.style.borderColor='var(--border)'">
+          🌙 Dîner
+        </button>
+        <button onclick="selectMealAndAdd('Snack')" style="padding:12px;border-radius:11px;border:2px solid var(--border);background:var(--white);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;color:var(--tx);font-family:var(--font-b);" onmouseover="this.style.background='var(--pu-ghost)';this.style.borderColor='var(--pu)'" onmouseout="this.style.background='var(--white)';this.style.borderColor='var(--border)'">
+          🍎 Snack
+        </button>
+      </div>
+      
+      <button onclick="closeMealModal()" style="margin-top:10px;padding:10px 20px;border-radius:9px;border:none;background:var(--tx-muted);color:white;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s;font-family:var(--font-b);" onmouseover="this.style.background='var(--tx)'" onmouseout="this.style.background='var(--tx-muted)'">
+        ✕ Annuler
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════════
+const CURRENT_DATE  = '{{ date }}';
+const CURRENT_REPAS = '{{ repas }}';
+
+// Recette courante dans la modal
+let currentRecipe = null;
+
+// ══════════════════════════════════════════════════
+// SUGGESTIONS RAPIDES
+// ══════════════════════════════════════════════════
+function setIngredients(value) {
+  document.getElementById('ingredientInput').value = value;
+  searchRecipes();
+}
+
+// ══════════════════════════════════════════════════
+// RECHERCHE DE RECETTES
+// ══════════════════════════════════════════════════
+async function searchRecipes() {
+  const input = document.getElementById('ingredientInput');
+  const ingredients = input.value.trim();
+
+  if (!ingredients) {
+    showToast('error', '⚠ Veuillez saisir au moins un ingrédient.');
+    input.focus();
+    return;
+  }
+
+  // État : chargement
+  showState('loading');
+  const btn = document.getElementById('btnSearch');
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳</span> Recherche…';
+
+  try {
+    const url = '/nutrition/api/recettes?ingredients=' + encodeURIComponent(ingredients) + '&number=12';
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    if (!data.success) {
+      showState('error');
+      document.getElementById('errorTitle').textContent = 'Erreur API';
+      document.getElementById('errorText').textContent  = data.message || 'Impossible de contacter Spoonacular.';
+      return;
+    }
+
+    if (!data.recettes || data.recettes.length === 0) {
+      showState('empty');
+      return;
+    }
+
+    renderRecipes(data.recettes);
+
+  } catch (err) {
+    showState('error');
+    document.getElementById('errorTitle').textContent = 'Erreur réseau';
+    document.getElementById('errorText').textContent  = 'Vérifiez votre connexion internet et réessayez.';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>🔍</span> Chercher des recettes';
+  }
+}
+
+// ══════════════════════════════════════════════════
+// RENDU DES CARTES RECETTES
+// ══════════════════════════════════════════════════
+function renderRecipes(recettes) {
+  showState('results');
+  const n = recettes.length;
+  document.getElementById('resultsCount').textContent = n + ' recette' + (n > 1 ? 's' : '');
+
+  const grid = document.getElementById('recipesGrid');
+  grid.innerHTML = '';
+
+  recettes.forEach((r, i) => {
+    const card = document.createElement('div');
+    card.className = 'recipe-card';
+    card.style.animationDelay = (i * 0.05) + 's';
+    card.onclick = () => openRecipeModal(r.id);
+
+    // Image
+    const imgHtml = r.image
+      ? `<img src="${r.image}" alt="${escHtml(r.titre)}" class="recipe-img" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">`
+        + `<div class="recipe-img-placeholder" style="display:none">🍽️</div>`
+      : `<div class="recipe-img-placeholder">🍽️</div>`;
+
+    // Badges
+    const usedBadge   = `<span class="badge used">✅ ${r.usedCount} utilisé${r.usedCount > 1 ? 's' : ''}</span>`;
+    const missedBadge = r.missedCount > 0
+      ? `<span class="badge missed">🛒 ${r.missedCount} à acheter</span>`
+      : `<span class="badge used">🎉 Complet !</span>`;
+    const likesBadge  = r.likes > 0 ? `<span class="badge likes">❤️ ${r.likes}</span>` : '';
+
+    // Aperçu ingrédients
+    const usedList   = r.usedIngredients.slice(0,3).map(n => `<span class="hit">${escHtml(n)}</span>`).join(', ');
+    const missedList = r.missedIngredients.slice(0,2).map(n => `<span class="miss">${escHtml(n)}</span>`).join(', ');
+    let ingrPreview  = '';
+    if (usedList)   ingrPreview += '✅ ' + usedList;
+    if (missedList) ingrPreview += (ingrPreview ? '<br>' : '') + '🛒 ' + missedList;
+
+    // Score de compatibilité (% ingrédients utilisés)
+    const total = r.usedCount + r.missedCount;
+    const score = total > 0 ? Math.round(r.usedCount / total * 100) : 100;
+    const scoreColor = score >= 80 ? 'var(--green)' : score >= 50 ? 'var(--orange)' : 'var(--red)';
+
+    card.innerHTML = `
+      ${imgHtml}
+      <div class="recipe-body">
+        <div class="recipe-title">${escHtml(r.titre)}</div>
+        <div class="recipe-badges">${usedBadge}${missedBadge}${likesBadge}</div>
+        ${ingrPreview ? `<div class="recipe-ingr-preview">${ingrPreview}</div>` : ''}
+        <div class="recipe-footer">
+          <button class="btn-detail" onclick="event.stopPropagation();openRecipeModal(${r.id})">Voir la recette →</button>
+          <span class="recipe-score" style="color:${scoreColor};font-weight:700">${score}% match</span>
+        </div>
+      </div>
+    `;
+
+    grid.appendChild(card);
+  });
+}
+
+// ══════════════════════════════════════════════════
+// MODAL : DÉTAILS RECETTE
+// ══════════════════════════════════════════════════
+async function openRecipeModal(id) {
+  // Afficher la modal en mode loading
+  document.getElementById('modalLoader').style.display = 'block';
+  document.getElementById('modalData').style.display   = 'none';
+  document.getElementById('recipeModal').classList.add('open');
+
+  try {
+    const res  = await fetch(`/nutrition/api/recette/${id}`);
+    const data = await res.json();
+
+    if (!data.success) {
+      closeModal();
+      showToast('error', '⚠ ' + (data.message || 'Erreur lors du chargement.'));
+      return;
+    }
+
+    populateModal(data.recette);
+
+  } catch (err) {
+    closeModal();
+    showToast('error', '⚠ Erreur réseau lors du chargement de la recette.');
+  }
+}
+
+function populateModal(r) {
+  currentRecipe = r;
+
+  // Image
+  const imgWrap = document.getElementById('modalImgWrap');
+  imgWrap.innerHTML = r.image
+    ? `<img src="${r.image}" alt="${escHtml(r.titre)}" class="modal-img" onerror="this.style.display='none'">`
+    : `<div class="modal-img-placeholder">🍳</div>`;
+
+  // Titre
+  document.getElementById('modalTitle').textContent = r.titre;
+
+  // Meta
+  const meta = document.getElementById('modalMeta');
+  let metaHtml = '';
+  if (r.temps) metaHtml += `<span class="meta-chip">⏱ ${r.temps} min</span>`;
+  if (r.portions) metaHtml += `<span class="meta-chip">👥 ${r.portions} portion${r.portions > 1 ? 's' : ''}</span>`;
+  meta.innerHTML = metaHtml;
+
+  // Macros
+  document.getElementById('macCal').textContent  = Math.round(r.calories)   + ' kcal';
+  document.getElementById('macProt').textContent = r.proteines.toFixed(1)   + 'g';
+  document.getElementById('macGluc').textContent = r.glucides.toFixed(1)    + 'g';
+  document.getElementById('macLip').textContent  = r.lipides.toFixed(1)     + 'g';
+
+  // Résumé
+  const resumeEl = document.getElementById('modalResume');
+  if (r.resume && r.resume.trim()) {
+    resumeEl.textContent   = r.resume;
+    resumeEl.style.display = 'block';
+  } else {
+    resumeEl.style.display = 'none';
+  }
+
+  // Ingrédients
+  const grid  = document.getElementById('ingrGrid');
+  const count = document.getElementById('ingrCount');
+  count.textContent = `(${r.ingredients.length} ingrédient${r.ingredients.length > 1 ? 's' : ''})`;
+  grid.innerHTML = r.ingredients.map(ing => `
+    <div class="ingr-item" title="${escHtml(ing.original)}">
+      <div class="ingr-dot"></div>
+      <div class="ingr-name">${escHtml(ing.nom || ing.original)}</div>
+      <div class="ingr-qty">${ing.quantite ? ing.quantite + (ing.unite ? ' ' + ing.unite : '') : ''}</div>
+    </div>
+  `).join('');
+
+  // Source
+  const btnSrc = document.getElementById('btnSource');
+  if (r.sourceUrl) {
+    btnSrc.href  = r.sourceUrl;
+    btnSrc.style.display = 'flex';
+  } else {
+    btnSrc.style.display = 'none';
+  }
+
+  // Afficher les données
+  document.getElementById('modalLoader').style.display = 'none';
+  document.getElementById('modalData').style.display   = 'block';
+}
+
+function closeModal() {
+  document.getElementById('recipeModal').classList.remove('open');
+  currentRecipe = null;
+}
+
+// Fermer en cliquant en dehors
+document.getElementById('recipeModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ══════════════════════════════════════════════════
+// AJOUTER AU JOURNAL (avec sélection du repas)
+// ══════════════════════════════════════════════════
+async function addRecipeToJournal() {
+  if (!currentRecipe) return;
+
+  // Afficher la modale de sélection du repas
+  document.getElementById('selectMealModal').classList.add('open');
+}
+
+function closeMealModal() {
+  document.getElementById('selectMealModal').classList.remove('open');
+}
+
+async function selectMealAndAdd(mealType) {
+  if (!currentRecipe) return;
+
+  // Fermer la modale
+  closeMealModal();
+
+  // Afficher un message de chargement
+  showToast('info', '⏳ Ajout de la recette au journal...');
+
+  try {
+    const response = await fetch('/nutrition/api/ajouter-recette', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        recipe_id: currentRecipe.id,
+        recipe_title: currentRecipe.titre,
+        calories: currentRecipe.calories,
+        proteines: currentRecipe.proteines,
+        glucides: currentRecipe.glucides,
+        lipides: currentRecipe.lipides,
+        meal_type: mealType,
+        date: CURRENT_DATE,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      showToast('success', `✅ ${currentRecipe.titre} ajouté au ${mealType.toLowerCase()} !`);
+      closeModal();
+      
+      // Rediriger vers le journal après 2s
+      setTimeout(() => {
+        window.location.href = '/nutrition?date=' + CURRENT_DATE;
+      }, 2000);
+    } else {
+      showToast('error', '⚠ ' + (data.message || 'Erreur lors de l\'ajout.'));
+    }
+  } catch (err) {
+    showToast('error', '⚠ Erreur réseau lors de l\'ajout.');
+    console.error(err);
+  }
+}
+
+// ══════════════════════════════════════════════════
+// GESTION DES ÉTATS DE LA PAGE
+// ══════════════════════════════════════════════════
+function showState(state) {
+  const states = {
+    initial:  document.getElementById('initialState'),
+    loading:  document.getElementById('loadingState'),
+    error:    document.getElementById('errorState'),
+    empty:    document.getElementById('emptyState'),
+    results:  document.getElementById('resultsSection'),
+  };
+  Object.entries(states).forEach(([key, el]) => {
+    if (el) el.style.display = key === state ? (key === 'results' ? 'block' : 'block') : 'none';
+  });
+}
+
+// ══════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════
+function escHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(type, msg) {
+  const t = document.getElementById('toast');
+  t.className    = 'toast ' + type;
+  t.textContent  = msg;
+  t.classList.add('show');
+  clearTimeout(t._to);
+  t._to = setTimeout(() => t.classList.remove('show'), 3800);
+}
+
+// Lancer la recherche avec "Entrée"
+document.getElementById('ingredientInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') searchRecipes();
+});
+</script>
+{% endblock %}

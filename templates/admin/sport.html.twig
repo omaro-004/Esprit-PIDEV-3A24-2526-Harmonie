@@ -1,0 +1,1045 @@
+{% extends 'admin/base.html.twig' %}
+{% block title %}Gestion Sport — Harmony{% endblock %}
+{% block page_title %}🏋️ Gestion du Sport{% endblock %}
+
+{% block stylesheets %}
+<style>
+    :root {
+        --spt-green: #10B981; --spt-green-dark: #059669; --spt-green-pale: #D1FAE5;
+        --spt-blue: #3B82F6; --spt-orange: #F59E0B; --spt-red: #EF4444;
+        --spt-pink: #EC4899; --spt-pink-pale: #FCE7F3;
+        --spt-blue-pale: #DBEAFE;
+    }
+
+    /* ── SECTION TABS (Femme / Homme / Tous) ── */
+    .section-tabs {
+        display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;
+    }
+    .section-tab {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 10px 22px; border-radius: 40px; font-size: 13.5px; font-weight: 700;
+        border: 2px solid var(--border); background: var(--white); cursor: pointer;
+        font-family: var(--font-body); transition: all .18s; color: var(--text-muted);
+    }
+    .section-tab.all.active,
+    .section-tab.all:hover   { border-color: var(--spt-green); color: var(--spt-green-dark); background: var(--spt-green-pale); }
+    .section-tab.femme.active,
+    .section-tab.femme:hover { border-color: var(--spt-pink);  color: #be185d; background: var(--spt-pink-pale); }
+    .section-tab.homme.active,
+    .section-tab.homme:hover { border-color: var(--spt-blue);  color: #1d4ed8; background: var(--spt-blue-pale); }
+    .section-tab .tab-count  { font-size: 11px; padding: 2px 7px; border-radius: 20px; background: rgba(0,0,0,.06); }
+
+    /* ── CATEGORY PILLS (sous les onglets) ── */
+    .cat-pills {
+        display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; min-height: 36px;
+        transition: opacity .15s;
+    }
+    .cat-pill {
+        padding: 6px 16px; border-radius: 30px; font-size: 12px; font-weight: 600;
+        border: 1.5px solid var(--border); background: var(--white); cursor: pointer;
+        font-family: var(--font-body); transition: all .15s; color: var(--text-mid);
+    }
+    .cat-pill:hover         { border-color: var(--spt-green); color: var(--spt-green-dark); background: var(--spt-green-pale); }
+    .cat-pill.active        { background: var(--spt-green); color: #fff; border-color: var(--spt-green); }
+    .section-femme .cat-pill.active { background: var(--spt-pink); border-color: var(--spt-pink); }
+    .section-homme .cat-pill.active { background: var(--spt-blue); border-color: var(--spt-blue); }
+
+    /* ── TOOLBAR ── */
+    .s-toolbar {
+        display: flex; align-items: center; gap: 12px; margin-bottom: 22px; flex-wrap: wrap;
+        background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 14px 18px;
+    }
+    .s-search-wrap { position: relative; flex: 1; min-width: 200px; }
+    .s-search-wrap .si { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); font-size: 14px; pointer-events: none; opacity: .5; }
+    .s-search { width: 100%; padding: 9px 14px 9px 40px; border: 1.5px solid var(--border); border-radius: 10px; font-family: var(--font-body); font-size: 13.5px; color: var(--text); background: var(--purple-ghost); outline: none; transition: border-color .15s; }
+    .s-search:focus { border-color: var(--spt-green); background: #fff; }
+    .s-select { padding: 9px 13px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 13px; font-family: var(--font-body); color: var(--text); background: var(--purple-ghost); outline: none; cursor: pointer; }
+    .s-select:focus { border-color: var(--spt-green); }
+    .view-toggle { display: flex; border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .view-btn { padding: 8px 14px; background: none; border: none; cursor: pointer; font-size: 12.5px; font-weight: 500; color: var(--text-muted); font-family: var(--font-body); transition: .12s; }
+    .view-btn.active { background: var(--spt-green-pale); color: var(--spt-green-dark); }
+    .btn-add-ex { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; background: linear-gradient(135deg, var(--spt-green), var(--spt-green-dark)); color: #fff; border: none; border-radius: 10px; font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 14px rgba(16,185,129,.35); transition: .15s; white-space: nowrap; }
+    .btn-add-ex:hover { transform: translateY(-1px); }
+
+    /* ── STATS ── */
+    .s-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+    .s-stat { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; display: flex; align-items: center; gap: 14px; transition: box-shadow .2s; }
+    .s-stat:hover { box-shadow: 0 4px 18px rgba(0,0,0,.07); }
+    .s-stat-icon { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; font-size: 20px; flex-shrink: 0; }
+    .s-stat-val { font-family: var(--font-head); font-size: 26px; font-weight: 800; color: var(--text); line-height: 1; }
+    .s-stat-lbl { font-size: 11.5px; color: var(--text-muted); margin-top: 3px; }
+
+    /* ── CHART SECTION ── */
+    .chart-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+    .chart-card { background: var(--white); border: 1px solid var(--border); border-radius: 18px; padding: 22px 24px; box-shadow: 0 2px 12px rgba(0,0,0,.04); transition: box-shadow .2s; }
+    .chart-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,.09); }
+    .chart-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+    .chart-card-title { font-family: var(--font-head); font-size: 15px; font-weight: 800; color: var(--text); display: flex; align-items: center; gap: 8px; }
+    .chart-card-subtitle { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+    .chart-refresh-btn { padding: 6px 12px; border: 1.5px solid var(--border); border-radius: 8px; background: none; font-size: 11.5px; font-family: var(--font-body); color: var(--text-muted); cursor: pointer; transition: .12s; }
+    .chart-refresh-btn:hover { border-color: var(--spt-green); color: var(--spt-green); background: var(--spt-green-pale); }
+    .chart-canvas-wrap { position: relative; height: 280px; display: flex; align-items: center; justify-content: center; }
+    .chart-canvas-wrap canvas { max-height: 280px; }
+    .chart-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 10px; background: var(--white); border-radius: 12px; z-index: 2; }
+    .chart-loading .spinner { width: 34px; height: 34px; border: 3px solid var(--spt-green-pale); border-top-color: var(--spt-green); border-radius: 50%; animation: spin .7s linear infinite; }
+    .chart-loading p { font-size: 12px; color: var(--text-muted); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .chart-legend { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-mid); }
+    .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .legend-pct { font-weight: 700; color: var(--text); }
+    .chart-card.full-width { grid-column: 1 / -1; }
+
+    /* ── EXERCISE CARD ── */
+    .ex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 18px; }
+    .ex-card { background: var(--white); border: 1.5px solid var(--border); border-radius: 18px; overflow: hidden; transition: border-color .2s, transform .2s, box-shadow .2s; }
+    .ex-card:hover { transform: translateY(-4px); box-shadow: 0 12px 36px rgba(0,0,0,.1); border-color: var(--spt-green); }
+
+    /* ── CATEGORY IMAGE BANNER ── */
+    .ex-cat-banner {
+        height: 120px; position: relative; overflow: hidden;
+        display: flex; align-items: center; justify-content: center;
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+    }
+    .ex-cat-banner img {
+        width: 100%; height: 100%; object-fit: cover; display: block;
+        transition: transform .3s;
+    }
+    .ex-card:hover .ex-cat-banner img { transform: scale(1.06); }
+    .ex-cat-banner .cat-overlay {
+        position: absolute; inset: 0;
+        background: linear-gradient(to top, rgba(0,0,0,.55) 0%, rgba(0,0,0,.1) 60%, transparent 100%);
+    }
+    .ex-cat-banner .cat-emoji {
+        position: absolute; bottom: 10px; right: 12px;
+        font-size: 26px; filter: drop-shadow(0 2px 4px rgba(0,0,0,.4));
+    }
+    /* Video play button overlay */
+    .video-thumb-overlay {
+        position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; cursor: pointer;
+    }
+    .play-btn { width: 46px; height: 46px; border-radius: 50%; background: rgba(255,255,255,.2); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,.4); transition: .2s; }
+    .play-btn:hover { background: rgba(16,185,129,.7); transform: scale(1.1); }
+    .play-btn svg { width: 18px; height: 18px; fill: #fff; margin-left: 3px; }
+
+    /* Section gender badge */
+    .gender-badge {
+        position: absolute; top: 10px; left: 10px;
+        padding: 3px 10px; border-radius: 20px; font-size: 10.5px; font-weight: 700;
+        backdrop-filter: blur(6px);
+    }
+    .gender-badge.femme { background: rgba(236,72,153,.85); color: #fff; }
+    .gender-badge.homme { background: rgba(59,130,246,.85);  color: #fff; }
+    .gender-badge.neutre { background: rgba(16,185,129,.85); color: #fff; }
+
+    .ex-body { padding: 14px 16px; }
+    .ex-name { font-family: var(--font-head); font-size: 14.5px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+    .ex-type-badge { display: inline-block; font-size: 10px; padding: 3px 10px; border-radius: 20px; font-weight: 600; background: var(--spt-green-pale); color: var(--spt-green-dark); }
+    .ex-video-link { display: block; margin-top: 8px; font-size: 12px; color: var(--spt-green); text-decoration: none; word-break: break-all; }
+    .ex-video-link:hover { text-decoration: underline; }
+    .no-video-text { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
+    .ex-footer { padding: 10px 14px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
+    .btn-ex { flex: 1; padding: 7px; border-radius: 9px; font-size: 12px; font-weight: 600; border: 1.5px solid var(--border); cursor: pointer; background: none; font-family: var(--font-body); transition: .12s; text-align: center; }
+    .btn-ex-edit { color: var(--purple); }
+    .btn-ex-edit:hover { background: var(--purple-pale); border-color: var(--purple); }
+    .btn-ex-del { color: #E05252; }
+    .btn-ex-del:hover { background: #FEE2E2; border-color: #FCA5A5; }
+
+    /* ── LIST VIEW ── */
+    .s-table-card { background: var(--white); border: 1px solid var(--border); border-radius: 18px; overflow: hidden; }
+    table.s-table { width: 100%; border-collapse: collapse; }
+    table.s-table th { padding: 11px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: var(--text-muted); background: var(--purple-ghost); border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; white-space: nowrap; }
+    table.s-table th:hover { color: var(--spt-green); }
+    table.s-table th.sorted-asc::after  { content: ' ▲'; }
+    table.s-table th.sorted-desc::after { content: ' ▼'; }
+    table.s-table td { padding: 12px 16px; font-size: 13.5px; color: var(--text); border-bottom: 1px solid var(--purple-ghost); vertical-align: middle; }
+    table.s-table tr:last-child td { border: none; }
+    table.s-table tr:hover td { background: rgba(16,185,129,.04); }
+    .vid-link { color: var(--spt-green); font-size: 12px; text-decoration: none; }
+    .vid-link:hover { text-decoration: underline; }
+    .no-vid { color: var(--text-muted); font-size: 12px; }
+    .act-row { display: flex; gap: 6px; }
+    .btn-sm-act { padding: 5px 11px; border-radius: 8px; font-size: 12px; font-weight: 500; border: 1.5px solid var(--border); cursor: pointer; background: none; font-family: var(--font-body); transition: .12s; }
+    .btn-sm-edit { color: var(--purple); }
+    .btn-sm-edit:hover { background: var(--purple-pale); border-color: var(--purple); }
+    .btn-sm-del { color: #E05252; }
+    .btn-sm-del:hover { background: #FEE2E2; border-color: #FCA5A5; }
+    .empty-state-ex { text-align: center; padding: 50px; color: var(--text-muted); font-size: 14px; }
+
+    /* ── MODAL ── */
+    .s-modal-overlay { position: fixed; inset: 0; background: rgba(10,8,28,.55); display: flex; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(6px); opacity: 0; pointer-events: none; transition: opacity .2s; }
+    .s-modal-overlay.open { opacity: 1; pointer-events: all; }
+    .s-modal { background: var(--white); border-radius: 22px; width: 520px; max-width: 95vw; max-height: 92vh; overflow-y: auto; box-shadow: 0 32px 80px rgba(0,0,0,.22); transform: scale(.95) translateY(14px); transition: transform .25s; }
+    .s-modal-overlay.open .s-modal { transform: scale(1) translateY(0); }
+    .s-modal-header { padding: 22px 26px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, #F0FDF4, #ECFDF5); }
+    .s-modal-title { font-family: var(--font-head); font-size: 17px; font-weight: 800; color: var(--text); }
+    .s-modal-close { background: none; border: none; cursor: pointer; font-size: 20px; color: var(--text-muted); width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; transition: .12s; }
+    .s-modal-close:hover { background: var(--spt-green-pale); color: var(--spt-green); }
+    .s-modal-body { padding: 24px 26px; }
+    .s-form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+    .s-form-group label { font-size: 12px; font-weight: 600; color: var(--text-mid); }
+    .s-form-group input, .s-form-group select, .s-form-group textarea { padding: 10px 13px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; font-family: var(--font-body); color: var(--text); background: var(--purple-ghost); outline: none; transition: border-color .15s, box-shadow .15s; width: 100%; }
+    .s-form-group input:focus, .s-form-group select:focus, .s-form-group textarea:focus { border-color: var(--spt-green); background: #fff; box-shadow: 0 0 0 3px rgba(16,185,129,.12); }
+    .s-form-group.has-err input, .s-form-group.has-err select { border-color: var(--spt-red); }
+    .s-form-group .err-msg { font-size: 11.5px; color: var(--spt-red); display: none; font-weight: 500; }
+    .s-form-group.has-err .err-msg { display: block; }
+    .req-star { color: var(--spt-red); }
+    .url-preview-box { margin-top: 8px; padding: 9px 12px; background: var(--purple-ghost); border-radius: 9px; font-size: 12px; color: var(--text-muted); word-break: break-all; display: none; border: 1px dashed var(--border); }
+    .url-preview-box.show { display: block; }
+
+    /* Type selector with section quick-picks */
+    .type-quick-picks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .type-pick { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; border: 1.5px solid var(--border); background: var(--white); cursor: pointer; transition: .12s; }
+    .type-pick.femme { border-color: #f9a8d4; color: #be185d; }
+    .type-pick.femme:hover { background: var(--spt-pink-pale); border-color: var(--spt-pink); }
+    .type-pick.homme { border-color: #93c5fd; color: #1d4ed8; }
+    .type-pick.homme:hover { background: var(--spt-blue-pale); border-color: var(--spt-blue); }
+
+    /* ── YOUTUBE SEARCH PANEL ── */
+    .yt-search-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+    .btn-yt-search { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 9px; font-size: 12.5px; font-weight: 600; border: 1.5px solid #FF0000; color: #FF0000; background: none; font-family: var(--font-body); cursor: pointer; transition: .15s; white-space: nowrap; flex-shrink: 0; }
+    .btn-yt-search:hover { background: #FFF0F0; }
+    .btn-yt-search:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-yt-search svg { width: 16px; height: 16px; fill: #FF0000; }
+    .yt-results-panel { margin-top: 12px; border: 1.5px solid #FFE0E0; border-radius: 14px; background: #FFF8F8; overflow: hidden; display: none; }
+    .yt-results-panel.open { display: block; }
+    .yt-results-header { padding: 10px 14px; background: #FF0000; display: flex; align-items: center; justify-content: space-between; }
+    .yt-results-header span { color: #fff; font-size: 12.5px; font-weight: 700; }
+    .btn-yt-close { background: none; border: none; color: #fff; cursor: pointer; font-size: 16px; line-height: 1; padding: 0 2px; }
+    .yt-results-list { padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+    .yt-result-item { display: flex; align-items: center; gap: 10px; padding: 9px 11px; border-radius: 10px; background: #fff; border: 1.5px solid #FFD5D5; cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+    .yt-result-item:hover { border-color: #FF0000; box-shadow: 0 3px 12px rgba(255,0,0,.12); }
+    .yt-result-item.selected { border-color: #10B981; background: #F0FDF4; }
+    .yt-thumb { width: 80px; height: 52px; object-fit: cover; border-radius: 7px; flex-shrink: 0; background: #eee; }
+    .yt-result-info { flex: 1; min-width: 0; }
+    .yt-result-title { font-size: 12.5px; font-weight: 600; color: #111; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.35; }
+    .yt-result-channel { font-size: 11px; color: #888; margin-top: 3px; }
+    .yt-select-badge { font-size: 10.5px; font-weight: 700; color: #10B981; background: #D1FAE5; padding: 3px 8px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
+    .yt-result-item.selected .yt-select-badge { background: #10B981; color: #fff; }
+    .yt-loading { padding: 22px; text-align: center; font-size: 13px; color: #888; display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .yt-spinner { width: 22px; height: 22px; border: 3px solid #FFD5D5; border-top-color: #FF0000; border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
+    .yt-empty { padding: 18px; text-align: center; font-size: 13px; color: #888; }
+    .yt-error { padding: 14px; background: #FEE2E2; color: #B91C1C; font-size: 12.5px; border-radius: 8px; margin: 8px; }
+
+    .s-modal-footer { padding: 16px 26px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; background: var(--purple-ghost); border-radius: 0 0 22px 22px; }
+    .btn-s-cancel { padding: 10px 20px; background: var(--white); border: 1.5px solid var(--border); border-radius: 10px; font-family: var(--font-body); font-size: 13px; cursor: pointer; color: var(--text-mid); }
+    .btn-s-save { padding: 10px 24px; background: linear-gradient(135deg, var(--spt-green), var(--spt-green-dark)); color: #fff; border: none; border-radius: 10px; font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 14px rgba(16,185,129,.35); transition: .15s; }
+    .btn-s-save:hover { transform: translateY(-1px); }
+
+    /* Delete modal */
+    .del-overlay { position: fixed; inset: 0; background: rgba(10,8,28,.55); display: flex; align-items: center; justify-content: center; z-index: 3000; backdrop-filter: blur(6px); opacity: 0; pointer-events: none; transition: opacity .2s; }
+    .del-overlay.open { opacity: 1; pointer-events: all; }
+    .del-box { background: var(--white); border-radius: 20px; width: 400px; max-width: 95vw; padding: 32px; box-shadow: 0 32px 80px rgba(0,0,0,.22); text-align: center; transform: scale(.92); transition: transform .2s; }
+    .del-overlay.open .del-box { transform: scale(1); }
+    .del-icon { font-size: 48px; margin-bottom: 12px; }
+    .del-title { font-family: var(--font-head); font-size: 18px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
+    .del-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5; }
+    .del-actions { display: flex; gap: 10px; justify-content: center; }
+    .btn-del-cancel { padding: 10px 22px; background: var(--purple-ghost); border: 1.5px solid var(--border); border-radius: 10px; font-family: var(--font-body); font-size: 13px; cursor: pointer; color: var(--text-mid); }
+    .btn-del-confirm { padding: 10px 22px; background: #EF4444; color: #fff; border: none; border-radius: 10px; font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 28px; right: 28px; padding: 13px 20px; border-radius: 12px; font-size: 13.5px; font-weight: 600; color: #fff; box-shadow: 0 8px 28px rgba(0,0,0,.2); z-index: 9999; transform: translateY(20px); opacity: 0; transition: all .3s; pointer-events: none; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { background: var(--spt-green); }
+    .toast.error { background: var(--spt-red); }
+
+    @keyframes cardIn { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
+    .card-anim { animation: cardIn .25s ease both; }
+
+    /* Loading skeleton for search */
+    .search-loading { text-align:center; padding:40px; color:var(--text-muted); font-size:13px; grid-column:1/-1; }
+
+    @media (max-width: 900px) {
+        .chart-section { grid-template-columns: 1fr; }
+        .chart-card.full-width { grid-column: auto; }
+        .s-stats { grid-template-columns: repeat(2,1fr); }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+
+{# ── SECTION TABS ── #}
+<div class="section-tabs" id="sectionTabs">
+    <button class="section-tab all active" data-section="" onclick="setSection('')">
+        🏋️ Tous <span class="tab-count" id="cnt-all">—</span>
+    </button>
+    <button class="section-tab femme" data-section="femme" onclick="setSection('femme')">
+        👩 Section Femme <span class="tab-count" id="cnt-femme">—</span>
+    </button>
+    <button class="section-tab homme" data-section="homme" onclick="setSection('homme')">
+        👨 Section Homme <span class="tab-count" id="cnt-homme">—</span>
+    </button>
+</div>
+
+{# ── CATEGORY PILLS ── #}
+<div class="cat-pills" id="catPills"></div>
+
+{# ── TOOLBAR ── #}
+<div class="s-toolbar">
+    <div class="s-search-wrap">
+        <span class="si">🔍</span>
+        <input type="text" class="s-search" id="exSearch" placeholder="Rechercher par nom ou type…"
+               oninput="debounceSearch()">
+    </div>
+    <select class="s-select" id="typeFilter" onchange="reload()">
+        <option value="">Tous les types</option>
+    </select>
+    <select class="s-select" id="sortSelectEx" onchange="reload()">
+        <option value="nom_asc">Nom A → Z</option>
+        <option value="nom_desc">Nom Z → A</option>
+        <option value="type_asc">Type A → Z</option>
+        <option value="type_desc">Type Z → A</option>
+    </select>
+    <div class="view-toggle">
+        <button class="view-btn active" id="btnGrid" onclick="setView('grid')">⊞ Grille</button>
+        <button class="view-btn" id="btnList" onclick="setView('list')">≡ Liste</button>
+    </div>
+    <button class="btn-add-ex" onclick="openExModal()">＋ Ajouter un exercice</button>
+</div>
+
+{# ── STATS ── #}
+<div class="s-stats">
+    <div class="s-stat">
+        <div class="s-stat-icon" style="background:#D1FAE5;">🏋️</div>
+        <div><div class="s-stat-val" id="s-total">—</div><div class="s-stat-lbl">Total exercices</div></div>
+    </div>
+    <div class="s-stat">
+        <div class="s-stat-icon" style="background:#DBEAFE;">🏷️</div>
+        <div><div class="s-stat-val" id="s-types">—</div><div class="s-stat-lbl">Types distincts</div></div>
+    </div>
+    <div class="s-stat">
+        <div class="s-stat-icon" style="background:#FEF3C7;">🎬</div>
+        <div><div class="s-stat-val" id="s-videos">—</div><div class="s-stat-lbl">Avec vidéo</div></div>
+    </div>
+    <div class="s-stat">
+        <div class="s-stat-icon" style="background:#EDE9FE;">📊</div>
+        <div><div class="s-stat-val" id="s-affiches">—</div><div class="s-stat-lbl">Affichés</div></div>
+    </div>
+</div>
+
+{# ── GRAPHIQUES ── #}
+<div class="chart-section">
+    <div class="chart-card">
+        <div class="chart-card-header">
+            <div>
+                <div class="chart-card-title">🥧 Répartition par type d'exercice</div>
+                <div class="chart-card-subtitle">Popularité relative de chaque catégorie</div>
+            </div>
+            <button class="chart-refresh-btn" onclick="loadCharts()">↻ Actualiser</button>
+        </div>
+        <div class="chart-canvas-wrap">
+            <div class="chart-loading" id="loadingDoughnut">
+                <div class="spinner"></div>
+                <p>Chargement des statistiques…</p>
+            </div>
+            <canvas id="chartDoughnut"></canvas>
+        </div>
+        <div class="chart-legend" id="legendDoughnut"></div>
+    </div>
+
+    <div class="chart-card">
+        <div class="chart-card-header">
+            <div>
+                <div class="chart-card-title">📊 Nombre d'exercices par type</div>
+                <div class="chart-card-subtitle">Vue détaillée en barres horizontales</div>
+            </div>
+            <button class="chart-refresh-btn" onclick="loadCharts()">↻ Actualiser</button>
+        </div>
+        <div class="chart-canvas-wrap">
+            <div class="chart-loading" id="loadingBar">
+                <div class="spinner"></div>
+                <p>Chargement des statistiques…</p>
+            </div>
+            <canvas id="chartBar"></canvas>
+        </div>
+    </div>
+</div>
+
+{# ── GRID VIEW ── #}
+<div id="gridView" class="ex-grid"></div>
+
+{# ── LIST VIEW ── #}
+<div id="listView" class="s-table-card" style="display:none;">
+    <table class="s-table">
+        <thead>
+        <tr>
+            <th id="th-nom"  onclick="colSortEx('nom_asc','nom_desc','th-nom')">Nom</th>
+            <th id="th-type" onclick="colSortEx('type_asc','type_desc','th-type')">Type</th>
+            <th>Vidéo / URL</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody id="listBody"></tbody>
+    </table>
+</div>
+
+{# ── MODAL ADD/EDIT ── #}
+<div class="s-modal-overlay" id="exModalOverlay" onclick="if(event.target===this)closeExModal()">
+    <div class="s-modal">
+        <div class="s-modal-header">
+            <div class="s-modal-title" id="exModalTitle">🏋️ Ajouter un exercice</div>
+            <button class="s-modal-close" onclick="closeExModal()">✕</button>
+        </div>
+        <div class="s-modal-body">
+            <input type="hidden" id="exEditId">
+            <div class="s-form-group" id="efg-nom">
+                <label>Nom de l'exercice <span class="req-star">*</span></label>
+                <input type="text" id="ef-nom" placeholder="Ex : Course à pied" maxlength="100">
+                <span class="err-msg">Ce champ est obligatoire</span>
+            </div>
+            <div class="s-form-group" id="efg-type">
+                <label>Type d'exercice <span class="req-star">*</span></label>
+                <input type="text" id="ef-type" placeholder="Ex : Cardio_Homme, Force_Femme…" maxlength="100" list="typeList">
+                <datalist id="typeList"></datalist>
+                <span class="err-msg">Ce champ est obligatoire</span>
+                {# Raccourcis rapides #}
+                <div class="type-quick-picks" id="typeQuickPicks">
+                    <span style="font-size:11px;font-weight:600;color:var(--text-muted);align-self:center;">👩 Femme :</span>
+                    <button type="button" class="type-pick femme" onclick="setTypeVal('Cardio_Femme')">Cardio</button>
+                    <button type="button" class="type-pick femme" onclick="setTypeVal('Force_Femme')">Force</button>
+                    <button type="button" class="type-pick femme" onclick="setTypeVal('Souplesse_Femme')">Souplesse</button>
+                    <button type="button" class="type-pick femme" onclick="setTypeVal('HIIT_Femme')">HIIT</button>
+                    <button type="button" class="type-pick femme" onclick="setTypeVal('Yoga_Femme')">Yoga</button>
+                    <span style="font-size:11px;font-weight:600;color:var(--text-muted);align-self:center;margin-left:6px;">👨 Homme :</span>
+                    <button type="button" class="type-pick homme" onclick="setTypeVal('Cardio_Homme')">Cardio</button>
+                    <button type="button" class="type-pick homme" onclick="setTypeVal('Force_Homme')">Force</button>
+                    <button type="button" class="type-pick homme" onclick="setTypeVal('Souplesse_Homme')">Souplesse</button>
+                    <button type="button" class="type-pick homme" onclick="setTypeVal('HIIT_Homme')">HIIT</button>
+                    <button type="button" class="type-pick homme" onclick="setTypeVal('Musculation_Homme')">Musculation</button>
+                </div>
+            </div>
+            <div class="s-form-group" id="efg-url">
+                <label>URL Vidéo (YouTube / Vimeo / autre)</label>
+                <div class="yt-search-row">
+                    <input type="text" id="ef-url" placeholder="https://youtube.com/watch?v=…" oninput="updateUrlPreview()" style="flex:1;">
+                    <button type="button" class="btn-yt-search" id="btnYtSearch" onclick="searchYouTube()" title="Rechercher sur YouTube">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                        </svg>
+                        Rechercher
+                    </button>
+                </div>
+                <div class="url-preview-box" id="urlPreviewBox"></div>
+                <div class="yt-results-panel" id="ytResultsPanel">
+                    <div class="yt-results-header">
+                        <span>🎬 Résultats YouTube — cliquez pour sélectionner</span>
+                        <button type="button" class="btn-yt-close" onclick="closeYtPanel()" title="Fermer">✕</button>
+                    </div>
+                    <div id="ytResultsBody">
+                        <div class="yt-loading"><div class="yt-spinner"></div> Recherche en cours…</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="s-modal-footer">
+            <button class="btn-s-cancel" onclick="closeExModal()">Annuler</button>
+            <button class="btn-s-save" onclick="saveExercise()">💾 Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+{# ── MODAL DELETE ── #}
+<div class="del-overlay" id="delExOverlay">
+    <div class="del-box">
+        <div class="del-icon">🗑️</div>
+        <div class="del-title">Supprimer cet exercice ?</div>
+        <div class="del-sub" id="delExSub">Cette action est irréversible.</div>
+        <div class="del-actions">
+            <button class="btn-del-cancel" onclick="closeDelEx()">Annuler</button>
+            <button class="btn-del-confirm" onclick="confirmDelEx()">Supprimer</button>
+        </div>
+    </div>
+</div>
+
+{# ── TOAST ── #}
+<div class="toast" id="toastEx"></div>
+
+{% endblock %}
+
+{% block javascripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════
+let exercises        = [];      // Résultats actuels (depuis le serveur)
+let allExercises     = [];      // Cache complet (pour compter les sections)
+let deleteExId       = null;
+let currentView      = 'grid';
+let currentSection   = '';      // '' | 'femme' | 'homme'
+let currentCat       = '';      // type exact sélectionné via pills
+let currentColSort   = 'nom_asc';
+let searchTimer      = null;
+
+// Chart.js instances
+let chartDoughnutInstance = null;
+let chartBarInstance      = null;
+
+const API = {
+    list:   (p) => '/admin/sport/api/list?' + new URLSearchParams(p),
+    types:  '/admin/sport/api/types',
+    create: '/admin/sport/api/create',
+    update: (id) => `/admin/sport/api/update/${id}`,
+    delete: (id) => `/admin/sport/api/delete/${id}`,
+    stats:  '/admin/sport/api/stats',
+    youtube:(q)  => `/admin/sport/api/youtube-search?q=${encodeURIComponent(q)}`,
+};
+
+// ── Image mapping par catégorie ───────────────────────────────────────────
+// Utilise des images Unsplash libres de droits (fitness thématiques).
+// Format clé : partie avant le "_" en minuscules. Ex: "cardio_femme" → "cardio"
+// Pour distinguer femme/homme on utilise typeExercice en minuscules.
+const CAT_IMAGES = {
+    // ── FEMME ──────────────────────────────────────────────────────────────
+    'cardio_femme':      { url: 'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=600&q=80', emoji: '🏃‍♀️' },
+    'force_femme':       { url: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80', emoji: '💪' },
+    'souplesse_femme':   { url: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&q=80', emoji: '🧘‍♀️' },
+    'hiit_femme':        { url: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600&q=80', emoji: '⚡' },
+    'yoga_femme':        { url: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600&q=80', emoji: '🌸' },
+    'pilates_femme':     { url: 'https://images.unsplash.com/photo-1616699002805-0a4a6c08d09c?w=600&q=80', emoji: '🤸‍♀️' },
+    'natation_femme':    { url: 'https://images.unsplash.com/photo-1560090995-01632a28895b?w=600&q=80', emoji: '🏊‍♀️' },
+    'etirement_femme':   { url: 'https://images.unsplash.com/photo-1575052814086-f385e2e2ad1b?w=600&q=80', emoji: '🌿' },
+    'danse_femme':       { url: 'https://images.unsplash.com/photo-1518834107812-67b0b7c58434?w=600&q=80', emoji: '💃' },
+    'aerobic_femme':     { url: 'https://images.unsplash.com/photo-1483721310020-03333e577078?w=600&q=80', emoji: '🎵' },
+    // ── HOMME ─────────────────────────────────────────────────────────────
+    'cardio_homme':      { url: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=600&q=80', emoji: '🏃‍♂️' },
+    'force_homme':       { url: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&q=80', emoji: '🏋️' },
+    'souplesse_homme':   { url: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600&q=80', emoji: '🤸‍♂️' },
+    'hiit_homme':        { url: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600&q=80', emoji: '⚡' },
+    'yoga_homme':        { url: 'https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?w=600&q=80', emoji: '🧘‍♂️' },
+    'musculation_homme': { url: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=600&q=80', emoji: '💪' },
+    'natation_homme':    { url: 'https://images.unsplash.com/photo-1519315901367-f34ff9154487?w=600&q=80', emoji: '🏊‍♂️' },
+    'etirement_homme':   { url: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&q=80', emoji: '🌿' },
+    'boxe_homme':        { url: 'https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?w=600&q=80', emoji: '🥊' },
+    'crossfit_homme':    { url: 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=600&q=80', emoji: '🔥' },
+    // ── FALLBACKS ─────────────────────────────────────────────────────────
+    'femme':  { url: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80', emoji: '👩' },
+    'homme':  { url: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&q=80', emoji: '👨' },
+    'default':{ url: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600&q=80', emoji: '🏋️' },
+};
+
+/**
+ * Résout l'image et l'emoji pour un type d'exercice donné.
+ * Essaie d'abord la clé exacte, puis la section seule, puis default.
+ */
+function getCatImage(typeExercice) {
+    if (!typeExercice) return CAT_IMAGES['default'];
+    const key = typeExercice.toLowerCase().trim();
+    if (CAT_IMAGES[key]) return CAT_IMAGES[key];
+    // Partie gauche du "_" pour le fallback section
+    const parts = key.split('_');
+    const sectionKey = parts[parts.length - 1]; // 'femme' ou 'homme'
+    if (CAT_IMAGES[sectionKey]) return CAT_IMAGES[sectionKey];
+    return CAT_IMAGES['default'];
+}
+
+/**
+ * Détecte la section d'un type : 'femme', 'homme', ou ''
+ */
+function getSectionOfType(typeExercice) {
+    if (!typeExercice) return '';
+    const lower = typeExercice.toLowerCase();
+    if (lower.includes('_femme')) return 'femme';
+    if (lower.includes('_homme')) return 'homme';
+    return '';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  API HELPER
+// ═══════════════════════════════════════════════════════════
+async function apiFetch(url, opts = {}) {
+    const res  = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opts });
+    const text = await res.text();
+    let json;
+    try { json = JSON.parse(text); } catch(e) { throw new Error('Réponse non JSON : ' + text.substring(0, 200)); }
+    if (!res.ok) throw new Error(json.error || 'Erreur HTTP ' + res.status);
+    return json;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SECTION TABS
+// ═══════════════════════════════════════════════════════════
+function setSection(section) {
+    currentSection = section;
+    currentCat     = '';   // Réinitialiser le filtre catégorie lors du changement de section
+
+    // Mise à jour visuelle des onglets
+    document.querySelectorAll('.section-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.section === section);
+    });
+
+    // Réinitialiser le filtre type dans la toolbar
+    document.getElementById('typeFilter').value = '';
+
+    // Recharger depuis le serveur
+    reload();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CATEGORY PILLS
+// ═══════════════════════════════════════════════════════════
+function buildCatPills(types) {
+    const container = document.getElementById('catPills');
+
+    // On filtre les types selon la section active
+    let sectionTypes = types;
+    if (currentSection === 'femme') {
+        sectionTypes = types.filter(t => t.toLowerCase().includes('_femme'));
+    } else if (currentSection === 'homme') {
+        sectionTypes = types.filter(t => t.toLowerCase().includes('_homme'));
+    }
+
+    if (!sectionTypes.length) {
+        container.innerHTML = '';
+        return;
+    }
+
+    container.innerHTML =
+        `<button class="cat-pill ${!currentCat ? 'active' : ''}" onclick="setCat('')">Tous</button>` +
+        sectionTypes.map(t => {
+            const label = t.replace(/_femme$/i,'').replace(/_homme$/i,'');
+            const active = currentCat === t ? 'active' : '';
+            return `<button class="cat-pill ${active}" onclick="setCat('${esc(t)}')">${esc(label)}</button>`;
+        }).join('');
+}
+
+function setCat(type) {
+    currentCat = type;
+    document.getElementById('typeFilter').value = type;
+    // Mettre à jour les pills actives
+    document.querySelectorAll('.cat-pill').forEach(p => {
+        p.classList.toggle('active', p.textContent.trim() === (type ? type.replace(/_femme$/i,'').replace(/_homme$/i,'') : 'Tous'));
+    });
+    reload();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RELOAD — Appelle le serveur avec tous les paramètres
+// ═══════════════════════════════════════════════════════════
+async function reload() {
+    const search  = document.getElementById('exSearch').value.trim();
+    const type    = document.getElementById('typeFilter').value;
+    const sort    = document.getElementById('sortSelectEx').value;
+
+    // Afficher spinner
+    const grid = document.getElementById('gridView');
+    grid.innerHTML = '<div class="search-loading">⏳ Chargement…</div>';
+
+    try {
+        const params = { search, type, section: currentSection, sort };
+        exercises = await apiFetch(API.list(params));
+        renderEx();
+        updateStats();
+        await reloadTypeFilter();
+    } catch(e) {
+        grid.innerHTML = `<div class="empty-state-ex">⚠️ Erreur : ${esc(e.message)}</div>`;
+    }
+}
+
+// ── Recharge la liste de types disponibles depuis le serveur ──────────────
+async function reloadTypeFilter() {
+    try {
+        const types = await apiFetch(API.types);
+        const sel   = document.getElementById('typeFilter');
+        const cur   = sel.value;
+
+        // Filtrer selon la section active
+        let filtered = types;
+        if (currentSection === 'femme')  filtered = types.filter(t => t.toLowerCase().includes('_femme'));
+        if (currentSection === 'homme')  filtered = types.filter(t => t.toLowerCase().includes('_homme'));
+
+        sel.innerHTML = '<option value="">Tous les types</option>' +
+            filtered.map(t => `<option value="${esc(t)}" ${t===cur?'selected':''}>${esc(t)}</option>`).join('');
+
+        // Datalist pour le champ type du modal
+        document.getElementById('typeList').innerHTML = types.map(t => `<option value="${esc(t)}">`).join('');
+
+        // Pills de catégories
+        buildCatPills(types);
+
+        // Compter par section (pour les badges des onglets)
+        reloadSectionCounts(types);
+    } catch(_) {}
+}
+
+async function reloadSectionCounts(types) {
+    // On utilise les types pour afficher les comptages dans les onglets
+    try {
+        const all    = await apiFetch(API.list({ search: '', type: '', section: '', sort: 'nom_asc' }));
+        const femme  = all.filter(e => getSectionOfType(e.typeExercice) === 'femme').length;
+        const homme  = all.filter(e => getSectionOfType(e.typeExercice) === 'homme').length;
+        document.getElementById('cnt-all').textContent   = all.length;
+        document.getElementById('cnt-femme').textContent = femme;
+        document.getElementById('cnt-homme').textContent = homme;
+    } catch(_) {}
+}
+
+// ── Debounce pour la recherche temps réel ────────────────────────────────
+function debounceSearch() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => reload(), 350);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════════════════
+function setView(v) {
+    currentView = v;
+    document.getElementById('gridView').style.display = v === 'grid' ? 'grid' : 'none';
+    document.getElementById('listView').style.display = v === 'list' ? 'block' : 'none';
+    document.getElementById('btnGrid').classList.toggle('active', v === 'grid');
+    document.getElementById('btnList').classList.toggle('active', v === 'list');
+}
+
+function renderEx() {
+    if (currentView === 'grid') renderGrid();
+    else renderList();
+}
+
+function renderGrid() {
+    const container = document.getElementById('gridView');
+    if (!exercises.length) {
+        container.innerHTML = '<div class="empty-state-ex" style="grid-column:1/-1">😕 Aucun exercice trouvé.</div>';
+        return;
+    }
+
+    container.innerHTML = exercises.map((e, i) => {
+        const cat     = getCatImage(e.typeExercice);
+        const section = getSectionOfType(e.typeExercice);
+        const genderLabel = section === 'femme' ? '👩 Femme' : section === 'homme' ? '👨 Homme' : '🏋️ Général';
+        const genderClass = section || 'neutre';
+
+        return `
+        <div class="ex-card card-anim" style="animation-delay:${i * 0.04}s">
+            <div class="ex-cat-banner">
+                <img src="${esc(cat.url)}" alt="${esc(e.typeExercice || 'exercice')}"
+                     loading="lazy"
+                     onerror="this.style.display='none'">
+                <div class="cat-overlay"></div>
+                <span class="gender-badge ${genderClass}">${genderLabel}</span>
+                <span class="cat-emoji">${cat.emoji}</span>
+                ${e.videoExercice
+                    ? `<div class="video-thumb-overlay" onclick="window.open('${esc(e.videoExercice)}','_blank')" title="Voir la vidéo">
+                           <div class="play-btn"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+                       </div>`
+                    : ''}
+            </div>
+            <div class="ex-body">
+                <div class="ex-name">${esc(e.nomExercice)}</div>
+                <div><span class="ex-type-badge">${esc(e.typeExercice || 'Non classifié')}</span></div>
+                ${e.videoExercice
+                    ? `<a class="ex-video-link" href="${esc(e.videoExercice)}" target="_blank">🔗 Voir la vidéo</a>`
+                    : `<span class="no-video-text">Pas de vidéo renseignée</span>`}
+            </div>
+            <div class="ex-footer">
+                <button class="btn-ex btn-ex-edit" onclick="editEx(${e.id})">✏️ Modifier</button>
+                <button class="btn-ex btn-ex-del"  onclick="askDelEx(${e.id}, '${escJs(e.nomExercice)}')">🗑️ Supprimer</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function renderList() {
+    const tbody = document.getElementById('listBody');
+    if (!exercises.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-state-ex">Aucun exercice trouvé.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = exercises.map(e => {
+        const cat     = getCatImage(e.typeExercice);
+        const section = getSectionOfType(e.typeExercice);
+        const genderClass = section || 'neutre';
+        return `
+        <tr>
+            <td>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <img src="${esc(cat.url)}" alt="" style="width:38px;height:38px;object-fit:cover;border-radius:8px;flex-shrink:0;"
+                         onerror="this.style.display='none'" loading="lazy">
+                    <span>${esc(e.nomExercice)}</span>
+                </div>
+            </td>
+            <td>
+                <span class="ex-type-badge">${esc(e.typeExercice || '—')}</span>
+                <span class="gender-badge ${genderClass}" style="position:static;display:inline-block;margin-left:6px;vertical-align:middle;">
+                    ${section === 'femme' ? '👩' : section === 'homme' ? '👨' : '🏋️'}
+                </span>
+            </td>
+            <td>${e.videoExercice
+                ? `<a class="vid-link" href="${esc(e.videoExercice)}" target="_blank">🔗 Voir</a>`
+                : `<span class="no-vid">—</span>`}</td>
+            <td><div class="act-row">
+                <button class="btn-sm-act btn-sm-edit" onclick="editEx(${e.id})">✏️ Modifier</button>
+                <button class="btn-sm-act btn-sm-del"  onclick="askDelEx(${e.id}, '${escJs(e.nomExercice)}')">🗑️ Supprimer</button>
+            </div></td>
+        </tr>`;
+    }).join('');
+}
+
+function updateStats() {
+    const types = [...new Set(exercises.map(e => e.typeExercice).filter(Boolean))];
+    document.getElementById('s-total').textContent    = exercises.length;
+    document.getElementById('s-types').textContent    = types.length;
+    document.getElementById('s-videos').textContent   = exercises.filter(e => e.videoExercice).length;
+    document.getElementById('s-affiches').textContent = exercises.length;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  COLUMN SORT (Vue Liste)
+// ═══════════════════════════════════════════════════════════
+function colSortEx(sortAsc, sortDesc, thId) {
+    const sel = document.getElementById('sortSelectEx');
+    const cur = sel.value;
+    // Bascule entre asc et desc
+    sel.value = (cur === sortAsc) ? sortDesc : sortAsc;
+    // Mise à jour des indicateurs visuels
+    document.querySelectorAll('table.s-table th').forEach(th => {
+        th.classList.remove('sorted-asc', 'sorted-desc');
+    });
+    const th = document.getElementById(thId);
+    if (th) th.classList.add(sel.value.endsWith('_asc') ? 'sorted-asc' : 'sorted-desc');
+    reload();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CHARTS
+// ═══════════════════════════════════════════════════════════
+async function loadCharts() {
+    document.getElementById('loadingDoughnut').style.display = 'flex';
+    document.getElementById('loadingBar').style.display      = 'flex';
+    try {
+        const data = await apiFetch(API.stats);
+        renderDoughnutChart(data);
+        renderBarChart(data);
+    } catch(e) {
+        document.getElementById('loadingDoughnut').innerHTML = `<p style="color:#EF4444;font-size:13px;">⚠️ ${esc(e.message)}</p>`;
+        document.getElementById('loadingBar').innerHTML      = `<p style="color:#EF4444;font-size:13px;">⚠️ ${esc(e.message)}</p>`;
+    }
+}
+
+function renderDoughnutChart(data) {
+    if (chartDoughnutInstance) { chartDoughnutInstance.destroy(); chartDoughnutInstance = null; }
+    const ctx = document.getElementById('chartDoughnut').getContext('2d');
+    chartDoughnutInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels: data.labels, datasets: [{ data: data.values, backgroundColor: data.backgroundColors, borderColor: '#fff', borderWidth: 3, hoverOffset: 10 }] },
+        options: {
+            responsive: true, maintainAspectRatio: false, cutout: '60%',
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: (ctx) => ` ${ctx.label} : ${ctx.parsed} exercice(s) (${((ctx.parsed/data.total)*100).toFixed(1)}%)` } }
+            }
+        }
+    });
+    document.getElementById('loadingDoughnut').style.display = 'none';
+    buildLegend(data);
+}
+
+function renderBarChart(data) {
+    if (chartBarInstance) { chartBarInstance.destroy(); chartBarInstance = null; }
+    const ctx = document.getElementById('chartBar').getContext('2d');
+    chartBarInstance = new Chart(ctx, {
+        type: 'bar',
+        data: { labels: data.labels, datasets: [{ label: 'Exercices', data: data.values, backgroundColor: data.backgroundColors, borderRadius: 8, borderSkipped: false }] },
+        options: {
+            indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => ` ${ctx.parsed.x} exercice(s) — ${((ctx.parsed.x/data.total)*100).toFixed(1)}%` } } },
+            scales: {
+                x: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                y: { ticks: { font: { size: 12 }, color: '#374151' }, grid: { display: false } }
+            }
+        }
+    });
+    document.getElementById('loadingBar').style.display = 'none';
+}
+
+function buildLegend(data) {
+    const container = document.getElementById('legendDoughnut');
+    if (!container) return;
+    const total = data.total || 1;
+    container.innerHTML = data.labels.map((label, i) => {
+        const pct = ((data.values[i] / total) * 100).toFixed(1);
+        return `<div class="legend-item"><div class="legend-dot" style="background:${data.backgroundColors[i]};"></div><span>${esc(label)}</span><span class="legend-pct">${pct}%</span></div>`;
+    }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MODAL
+// ═══════════════════════════════════════════════════════════
+function isVideoUrl(url) { return /youtube|youtu\.be|vimeo|dailymotion|twitch/i.test(url); }
+
+function openExModal(ex = null) {
+    document.getElementById('exEditId').value           = ex ? ex.id : '';
+    document.getElementById('exModalTitle').textContent = ex ? '✏️ Modifier l\'exercice' : '🏋️ Ajouter un exercice';
+    document.getElementById('ef-nom').value             = ex?.nomExercice  || '';
+    document.getElementById('ef-type').value            = ex?.typeExercice || '';
+    document.getElementById('ef-url').value             = ex?.videoExercice || '';
+    clearExErrors();
+    updateUrlPreview();
+    document.getElementById('exModalOverlay').classList.add('open');
+    setTimeout(() => document.getElementById('ef-nom').focus(), 100);
+}
+
+function closeExModal() {
+    document.getElementById('exModalOverlay').classList.remove('open');
+    closeYtPanel();
+}
+
+function editEx(id) {
+    const ex = exercises.find(e => e.id === id);
+    if (ex) openExModal(ex);
+}
+
+function setTypeVal(type) {
+    document.getElementById('ef-type').value = type;
+}
+
+function askDelEx(id, nom) {
+    deleteExId = id;
+    document.getElementById('delExSub').textContent = `Supprimer « ${nom} » ? Cette action est irréversible.`;
+    document.getElementById('delExOverlay').classList.add('open');
+}
+function closeDelEx() { deleteExId = null; document.getElementById('delExOverlay').classList.remove('open'); }
+
+// ═══════════════════════════════════════════════════════════
+//  CRUD
+// ═══════════════════════════════════════════════════════════
+async function saveExercise() {
+    if (!validateEx()) return;
+    const id   = document.getElementById('exEditId').value;
+    const body = {
+        nomExercice:   document.getElementById('ef-nom').value.trim(),
+        typeExercice:  document.getElementById('ef-type').value.trim(),
+        videoExercice: document.getElementById('ef-url').value.trim() || null,
+    };
+    try {
+        const url = id ? API.update(id) : API.create;
+        await apiFetch(url, { method: 'POST', body: JSON.stringify(body) });
+        showToastEx(id ? '✅ Exercice modifié avec succès' : '✅ Exercice ajouté avec succès', 'success');
+        closeExModal();
+        reload();
+        loadCharts();
+    } catch(e) {
+        showToastEx('❌ ' + e.message, 'error');
+    }
+}
+
+async function confirmDelEx() {
+    if (!deleteExId) return;
+    try {
+        await apiFetch(API.delete(deleteExId), { method: 'POST' });
+        closeDelEx();
+        showToastEx('🗑️ Exercice supprimé', 'success');
+        reload();
+        loadCharts();
+    } catch(e) {
+        showToastEx('❌ ' + e.message, 'error');
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  VALIDATION
+// ═══════════════════════════════════════════════════════════
+function validateEx() {
+    clearExErrors(); let valid = true;
+    if (!document.getElementById('ef-nom').value.trim())  { setErrEx('efg-nom');  valid = false; }
+    if (!document.getElementById('ef-type').value.trim()) { setErrEx('efg-type'); valid = false; }
+    return valid;
+}
+function setErrEx(id)    { document.getElementById(id).classList.add('has-err'); }
+function clearExErrors() { document.querySelectorAll('.s-form-group.has-err').forEach(e => e.classList.remove('has-err')); }
+
+function updateUrlPreview() {
+    const url = document.getElementById('ef-url').value.trim();
+    const box = document.getElementById('urlPreviewBox');
+    if (url) {
+        box.textContent = (isVideoUrl(url) ? '🔗 URL vidéo : ' : '📎 Référence : ') + url;
+        box.classList.add('show');
+    } else {
+        box.classList.remove('show');
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════════
+function showToastEx(msg, type) {
+    const t = document.getElementById('toastEx');
+    t.textContent = msg;
+    t.className = 'toast ' + type + ' show';
+    setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════════════
+function esc(s)   { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escJs(s) { return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+// ═══════════════════════════════════════════════════════════
+//  YOUTUBE SEARCH
+// ═══════════════════════════════════════════════════════════
+async function searchYouTube() {
+    const query = document.getElementById('ef-nom').value.trim();
+    if (!query) {
+        showToastEx('⚠️ Entrez d\'abord le nom de l\'exercice pour rechercher des vidéos.', 'error');
+        document.getElementById('ef-nom').focus();
+        return;
+    }
+    const panel = document.getElementById('ytResultsPanel');
+    const body  = document.getElementById('ytResultsBody');
+    const btn   = document.getElementById('btnYtSearch');
+    panel.classList.add('open');
+    body.innerHTML = '<div class="yt-loading"><div class="yt-spinner"></div> Recherche en cours…</div>';
+    btn.disabled   = true;
+    try {
+        const videos = await apiFetch(API.youtube(query));
+        if (!videos || !videos.length) {
+            body.innerHTML = `<div class="yt-empty">😕 Aucune vidéo trouvée pour « ${esc(query)} ».</div>`;
+            return;
+        }
+        body.innerHTML = '<div class="yt-results-list">' +
+            videos.map((v, i) => `
+                <div class="yt-result-item" id="ytItem-${i}"
+                     onclick="selectYtVideo(${i}, '${escJs(v.url)}', '${escJs(v.title)}')"
+                     title="${esc(v.title)}">
+                    <img class="yt-thumb" src="${esc(v.thumbnail)}" alt="${esc(v.title)}" loading="lazy" onerror="this.style.display='none'">
+                    <div class="yt-result-info">
+                        <div class="yt-result-title">${esc(v.title)}</div>
+                        <div class="yt-result-channel">📺 ${esc(v.channelTitle)}</div>
+                    </div>
+                    <span class="yt-select-badge">Choisir ✓</span>
+                </div>`).join('') +
+        '</div>';
+    } catch(e) {
+        body.innerHTML = `<div class="yt-error">⚠️ ${esc(e.message)}</div>`;
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function selectYtVideo(index, url, title) {
+    document.getElementById('ef-url').value = url;
+    updateUrlPreview();
+    document.querySelectorAll('.yt-result-item').forEach((el, i) => el.classList.toggle('selected', i === index));
+    showToastEx('✅ Vidéo sélectionnée : ' + title.substring(0, 50) + (title.length > 50 ? '…' : ''), 'success');
+    setTimeout(closeYtPanel, 800);
+}
+
+function closeYtPanel() {
+    document.getElementById('ytResultsPanel').classList.remove('open');
+    setTimeout(() => {
+        document.getElementById('ytResultsBody').innerHTML =
+            '<div class="yt-loading"><div class="yt-spinner"></div> Recherche en cours…</div>';
+    }, 300);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+reload();
+loadCharts();
+</script>
+{% endblock %}

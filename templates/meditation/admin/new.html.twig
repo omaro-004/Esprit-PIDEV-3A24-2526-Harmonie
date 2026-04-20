@@ -1,0 +1,181 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Nouvelle session - Admin{% endblock %}
+{% block page_title %}🧘 Nouvelle session de méditation{% endblock %}
+
+{% block stylesheets %}
+    <style>
+        .back-link { display:inline-flex; align-items:center; gap:6px; color:var(--text-muted); text-decoration:none; font-size:13px; margin-bottom:20px; }
+        .back-link:hover { color:var(--purple); }
+        .form-card {
+            background:var(--white); border:1px solid var(--border); border-radius:16px;
+            padding:32px; max-width:640px;
+        }
+        .form-card h2 { font-family:var(--font-head); font-size:20px; font-weight:700; margin-bottom:24px; color:var(--text); }
+        .form-group { margin-bottom:20px; }
+        .form-group label { display:block; font-size:13px; font-weight:600; color:var(--text-mid); margin-bottom:6px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width:100%; padding:10px 14px; border:1px solid var(--border); border-radius:10px;
+            font-size:14px; font-family:var(--font-body); color:var(--text); background:var(--white);
+            transition:border-color .15s;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline:none; border-color:var(--purple);
+        }
+        .form-group textarea { resize:vertical; }
+        .form-group ul { list-style:none; padding:0; margin:4px 0 0; }
+        .form-group ul li { color:#E05252; font-size:12px; font-weight:500; }
+        .form-actions { display:flex; gap:12px; margin-top:24px; }
+        .btn-submit {
+            padding:10px 24px; border-radius:10px; border:none; background:var(--purple);
+            color:white; font-size:14px; font-weight:600; cursor:pointer; font-family:var(--font-body);
+        }
+        .btn-submit:hover { background:var(--purple-dark); }
+        .btn-cancel {
+            padding:10px 24px; border-radius:10px; border:1px solid var(--border); background:var(--white);
+            color:var(--text-mid); font-size:14px; font-weight:500; text-decoration:none;
+            display:inline-flex; align-items:center;
+        }
+        .btn-cancel:hover { background:var(--purple-ghost); }
+
+        .ai-panel {
+            background:var(--purple-pale); border:1px solid rgba(106,90,205,.2); border-radius:12px;
+            padding:20px; margin-bottom:24px;
+        }
+        .ai-panel h3 { font-family:var(--font-head); font-size:15px; font-weight:700; color:var(--purple); margin-bottom:10px; }
+        .ai-panel p { font-size:12px; color:var(--text-muted); margin-bottom:14px; }
+        .ai-input-row { display:flex; gap:10px; align-items:center; }
+        .ai-input-row input { flex:1; padding:10px 14px; border:1px solid var(--border); border-radius:10px; font-size:14px; font-family:var(--font-body); }
+        .btn-ai {
+            padding:10px 20px; border-radius:10px; border:none; background:var(--purple);
+            color:white; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; font-family:var(--font-body);
+        }
+        .btn-ai:hover { background:var(--purple-dark); }
+        .btn-ai:disabled { opacity:0.6; cursor:not-allowed; }
+        .ai-status { font-size:12px; color:var(--text-muted); margin-top:8px; }
+        .ai-conseils-preview { margin-top:12px; font-size:12px; color:var(--text-muted); font-style:italic; }
+        .yt-search-link { display:inline-flex; align-items:center; gap:6px; margin-top:10px; padding:8px 14px; border-radius:8px; background:#FF0000; color:white; font-size:12px; font-weight:600; text-decoration:none; }
+        .yt-search-link:hover { background:#cc0000; }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <a href="{{ path('admin_meditation_index') }}" class="back-link">← Retour aux sessions</a>
+
+    {# AI Generator panel #}
+    <div class="form-card" style="max-width:640px; margin-bottom:20px;">
+        <div class="ai-panel">
+            <h3>🤖 Générer avec l'IA</h3>
+            <p>Entrez un thème et l'IA génère automatiquement l'auteur, la durée, une vraie vidéo YouTube et 3 conseils.</p>
+            <div class="ai-input-row">
+                <input type="text" id="aiThemeInput" placeholder="Ex: Gestion du stress, Sommeil, Anxiété...">
+                <button type="button" class="btn-ai" id="aiGenerateBtn">✨ Générer</button>
+            </div>
+            <div class="ai-status" id="aiStatus"></div>
+            <div id="aiYtSearch"></div>
+            <div class="ai-conseils-preview" id="aiConseilsPreview"></div>
+        </div>
+    </div>
+
+    <div class="form-card">
+        <h2>Créer une session</h2>
+
+        {{ form_start(form, {attr: {novalidate: 'novalidate', id: 'meditationForm'}}) }}
+        <input type="hidden" name="ai_conseils" id="aiConseilsHidden" value="">
+
+        <div class="form-group">
+            {{ form_label(form.theme) }}
+            {{ form_widget(form.theme) }}
+            {{ form_errors(form.theme) }}
+        </div>
+
+        <div class="form-group">
+            {{ form_label(form.auteur) }}
+            {{ form_widget(form.auteur) }}
+            {{ form_errors(form.auteur) }}
+        </div>
+
+        <div class="form-group">
+            {{ form_label(form.duree) }}
+            {{ form_widget(form.duree) }}
+            {{ form_errors(form.duree) }}
+        </div>
+
+        <div class="form-group">
+            {{ form_label(form.audioUrl) }}
+            {{ form_widget(form.audioUrl) }}
+            {{ form_errors(form.audioUrl) }}
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-submit">✅ Créer la session</button>
+            <a href="{{ path('admin_meditation_index') }}" class="btn-cancel">Annuler</a>
+        </div>
+
+        {{ form_end(form) }}
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+(function(){
+    const aiBtn     = document.getElementById('aiGenerateBtn');
+    const aiTheme   = document.getElementById('aiThemeInput');
+    const aiStatus  = document.getElementById('aiStatus');
+    const aiPreview = document.getElementById('aiConseilsPreview');
+    const aiYtSearch = document.getElementById('aiYtSearch');
+
+    const themeField    = document.querySelector('[name*="[theme]"]');
+    const auteurField   = document.querySelector('[name*="[auteur]"]');
+    const dureeField    = document.querySelector('[name*="[duree]"]');
+    const audioUrlField = document.querySelector('[name*="[audioUrl]"]');
+
+    aiBtn.addEventListener('click', async () => {
+        const theme = aiTheme.value.trim();
+        if (!theme) { aiStatus.textContent = '⚠️ Entrez un thème.'; return; }
+
+        aiBtn.disabled = true;
+        aiBtn.textContent = '⏳ Génération...';
+        aiStatus.textContent = '';
+        aiPreview.textContent = '';
+        aiYtSearch.innerHTML = '';
+
+        const fd = new FormData();
+        fd.append('theme', theme);
+
+        try {
+            const res  = await fetch('{{ path("admin_meditation_generate") }}', { method: 'POST', body: fd });
+            const data = await res.json();
+
+            if (data.error) { aiStatus.textContent = '❌ ' + data.error; return; }
+
+            if (themeField)    themeField.value    = theme;
+            if (auteurField)   auteurField.value   = data.auteur || '';
+            if (dureeField)    dureeField.value    = data.duree || 10;
+            if (audioUrlField) audioUrlField.value = data.audioUrl || '';
+
+            if (data.audioUrl) {
+                aiStatus.textContent = '✅ Formulaire rempli avec une vraie vidéo YouTube !';
+            } else if (data.searchQuery) {
+                const url = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(data.searchQuery);
+                aiYtSearch.innerHTML = `<a href="${url}" target="_blank" class="yt-search-link">▶ Recherche YouTube : <em>${data.searchQuery}</em></a><br><small style="color:var(--text-muted);font-size:11px;margin-top:4px;display:block;">Réseau lent — ouvrez ce lien, copiez l'URL d'une vidéo et collez-la dans le champ Audio.</small>`;
+                aiStatus.textContent = '⚠️ Lien YouTube non trouvé automatiquement — voir ci-dessous.';
+            } else {
+                aiStatus.textContent = '✅ Formulaire rempli !';
+            }
+
+            if (data.conseils && data.conseils.length) {
+                aiPreview.innerHTML = '<strong>Conseils générés :</strong><br>' +
+                    data.conseils.map((c, i) => `${i+1}. ${c}`).join('<br>');
+                document.getElementById('aiConseilsHidden').value = JSON.stringify(data.conseils);
+            }
+        } catch(err) {
+            aiStatus.textContent = '❌ Erreur : ' + err.message;
+        } finally {
+            aiBtn.disabled = false;
+            aiBtn.textContent = '✨ Générer';
+        }
+    });
+})();
+</script>
+{% endblock %}

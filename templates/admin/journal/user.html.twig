@@ -1,0 +1,116 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Journal de {{ user.firstName }} {{ user.lastName }} - Admin{% endblock %}
+{% block page_title %}📔 Journal de {{ user.firstName }} {{ user.lastName }}{% endblock %}
+
+{% block stylesheets %}
+<style>
+    .back-link { display:inline-flex; align-items:center; gap:6px; color:var(--text-muted); text-decoration:none; font-size:13px; margin-bottom:20px; }
+    .back-link:hover { color:var(--purple); }
+    .top-bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; }
+    .action-btn { padding:8px 18px; border-radius:10px; font-size:13px; font-weight:500; text-decoration:none; border:1px solid var(--border); background:var(--white); color:var(--text-mid); display:inline-flex; align-items:center; gap:6px; }
+    .action-btn:hover { background:var(--purple-pale); color:var(--purple); }
+    .btn-pdf { background:#E05252; color:white; border-color:#E05252; }
+    .btn-pdf:hover { background:#c93c3c; color:white; }
+
+    .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:28px; }
+    .stat-box { background:var(--white); border:1px solid var(--border); border-radius:14px; padding:20px; text-align:center; }
+    .stat-box .stat-num { font-family:var(--font-head); font-size:32px; font-weight:800; color:var(--purple); }
+    .stat-box .stat-lbl { font-size:12px; color:var(--text-muted); margin-top:4px; }
+
+    .chart-card { background:var(--white); border:1px solid var(--border); border-radius:16px; padding:24px; margin-bottom:24px; }
+    .chart-title { font-family:var(--font-head); font-size:16px; font-weight:700; color:var(--text); margin-bottom:16px; }
+
+    .entries-table { width:100%; border-collapse:collapse; }
+    .entries-table th { text-align:left; font-size:12px; font-weight:600; color:var(--text-muted); padding:10px 12px; border-bottom:1px solid var(--border); }
+    .entries-table td { padding:10px 12px; font-size:13px; border-bottom:1px solid var(--border); vertical-align:top; }
+    .mood-badge { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; padding:3px 10px; border-radius:20px; }
+    .mood-5{background:#D1FAE5;color:#065F46;} .mood-4{background:#DBEAFE;color:#1E40AF;}
+    .mood-3{background:#F3F4F6;color:#4B5563;} .mood-2{background:#FEF3C7;color:#92400E;}
+    .mood-1{background:#FEE2E2;color:#991B1B;}
+</style>
+{% endblock %}
+
+{% block body %}
+    <a href="{{ path('admin_journal_students') }}" class="back-link">← Retour aux étudiants</a>
+
+    <div class="top-bar">
+        <div></div>
+        <a href="{{ path('admin_journal_rapport', {id: user.id}) }}" class="action-btn btn-pdf" target="_blank">🤖 Générer rapport PDF</a>
+    </div>
+
+    <div class="stats-row">
+        <div class="stat-box">
+            <div class="stat-num">{{ stats.total }}</div>
+            <div class="stat-lbl">Entrées totales</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-num">{{ stats.avgScore }}</div>
+            <div class="stat-lbl">Score moyen /5</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-num">{{ entries|last ? entries|last.dateJournal|date('d/m') : '—' }}</div>
+            <div class="stat-lbl">Dernière entrée</div>
+        </div>
+    </div>
+
+    {% if trend|length > 1 %}
+    <div class="chart-card">
+        <div class="chart-title">📈 Évolution du score d'humeur</div>
+        <canvas id="trendChart" height="80"></canvas>
+    </div>
+    {% endif %}
+
+    <div class="chart-card">
+        <table class="entries-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Humeur</th>
+                    <th>Score</th>
+                    <th>Contenu (aperçu)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in entries|reverse %}
+                <tr>
+                    <td>{{ e.dateJournal|date('d/m/Y') }}</td>
+                    <td><span class="mood-badge mood-{{ e.score }}">{{ e.humeur.emoji }} {{ e.humeur.label }}</span></td>
+                    <td>{{ e.score }}/5</td>
+                    <td>{{ e.contenu|slice(0,80) }}{% if e.contenu|length > 80 %}…{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+{% if trend|length > 1 %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const trendData = {{ trend|json_encode|raw }};
+new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: {
+        labels: trendData.map(d => d.date),
+        datasets: [{
+            label: 'Score humeur',
+            data: trendData.map(d => d.score),
+            borderColor: '#6A5ACD',
+            backgroundColor: 'rgba(106,90,205,.1)',
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: '#6A5ACD',
+            pointRadius: 4,
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: { y: { min: 1, max: 5, ticks: { stepSize: 1 } } },
+        plugins: { legend: { display: false } }
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Demandes de réservation — Admin{% endblock %}
+
+{% block body %}
+<div class="admin-topbar">
+    <h1 class="admin-page-title">Demandes de réservation</h1>
+</div>
+
+<div class="admin-toolbar">
+    <form class="admin-toolbar__search" method="get" action="{{ path('admin_demande_index') }}" role="search">
+        {% if statutFiltre %}
+            <input type="hidden" name="statut" value="{{ statutFiltre }}">
+        {% endif %}
+        <label class="visually-hidden" for="admin-demande-q">Recherche</label>
+        <input id="admin-demande-q" type="search" name="q" value="{{ searchQuery }}" placeholder="Rechercher (utilisateur, événement, salle…)">
+    </form>
+    <div class="admin-pills">
+        <a class="admin-pill {{ statutFiltre == '' ? 'is-active' : '' }}" href="{{ path('admin_demande_index', { q: searchQuery, page: 1 }) }}">Tous</a>
+        <a class="admin-pill {{ statutFiltre == 'EN_ATTENTE' ? 'is-active' : '' }}" href="{{ path('admin_demande_index', { q: searchQuery, page: 1, statut: 'EN_ATTENTE' }) }}">En attente</a>
+        <a class="admin-pill {{ statutFiltre == 'ACCEPTEE' ? 'is-active' : '' }}" href="{{ path('admin_demande_index', { q: searchQuery, page: 1, statut: 'ACCEPTEE' }) }}">Acceptées</a>
+        <a class="admin-pill {{ statutFiltre == 'REFUSEE' ? 'is-active' : '' }}" href="{{ path('admin_demande_index', { q: searchQuery, page: 1, statut: 'REFUSEE' }) }}">Refusées</a>
+    </div>
+</div>
+
+<div class="admin-cards-grid">
+    {% for d in demandes %}
+        <article class="admin-module-card admin-module-card--accent-demande"
+                 data-admin-demande-card
+                 data-demand-id="{{ d.id }}"
+                 data-csrf="{{ csrf_token('admin_demande_action' ~ d.id) }}"
+                 data-url-accepter="{{ path('admin_demande_accepter', { id: d.id }) }}"
+                 data-url-refuser="{{ path('admin_demande_refuser', { id: d.id }) }}">
+            <div class="admin-module-card__head">
+                <p class="admin-module-card__title admin-module-card__title--lg" style="margin:0;font-size:1rem;">Demande #{{ d.id }}</p>
+                {% if d.statut == 'EN_ATTENTE' %}
+                    <span class="admin-badge admin-badge--wait admin-badge--pulse js-demande-badge">En attente</span>
+                {% elseif d.statut == 'ACCEPTEE' %}
+                    <span class="admin-badge admin-badge--ok js-demande-badge">Acceptée</span>
+                {% else %}
+                    <span class="admin-badge admin-badge--no js-demande-badge">Refusée</span>
+                {% endif %}
+            </div>
+            <div class="admin-module-card__body">
+                <p class="admin-module-card__meta">👤 {{ d.utilisateur ? (d.utilisateur.userPrenom ~ ' ' ~ d.utilisateur.userNom) : '—' }}</p>
+                <p class="admin-module-card__meta">🗓️ {{ d.evenement ? (d.evenement.titre ?? 'Sans titre') : '—' }}</p>
+                <p class="admin-module-card__meta">🏢 {% if d.salle %}{{ d.salle.nom }} · {{ d.salle.capacite }} pers.{% else %}—{% endif %}</p>
+                <p class="admin-module-card__meta">📅 {{ d.dateDemande|date('d/m/Y H:i') }}</p>
+                <p class="admin-module-card__meta js-demande-admin-note" {% if not d.commentaireAdmin %}hidden{% endif %}>
+                    {% if d.commentaireAdmin %}💬 {{ d.commentaireAdmin }}{% endif %}
+                </p>
+                {% if d.statut == 'EN_ATTENTE' %}
+                    <div class="admin-demande-actions js-demande-actions">
+                        <textarea class="admin-input js-demande-refuse-comment" rows="2" placeholder="Motif du refus (optionnel)" style="width:100%;max-width:100%;resize:vertical;"></textarea>
+                        <div class="admin-demande-actions__row">
+                            <button type="button" class="admin-btn admin-btn-accept js-demande-accepter">✅ Accepter</button>
+                            <button type="button" class="admin-btn admin-btn-refuse js-demande-refuser">❌ Refuser</button>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </article>
+    {% else %}
+        <p class="admin-empty-hint" style="grid-column: 1 / -1;">Aucune demande.</p>
+    {% endfor %}
+</div>
+
+{% if pages > 1 %}
+    <nav class="admin-pagination-round" aria-label="Pagination">
+        {% if page > 1 %}
+            <a href="{{ path('admin_demande_index', app.request.query.all|merge({ page: page - 1 })) }}" aria-label="Page précédente">‹</a>
+        {% endif %}
+        {% for p in 1..pages %}
+            {% if p == page %}
+                <span class="is-current" aria-current="page">{{ p }}</span>
+            {% else %}
+                <a href="{{ path('admin_demande_index', app.request.query.all|merge({ page: p })) }}">{{ p }}</a>
+            {% endif %}
+        {% endfor %}
+        {% if page < pages %}
+            <a href="{{ path('admin_demande_index', app.request.query.all|merge({ page: page + 1 })) }}" aria-label="Page suivante">›</a>
+        {% endif %}
+    </nav>
+{% endif %}
+{% endblock %}

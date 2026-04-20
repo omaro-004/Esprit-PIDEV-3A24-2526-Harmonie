@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Bilan d'Activités — Harmony</title>
+<style>
+/*
+ * ══════════════════════════════════════════════════════
+ * HARMONY — BILAN PDF TEMPLATE v2 (REDESIGN COMPLET)
+ * Format A4 : 210mm x 297mm
+ * Rendu par KnpSnappyBundle (wkhtmltopdf 0.12.x)
+ *
+ * COMPATIBILITE wkhtmltopdf :
+ *  - display:table au lieu de flexbox/grid
+ *  - Pas d'emojis (remplacés par codes HTML et texte)
+ *  - position:fixed pour le footer (repete sur chaque page)
+ *  - page-break-inside:avoid sur les blocs session
+ *  - print-color-adjust:exact pour les fonds colorés
+ * ══════════════════════════════════════════════════════
+ */
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 11px;
+  color: #1C1733;
+  background: #ffffff;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.page {
+  width: 100%;
+  min-height: 297mm;
+  position: relative;
+  background: #ffffff;
+  padding-bottom: 52px;
+}
+
+/* ── HEADER ── */
+.header {
+  background: #120A2E;
+  width: 100%;
+  height: 88px;
+  display: table;
+  border-bottom: 4px solid #5B3FDB;
+}
+.header-brand {
+  display: table-cell;
+  vertical-align: middle;
+  padding: 0 22px;
+  width: 55%;
+}
+.header-info {
+  display: table-cell;
+  vertical-align: middle;
+  text-align: right;
+  padding: 0 22px;
+  width: 45%;
+}
+.logo-box {
+  display: inline-block;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: #5B3FDB;
+  border: 2px solid rgba(255,255,255,0.25);
+  text-align: center;
+  line-height: 48px;
+  font-size: 22px;
+  font-weight: 900;
+  color: #ffffff;
+  vertical-align: middle;
+  margin-right: 14px;
+}
+.brand-wrap { display: inline-block; vertical-align: middle; }
+.brand-title { font-size: 24px; font-weight: 900; color: #ffffff; letter-spacing: -0.5px; line-height: 1.1; }
+.brand-subtitle { font-size: 10px; color: rgba(255,255,255,0.55); margin-top: 3px; }
+.official-badge {
+  display: inline-block;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: 30px;
+  padding: 3px 12px;
+  font-size: 8.5px;
+  font-weight: 700;
+  color: #c3b1ff;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+.header-export-date { font-size: 9.5px; color: rgba(255,255,255,0.6); display: block; margin-top: 3px; }
+
+/* ── STATS STRIP ── */
+.stats-strip {
+  background: #EDE8FA;
+  border-bottom: 2px solid rgba(91,63,219,0.18);
+  padding: 18px 22px;
+}
+.stats-table { width: 100%; border-collapse: collapse; }
+.stat-cell { text-align: center; vertical-align: middle; padding: 4px 8px; width: 23%; }
+.stat-sep-cell { width: 2%; text-align: center; vertical-align: middle; }
+.stat-sep-line { display: inline-block; width: 1px; height: 40px; background: rgba(91,63,219,0.22); vertical-align: middle; }
+.stat-icon { font-size: 13px; font-weight: 700; color: #5B3FDB; display: block; margin-bottom: 5px; }
+.stat-value { font-size: 28px; font-weight: 900; color: #5B3FDB; line-height: 1; display: block; }
+.stat-label { font-size: 9px; color: #7B72B0; margin-top: 5px; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; display: block; }
+.progress-bar-track { display: block; width: 60%; height: 3px; background: rgba(91,63,219,0.15); border-radius: 3px; margin: 5px auto 0; overflow: hidden; }
+.progress-bar-fill { height: 100%; border-radius: 3px; background: #5B3FDB; display: block; }
+
+/* ── SUMMARY BOX ── */
+.summary-box {
+  margin: 14px 22px;
+  background: #F8F6FF;
+  border: 1.5px solid rgba(91,63,219,0.14);
+  border-radius: 10px;
+  padding: 12px 18px;
+  display: table;
+  width: calc(100% - 44px);
+}
+.summary-left { display: table-cell; vertical-align: middle; width: 70%; }
+.summary-right { display: table-cell; vertical-align: middle; text-align: right; width: 30%; }
+.summary-title { font-size: 11px; font-weight: 800; color: #3A1F8A; margin-bottom: 3px; }
+.summary-sub { font-size: 9.5px; color: #9590B8; line-height: 1.4; }
+.summary-date { font-size: 9px; color: #5B3FDB; font-weight: 700; }
+
+/* ── TITRE SECTION ── */
+.section-title-bar {
+  padding: 10px 22px;
+  border-bottom: 2px solid rgba(91,63,219,0.15);
+  margin-bottom: 14px;
+  display: table;
+  width: 100%;
+}
+.section-title-left { display: table-cell; vertical-align: middle; }
+.section-title-text { font-size: 13.5px; font-weight: 900; color: #120A2E; }
+.section-title-right { display: table-cell; vertical-align: middle; text-align: right; }
+.section-badge {
+  display: inline-block;
+  background: #5B3FDB;
+  color: #ffffff;
+  font-size: 8.5px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* ── CONTENU ── */
+.content { padding: 0 22px 14px; }
+
+/* ── SESSION BLOCK ── */
+.session-block {
+  margin-bottom: 16px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1.5px solid rgba(91,63,219,0.14);
+  page-break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+}
+.session-head {
+  background: #F0EAFE;
+  padding: 11px 16px;
+  border-bottom: 1px solid rgba(91,63,219,0.1);
+  display: table;
+  width: 100%;
+}
+.session-head-left { display: table-cell; vertical-align: middle; width: 50%; }
+.session-head-right { display: table-cell; vertical-align: middle; text-align: right; width: 50%; }
+.session-date-label { font-size: 13px; font-weight: 800; color: #3A1F8A; }
+.session-date-day { font-size: 9px; color: #9590B8; font-weight: 500; margin-top: 2px; display: block; }
+.stag {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 20px;
+  margin-left: 5px;
+}
+.stag-ex  { background: #EDE8FA; color: #5B3FDB; border: 1px solid rgba(91,63,219,0.2); }
+.stag-min { background: #E8F5F0; color: #0B7A4C; border: 1px solid rgba(11,122,76,0.2); }
+.stag-cal { background: #FFF3E2; color: #B45309; border: 1px solid rgba(180,83,9,0.2); }
+
+/* ── TABLEAU EXERCICES ── */
+.ex-table { width: 100%; border-collapse: collapse; background: #ffffff; }
+.ex-thead td {
+  background: rgba(91,63,219,0.05);
+  font-size: 8.5px;
+  font-weight: 800;
+  color: #9590B8;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 7px 14px;
+  border-bottom: 1px solid rgba(91,63,219,0.08);
+}
+.ex-row td { padding: 9px 14px; vertical-align: middle; font-size: 10.5px; border-bottom: 1px solid rgba(91,63,219,0.05); }
+.ex-row:last-child td { border-bottom: none; }
+.ex-row:nth-child(even) td { background: rgba(91,63,219,0.02); }
+.col-nom { width: 33%; }
+.col-meta { width: 38%; }
+.col-notes { width: 29%; }
+.ex-nom-text { font-weight: 700; color: #1C1733; font-size: 11px; }
+.ex-type-badge {
+  display: inline-block;
+  font-size: 8px; font-weight: 700;
+  padding: 2px 7px; border-radius: 10px;
+  margin-top: 3px; text-transform: uppercase;
+  letter-spacing: 0.3px; color: white;
+}
+.badge-cardio    { background: #FF4D6D; }
+.badge-force     { background: #3B82F6; }
+.badge-souplesse { background: #10B981; }
+.badge-endurance { background: #F59E0B; }
+.badge-perte     { background: #EF4444; }
+.badge-default   { background: #9590B8; }
+.ex-meta-item { display: inline-block; margin-right: 9px; font-size: 10px; color: #5B3FDB; font-weight: 600; white-space: nowrap; }
+.ex-meta-label { font-size: 8.5px; color: #9590B8; font-weight: 500; }
+.ex-notes-text { color: #8B82B8; font-style: italic; font-size: 9.5px; line-height: 1.4; }
+
+/* ── ÉTAT VIDE ── */
+.empty-state {
+  text-align: center; padding: 50px 20px; color: #9590B8;
+  font-style: italic; font-size: 12px;
+  border: 2px dashed rgba(91,63,219,0.15);
+  border-radius: 10px; margin: 14px 0;
+}
+
+/* ── TAMPON ── */
+.stamp-section { text-align: center; padding: 22px 0 30px; }
+.stamp {
+  display: inline-block; width: 120px; height: 120px;
+  border-radius: 50%; border: 3px solid #5B3FDB;
+  text-align: center; padding: 16px 8px;
+  opacity: 0.72; color: #5B3FDB;
+  -webkit-transform: rotate(-9deg); transform: rotate(-9deg);
+}
+.stamp-line1 { font-size: 7.5px; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; display: block; color: #5B3FDB; margin-bottom: 3px; }
+.stamp-diamond { font-size: 18px; display: block; color: #5B3FDB; margin: 3px 0; line-height: 1; font-weight: 900; }
+.stamp-name { font-size: 14px; font-weight: 900; color: #3A1F8A; display: block; letter-spacing: 0.5px; margin: 2px 0; }
+.stamp-year { font-size: 7px; letter-spacing: 0.8px; text-transform: uppercase; display: block; margin-top: 2px; color: #9590B8; }
+
+/* ── FOOTER FIXE ── */
+.footer {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: 40px; background: #120A2E; border-top: 3px solid #5B3FDB;
+}
+.footer-table { width: 100%; height: 40px; border-collapse: collapse; }
+.footer-cell { vertical-align: middle; padding: 0 22px; }
+.footer-left { font-size: 8px; color: rgba(255,255,255,0.55); width: 38%; }
+.footer-center { font-size: 9px; font-weight: 700; color: #c3b1ff; letter-spacing: 0.5px; text-align: center; width: 24%; }
+.footer-right { font-size: 8px; color: rgba(255,255,255,0.45); text-align: right; width: 38%; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  {# ── HEADER ── #}
+  <div class="header">
+    <div class="header-brand">
+      <span class="logo-box">H</span>
+      <div class="brand-wrap">
+        <div class="brand-title">Harmony</div>
+        <div class="brand-subtitle">Plateforme de suivi sportif</div>
+      </div>
+    </div>
+    <div class="header-info">
+      <span class="official-badge">&#9733; Document officiel</span>
+      <span class="header-export-date">Exporte le {{ exportDate|date('d/m/Y') }} a {{ exportDate|date('H:i') }}</span>
+    </div>
+  </div>
+
+  {# ── STATS ── #}
+  {% set totalEx = 0 %}
+  {% for date, exs in grouped %}{% set totalEx = totalEx + exs|length %}{% endfor %}
+  {% set avgMin = stats.sessions > 0 ? (stats.minutes / stats.sessions)|round : 0 %}
+
+  <div class="stats-strip">
+    <table class="stats-table">
+      <tr>
+        <td class="stat-cell">
+          <span class="stat-icon">[S]</span>
+          <span class="stat-value">{{ stats.sessions }}</span>
+          <span class="stat-label">Seances</span>
+          {% set pct1 = stats.sessions * 10 %}{% set pct1 = pct1 > 100 ? 100 : pct1 %}
+          <span class="progress-bar-track"><span class="progress-bar-fill" style="width:{{ pct1 }}%"></span></span>
+        </td>
+        <td class="stat-sep-cell"><span class="stat-sep-line"></span></td>
+        <td class="stat-cell">
+          <span class="stat-icon">[T]</span>
+          <span class="stat-value">{{ stats.minutes }}</span>
+          <span class="stat-label">Min actives</span>
+          {% set pct2 = (stats.minutes / 10)|round %}{% set pct2 = pct2 > 100 ? 100 : pct2 %}
+          <span class="progress-bar-track"><span class="progress-bar-fill" style="width:{{ pct2 }}%"></span></span>
+        </td>
+        <td class="stat-sep-cell"><span class="stat-sep-line"></span></td>
+        <td class="stat-cell">
+          <span class="stat-icon">[C]</span>
+          <span class="stat-value">{{ stats.calories }}</span>
+          <span class="stat-label">Calories</span>
+          {% set pct3 = (stats.calories / 50)|round %}{% set pct3 = pct3 > 100 ? 100 : pct3 %}
+          <span class="progress-bar-track"><span class="progress-bar-fill" style="width:{{ pct3 }}%"></span></span>
+        </td>
+        <td class="stat-sep-cell"><span class="stat-sep-line"></span></td>
+        <td class="stat-cell">
+          <span class="stat-icon">[E]</span>
+          <span class="stat-value">{{ totalEx }}</span>
+          <span class="stat-label">Exercices</span>
+          {% set pct4 = totalEx * 5 %}{% set pct4 = pct4 > 100 ? 100 : pct4 %}
+          <span class="progress-bar-track"><span class="progress-bar-fill" style="width:{{ pct4 }}%"></span></span>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  {# ── SUMMARY BOX ── #}
+  <div class="summary-box">
+    <div class="summary-left">
+      <div class="summary-title">Bilan d'Activites Sportives — Rapport Personnel</div>
+      <div class="summary-sub">Ce document recapitule l'ensemble de vos seances d'entrainement enregistrees sur Harmony. Moyenne : {{ avgMin }} min/seance.</div>
+    </div>
+    <div class="summary-right">
+      <span class="summary-date">{{ exportDate|date('d/m/Y') }}</span>
+    </div>
+  </div>
+
+  {# ── TITRE SECTION ── #}
+  <div class="section-title-bar">
+    <div class="section-title-left">
+      <span class="section-title-text">Historique detaille des Seances</span>
+    </div>
+    <div class="section-title-right">
+      <span class="section-badge">{{ stats.sessions }} seance{{ stats.sessions != 1 ? 's' : '' }}</span>
+    </div>
+  </div>
+
+  {# ── CONTENU ── #}
+  <div class="content">
+    {% if grouped is empty %}
+      <div class="empty-state">Aucune seance enregistree. Commencez votre entrainement et revenez ici !</div>
+    {% else %}
+
+      {% for date, exercises in grouped %}
+        {% set sessionMin = 0 %}
+        {% set sessionCal = 0 %}
+        {% for ex in exercises %}
+          {% set sessionMin = sessionMin + (ex.duree_minutes ?: 0) %}
+          {% set sessionCal = sessionCal + (ex.calories_brulees ?: 0) %}
+        {% endfor %}
+
+        <div class="session-block">
+          <div class="session-head">
+            <div class="session-head-left">
+              <span class="session-date-label">{{ date|date('d/m/Y') }}</span>
+              <span class="session-date-day">
+                {%- set dn = date|date('N') -%}
+                {%- if dn == 1 %}Lundi{%- elseif dn == 2 %}Mardi{%- elseif dn == 3 %}Mercredi{%- elseif dn == 4 %}Jeudi{%- elseif dn == 5 %}Vendredi{%- elseif dn == 6 %}Samedi{%- else %}Dimanche{%- endif -%}
+              </span>
+            </div>
+            <div class="session-head-right">
+              <span class="stag stag-ex">{{ exercises|length }} ex.</span>
+              <span class="stag stag-min">{{ sessionMin }} min</span>
+              {% if sessionCal > 0 %}<span class="stag stag-cal">{{ sessionCal }} kcal</span>{% endif %}
+            </div>
+          </div>
+
+          <table class="ex-table">
+            <thead>
+              <tr class="ex-thead">
+                <td class="col-nom">Exercice</td>
+                <td class="col-meta">Performance</td>
+                <td class="col-notes">Notes</td>
+              </tr>
+            </thead>
+            <tbody>
+              {% for ex in exercises %}
+                {% set tl = (ex.exercice_type ?: '')|lower %}
+                {% set bc = 'badge-default' %}
+                {% if 'cardio' in tl %}{% set bc = 'badge-cardio' %}
+                {% elseif 'force' in tl %}{% set bc = 'badge-force' %}
+                {% elseif 'souplesse' in tl %}{% set bc = 'badge-souplesse' %}
+                {% elseif 'endurance' in tl %}{% set bc = 'badge-endurance' %}
+                {% elseif 'perte' in tl %}{% set bc = 'badge-perte' %}
+                {% endif %}
+                <tr class="ex-row">
+                  <td class="col-nom">
+                    <div class="ex-nom-text">{{ ex.exercice_nom ?: 'Exercice' }}</div>
+                    {% if ex.exercice_type %}
+                      <span class="ex-type-badge {{ bc }}">{{ ex.exercice_type|replace({'_femme':'','homme':'','_':' '})|trim }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="col-meta">
+                    <span class="ex-meta-item"><span class="ex-meta-label">Duree</span><br>{{ (ex.duree_minutes ?: 0) }} min</span>
+                    {% if ex.calories_brulees %}<span class="ex-meta-item"><span class="ex-meta-label">Calories</span><br>{{ ex.calories_brulees }} kcal</span>{% endif %}
+                    {% if ex.nb_series %}<span class="ex-meta-item"><span class="ex-meta-label">Series</span><br>{{ ex.nb_series }}&times;{{ ex.nb_repetitions ?: '?' }}</span>{% endif %}
+                    {% if ex.poids %}<span class="ex-meta-item"><span class="ex-meta-label">Poids</span><br>{{ ex.poids }} kg</span>{% endif %}
+                  </td>
+                  <td class="col-notes">
+                    {% if ex.notes %}<span class="ex-notes-text">&laquo;{{ ex.notes }}&raquo;</span>{% else %}<span style="color:#C8C4E0;font-size:9.5px">—</span>{% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endfor %}
+
+    {% endif %}
+
+    <div class="stamp-section">
+      <div class="stamp">
+        <span class="stamp-line1">Certifie par</span>
+        <span class="stamp-diamond">&#9670;</span>
+        <span class="stamp-name">HARMONY</span>
+        <span class="stamp-year">Sport App &middot; {{ exportDate|date('Y') }}</span>
+      </div>
+    </div>
+
+  </div>
+
+  {# ── FOOTER FIXE ── #}
+  <div class="footer">
+    <table class="footer-table">
+      <tr>
+        <td class="footer-cell footer-left">Harmony &mdash; Journal de Sport | Confidentiel</td>
+        <td class="footer-cell footer-center">harmony-app.fr</td>
+        <td class="footer-cell footer-right">{{ exportDate|date('d/m/Y') }}</td>
+      </tr>
+    </table>
+  </div>
+
+</div>
+</body>
+</html>

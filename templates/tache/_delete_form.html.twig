@@ -1,0 +1,4 @@
+<form method="post" action="{{ path('app_tache_delete', { id: tache.id }) }}" onsubmit="return confirm('Supprimer définitivement cette tâche ?');">
+    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ tache.id) }}">
+    <button type="submit" class="harmony-btn-delete" style="padding:12px 20px;font-size:14px;">🗑️ Supprimer</button>
+</form>

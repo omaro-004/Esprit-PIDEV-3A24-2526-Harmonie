@@ -1,0 +1,343 @@
+{% extends 'admin/base.html.twig' %}
+{% block title %}{{ course.title }} — Admin Harmony{% endblock %}
+{% block page_title %}📖 Aperçu du cours{% endblock %}
+
+{% block stylesheets %}
+<style>
+    /* ── HEADER ──────────────────────────────────────────────────────────── */
+    .cv-header {
+        background: var(--white); border: 1px solid var(--border);
+        border-radius: 18px; padding: 24px 28px;
+        display: flex; align-items: flex-start; gap: 20px;
+        margin-bottom: 24px; flex-wrap: wrap;
+    }
+    .cv-cover {
+        width: 80px; height: 80px; border-radius: 14px; flex-shrink: 0;
+        background: var(--purple-pale); display: grid; place-items: center;
+        font-size: 32px; overflow: hidden;
+    }
+    .cv-cover img { width: 100%; height: 100%; object-fit: cover; }
+    .cv-meta { flex: 1; min-width: 0; }
+    .cv-title { font-family: var(--font-head); font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+    .cv-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; }
+    .cv-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+    .cv-tag {
+        padding: 3px 12px; border-radius: 20px; font-size: 11.5px; font-weight: 600;
+        background: var(--purple-pale); color: var(--purple);
+    }
+    .cv-tag.red   { background: #FEE2E2; color: #991B1B; }
+    .cv-tag.green { background: #D1FAE5; color: #065F46; }
+    .cv-tag.grey  { background: #F3F4F6; color: #6B7280; }
+
+    .cv-actions { display: flex; gap: 10px; align-items: center; margin-left: auto; flex-shrink: 0; }
+    .btn-back {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 500;
+        background: var(--purple-ghost); color: var(--text-mid);
+        border: 1px solid var(--border); text-decoration: none; transition: .15s;
+    }
+    .btn-back:hover { background: var(--purple-pale); color: var(--purple); }
+    .btn-unpublish {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 8px 18px; border-radius: 10px; font-size: 13px; font-weight: 600;
+        background: #FEE2E2; color: #991B1B; border: none; cursor: pointer; transition: .15s;
+    }
+    .btn-unpublish:hover { background: #FECACA; }
+
+    /* ── TWO-COL LAYOUT ──────────────────────────────────────────────────── */
+    .cv-body { display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start; }
+    @media (max-width: 900px) { .cv-body { grid-template-columns: 1fr; } }
+
+    /* ── FILES CARD ──────────────────────────────────────────────────────── */
+    .cv-card {
+        background: var(--white); border: 1px solid var(--border);
+        border-radius: 16px; overflow: hidden; margin-bottom: 20px;
+    }
+    .cv-card-header {
+        padding: 14px 20px; border-bottom: 1px solid var(--border);
+        font-family: var(--font-head); font-size: 14px; font-weight: 700; color: var(--text);
+        display: flex; align-items: center; gap: 8px;
+    }
+    .cv-card-body { padding: 16px 20px; }
+
+    .files-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px;
+    }
+    .file-card {
+        border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+        background: var(--purple-ghost); transition: box-shadow .15s, transform .15s;
+        cursor: default;
+    }
+    .file-card:hover { box-shadow: 0 4px 16px rgba(106,90,205,.12); transform: translateY(-2px); }
+    .file-thumb {
+        height: 80px; display: grid; place-items: center;
+        font-size: 32px; background: var(--purple-pale);
+        overflow: hidden;
+    }
+    .file-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .file-info { padding: 8px 10px; }
+    .file-name {
+        font-size: 11.5px; font-weight: 600; color: var(--text);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .file-meta { font-size: 10.5px; color: var(--text-muted); margin-top: 2px; }
+
+    .empty-files {
+        text-align: center; padding: 32px; color: var(--text-muted); font-size: 13px;
+    }
+
+    /* ── REPORTS TABLE ───────────────────────────────────────────────────── */
+    table { width: 100%; border-collapse: collapse; }
+    th {
+        font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: .6px; color: var(--text-muted);
+        padding: 9px 14px; text-align: left; background: var(--purple-ghost);
+    }
+    td {
+        padding: 11px 14px; font-size: 13px; color: var(--text);
+        border-bottom: 1px solid var(--purple-ghost); vertical-align: middle;
+    }
+    tr:last-child td { border: none; }
+    tr:hover td { background: var(--purple-ghost); }
+
+    .badge {
+        display: inline-flex; align-items: center; gap: 4px;
+        padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+    }
+    .badge-pending   { background: #FEF3C7; color: #92400E; }
+    .badge-reviewed  { background: #D1FAE5; color: #065F46; }
+    .badge-dismissed { background: #F3F4F6; color: #6B7280; }
+
+    /* ── STAT ROW ────────────────────────────────────────────────────────── */
+    .stat-row { display: flex; flex-direction: column; gap: 10px; }
+    .stat-item {
+        display: flex; justify-content: space-between; align-items: center;
+        font-size: 13px; color: var(--text-mid); padding: 6px 0;
+        border-bottom: 1px solid var(--purple-ghost);
+    }
+    .stat-item:last-child { border: none; }
+    .stat-item strong { color: var(--text); font-weight: 600; }
+
+    /* ── CONFIRM MODAL ───────────────────────────────────────────────────── */
+    .modal-overlay {
+        position: fixed; inset: 0; background: rgba(0,0,0,.45);
+        display: none; place-items: center; z-index: 1000;
+    }
+    .modal-overlay.open { display: grid; }
+    .modal-box {
+        background: var(--white); border-radius: 20px; padding: 32px 28px;
+        max-width: 420px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,.2);
+        animation: fadeUp .25s ease both;
+    }
+    .modal-icon  { font-size: 36px; margin-bottom: 12px; }
+    .modal-title { font-family: var(--font-head); font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .modal-body  { font-size: 13.5px; color: var(--text-mid); line-height: 1.6; margin-bottom: 22px; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .btn-cancel { padding: 9px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; background: var(--purple-ghost); color: var(--text-mid); border: none; cursor: pointer; }
+    .btn-confirm { padding: 9px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; background: #E05252; color: #fff; border: none; cursor: pointer; }
+    .btn-confirm:hover { background: #c94444; }
+</style>
+{% endblock %}
+
+{% block body %}
+
+{# ── COURSE HEADER ─────────────────────────────────────────────────────── #}
+<div class="cv-header">
+    <div class="cv-cover">
+        {% if course.cover_image_path %}
+            <img src="{{ asset('uploads/covers/' ~ course.cover_image_path) }}" alt="{{ course.title }}">
+        {% else %}
+            📚
+        {% endif %}
+    </div>
+
+    <div class="cv-meta">
+        <div class="cv-title">{{ course.title }}</div>
+        <div class="cv-subtitle">
+            Par <strong>{{ course.owner_name|default('Inconnu') }}</strong>
+            ({{ course.owner_email|default('—') }})
+            · Créé le {{ course.created_at|date('d/m/Y') }}
+        </div>
+        <div class="cv-tags">
+            {% if course.is_published %}
+                <span class="cv-tag green">✅ Publié</span>
+            {% else %}
+                <span class="cv-tag red">🔒 Dépublié</span>
+            {% endif %}
+            {% if course.admin_locked %}
+                <span class="cv-tag red">🔐 Verrouillé admin</span>
+            {% endif %}
+            <span class="cv-tag grey">⭐ {{ course.saves }} sauvegarde{{ course.saves != 1 ? 's' }}</span>
+        </div>
+    </div>
+
+    <div class="cv-actions">
+        <a href="{{ path('admin_courses_index') }}" class="btn-back">← Retour</a>
+        {% if course.is_published %}
+            <button class="btn-unpublish" onclick="openModal()">🚫 Dépublier</button>
+        {% endif %}
+    </div>
+</div>
+
+{# ── BODY ──────────────────────────────────────────────────────────────── #}
+<div class="cv-body">
+
+    {# LEFT — Files + Reports #}
+    <div>
+        {# Files #}
+        <div class="cv-card">
+            <div class="cv-card-header">📁 Fichiers ({{ files|length }})</div>
+            <div class="cv-card-body">
+                {% if files is empty %}
+                    <div class="empty-files">Aucun fichier dans ce cours.</div>
+                {% else %}
+                    <div class="files-grid">
+                    {% for file in files %}
+                        {% set lname = file.originalname|lower %}
+                        {% set isImg = file.mimetype starts with 'image/' %}
+                        {% set isPdf = file.mimetype == 'application/pdf' %}
+                        {% set isWord = lname ends with '.docx' or lname ends with '.doc' %}
+                        {% set isPpt  = lname ends with '.pptx' or lname ends with '.ppt' %}
+                        {% set isXls  = lname ends with '.xlsx' or lname ends with '.xls' %}
+                        <div class="file-card" title="{{ file.originalname }}">
+                            <div class="file-thumb">
+                                {% if isPdf %}📄
+                                {% elseif isWord %}📝
+                                {% elseif isPpt %}📊
+                                {% elseif isXls %}📈
+                                {% elseif isImg %}🖼
+                                {% else %}📎{% endif %}
+                            </div>
+                            <div class="file-info">
+                                <div class="file-name">{{ file.originalname }}</div>
+                                <div class="file-meta">
+                                    {{ (file.sizebytes / 1024)|round(1) }} KB
+                                    · {{ file.uploaded_at|date('d/m/Y') }}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Reports #}
+        {% if reports is not empty %}
+        <div class="cv-card">
+            <div class="cv-card-header">🚩 Signalements ({{ reports|length }})</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Raison</th>
+                        <th>Signalé par</th>
+                        <th>Statut</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for r in reports %}
+                    <tr>
+                        <td>{{ r.reason }}</td>
+                        <td style="color:var(--text-muted);font-size:12px;">{{ r.reporter_email|default('—') }}</td>
+                        <td>
+                            {% if r.status == 'pending' %}
+                                <span class="badge badge-pending">⏳ En attente</span>
+                            {% elseif r.status == 'reviewed' %}
+                                <span class="badge badge-reviewed">✅ Traité</span>
+                            {% else %}
+                                <span class="badge badge-dismissed">🗑 Rejeté</span>
+                            {% endif %}
+                        </td>
+                        <td style="color:var(--text-muted);font-size:12px;white-space:nowrap;">{{ r.created_at|date('d/m/Y') }}</td>
+                    </tr>
+                    {% if r.details %}
+                    <tr>
+                        <td colspan="4" style="background:var(--purple-ghost);font-size:12px;color:var(--text-mid);padding:6px 14px 10px 28px;">
+                            {{ r.details }}
+                        </td>
+                    </tr>
+                    {% endif %}
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+
+    {# RIGHT — Stats sidebar #}
+    <div>
+        <div class="cv-card">
+            <div class="cv-card-header">📊 Informations</div>
+            <div class="cv-card-body">
+                <div class="stat-row">
+                    <div class="stat-item"><span>ID du cours</span><strong>#{{ course.id }}</strong></div>
+                    <div class="stat-item"><span>Propriétaire</span><strong>{{ course.owner_name|default('—') }}</strong></div>
+                    <div class="stat-item"><span>Email</span><strong style="font-size:12px;">{{ course.owner_email|default('—') }}</strong></div>
+                    <div class="stat-item"><span>Fichiers</span><strong>{{ files|length }}</strong></div>
+                    <div class="stat-item"><span>Signalements</span><strong>{{ reports|length }}</strong></div>
+                    <div class="stat-item"><span>Sauvegardes</span><strong>{{ course.saves }}</strong></div>
+                    <div class="stat-item"><span>Créé le</span><strong>{{ course.created_at|date('d/m/Y H:i') }}</strong></div>
+                    <div class="stat-item">
+                        <span>Statut</span>
+                        <strong>{{ course.is_published ? '✅ Publié' : '🔒 Dépublié' }}</strong>
+                    </div>
+                    <div class="stat-item">
+                        <span>Verrou admin</span>
+                        <strong>{{ course.admin_locked ? '🔐 Oui' : '—' }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align:center;">
+            <a href="{{ path('admin_course_reports_index', {q: course.title}) }}"
+               style="font-size:12.5px;color:var(--purple);text-decoration:none;">
+                🔍 Voir les signalements de ce cours →
+            </a>
+        </div>
+    </div>
+
+</div>
+
+{# ── CONFIRM MODAL ────────────────────────────────────────────────────── #}
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal-box">
+        <div class="modal-icon">🚫</div>
+        <div class="modal-title">Dépublier ce cours ?</div>
+        <div class="modal-body">
+            <strong>{{ course.title }}</strong> sera dépublié et verrouillé.
+            Le propriétaire ne pourra pas le republier.
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+            <button class="btn-confirm" id="btnConfirm">🚫 Confirmer</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    function openModal()  { document.getElementById('confirmModal').classList.add('open'); }
+    function closeModal() { document.getElementById('confirmModal').classList.remove('open'); }
+
+    document.getElementById('confirmModal').addEventListener('click', e => {
+        if (e.target === document.getElementById('confirmModal')) closeModal();
+    });
+
+    document.getElementById('btnConfirm').addEventListener('click', function () {
+        this.disabled = true;
+        this.textContent = 'En cours…';
+
+        fetch('/admin/courses/unpublish/{{ course.id }}', { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok) location.reload();
+                else { alert(data.message || 'Erreur'); this.disabled = false; }
+            })
+            .catch(() => { alert('Erreur réseau'); this.disabled = false; });
+    });
+</script>
+{% endblock %}
