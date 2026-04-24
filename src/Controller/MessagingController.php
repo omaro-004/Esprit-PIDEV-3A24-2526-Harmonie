@@ -25,6 +25,7 @@ class MessagingController extends AbstractController
         private readonly ConversationRepository $convRepo,
         private readonly MessageRepository      $msgRepo,
         private readonly UserRepository         $userRepo,
+        private readonly HubInterface          $hub,
     ) {}
 
     #[Route('/conversations', name: 'api_messaging_conversations', methods: ['GET'])]
@@ -52,7 +53,8 @@ class MessagingController extends AbstractController
             ];
         }, $convs);
 
-        return new JsonResponse($data);
+        return new 
+        JsonResponse($data);
     }
 
     #[Route('/conversations/{id}/messages', name: 'api_messaging_messages', methods: ['GET'])]
@@ -133,6 +135,33 @@ class MessagingController extends AbstractController
             $this->em->persist($msg);
             $conv->setUpdatedAt(new \DateTime());
             $this->em->flush();
+
+            $payload = [
+                'id'       => $msg->getId(),
+                'convId'   => $conv->getId(),
+                'senderId' => $me->getUserId(),
+                'content'  => $msg->getContent(),
+                'sentAt'   => $msg->getSentAt()->format('H:i'),
+            ];
+
+            try {
+                $this->hub->publish(new Update(
+                    'user/' . $recipient->getUserId() . '/messages',
+                    json_encode($payload, JSON_THROW_ON_ERROR),
+                ));
+
+                // Keep sender tabs in sync too.
+                $this->hub->publish(new Update(
+                    'user/' . $me->getUserId() . '/messages',
+                    json_encode($payload, JSON_THROW_ON_ERROR),
+                ));
+            } catch (\Throwable $mercureError) {
+                file_put_contents(
+                    __DIR__ . '/../../var/log/send_debug.log',
+                    date('Y-m-d H:i:s') . ' | MERCURE ERROR: ' . $mercureError->getMessage() . "\n",
+                    FILE_APPEND
+                );
+            }
 
             file_put_contents(
                 __DIR__ . '/../../var/log/send_debug.log',
