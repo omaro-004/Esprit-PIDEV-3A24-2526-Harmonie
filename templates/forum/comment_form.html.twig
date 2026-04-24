@@ -1,0 +1,227 @@
+{% extends 'base.html.twig' %}
+{% block title %}Modifier commentaire — Harmony{% endblock %}
+
+{% block stylesheets %}
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+    .spell-container { position: relative; }
+    .spell-errors { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+    .spell-error-item {
+        background: #FFF8E7; border: 1px solid rgba(245,158,11,.2);
+        border-radius: 10px; padding: 10px 14px; font-size: 12.5px;
+        color: #92400E; display: flex; align-items: flex-start; gap: 10px;
+    }
+    .spell-error-word { font-weight: 700; background: rgba(245,158,11,.15); padding: 1px 6px; border-radius: 4px; }
+    .spell-suggestions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+    .spell-suggestion-btn {
+        padding: 3px 10px; background: #6A5ACD; color: white; border: none;
+        border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;
+        font-family: var(--font-body); transition: background .15s;
+    }
+    .spell-suggestion-btn:hover { background: #4B3B9E; }
+
+
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{--purple:#6A5ACD;--purple-dark:#4B3B9E;--purple-soft:#8B7FD4;
+        --purple-pale:#EDE8FA;--purple-ghost:#F7F5FD;--text:#1C1733;
+        --text-mid:#4A4570;--text-muted:#9590B8;--border:rgba(106,90,205,.12);
+        --white:#FFFFFF;--font-head:'Syne',sans-serif;--font-body:'Inter',sans-serif;}
+    html,body{font-family:var(--font-body);background:var(--purple-ghost);color:var(--text);}
+    .topbar{position:sticky;top:0;z-index:200;background:var(--white);
+        border-bottom:1px solid var(--border);height:62px;display:flex;
+        align-items:center;padding:0 40px;gap:8px;}
+    .topbar-logo{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:32px;}
+    .logo-mark{width:34px;height:34px;border-radius:10px;object-fit:contain;}
+    .nav-links{display:flex;align-items:center;gap:2px;flex:1;}
+    .nav-link{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;
+        border-radius:9px;font-size:13.5px;font-weight:500;color:var(--text-mid);
+        text-decoration:none;transition:background .15s,color .15s;}
+    .nav-link:hover,.nav-link.active{background:var(--purple-pale);color:var(--purple);font-weight:600;}
+    .topbar-right{display:flex;align-items:center;gap:10px;margin-left:auto;}
+    .logout-btn{padding:7px 16px;border-radius:9px;border:1.5px solid rgba(239,68,68,.2);
+        background:transparent;color:#E05252;font-size:13px;cursor:pointer;}
+    .avatar{width:36px;height:36px;border-radius:50%;background:var(--purple);
+        color:white;font-family:var(--font-head);font-weight:700;font-size:14px;
+        display:grid;place-items:center;}
+
+    .page{max-width:600px;margin:0 auto;padding:48px 40px 80px;}
+    .breadcrumb{display:flex;align-items:center;gap:8px;font-size:13px;
+        color:var(--text-muted);margin-bottom:24px;}
+    .breadcrumb a{color:var(--purple);text-decoration:none;font-weight:500;}
+
+    .post-ref{background:var(--purple-ghost);border:1px solid var(--border);
+        border-radius:12px;padding:14px 18px;margin-bottom:24px;
+        font-size:13px;color:var(--text-mid);}
+    .post-ref strong{color:var(--text);font-size:14px;}
+
+    .form-card{background:var(--white);border:1px solid var(--border);
+        border-radius:20px;padding:40px;}
+    .form-title{font-family:var(--font-head);font-size:22px;font-weight:800;
+        color:var(--text);margin-bottom:24px;}
+    .form-group{margin-bottom:20px;}
+    .form-label{display:block;font-size:13px;font-weight:600;color:var(--text-mid);margin-bottom:7px;}
+    .form-textarea{width:100%;padding:11px 14px;border:1.5px solid var(--border);
+        border-radius:10px;font-family:var(--font-body);font-size:14px;color:var(--text);
+        background:var(--white);transition:border-color .15s;outline:none;
+        resize:vertical;min-height:120px;}
+    .form-textarea:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(106,90,205,.1);}
+    .form-textarea.error{border-color:#E05252;}
+
+    .error-box{background:#FEF2F2;border:1px solid rgba(239,68,68,.2);
+        border-radius:10px;padding:12px 16px;margin-bottom:20px;
+        color:#E05252;font-size:13px;display:flex;align-items:center;gap:8px;}
+
+    .form-actions{display:flex;gap:12px;margin-top:24px;}
+    .btn-submit{flex:1;padding:12px;background:var(--purple);color:white;border:none;
+        border-radius:11px;font-family:var(--font-body);font-size:14px;font-weight:600;
+        cursor:pointer;transition:background .15s;}
+    .btn-submit:hover{background:var(--purple-dark);}
+    .btn-cancel{padding:12px 24px;background:var(--purple-ghost);color:var(--text-mid);
+        border:1.5px solid var(--border);border-radius:11px;font-family:var(--font-body);
+        font-size:14px;font-weight:500;cursor:pointer;text-decoration:none;
+        display:inline-flex;align-items:center;}
+</style>
+{% endblock %}
+
+{% block body %}
+<header class="topbar">
+    <a href="{{ path('homepage') }}" class="topbar-logo">
+        <img src="{{ asset('images/logo.png') }}" class="logo-mark" alt="Harmony">
+    </a>
+    <nav class="nav-links">
+        <a href="{{ path('activites') }}" class="nav-link"> 🏋 Activités </a>
+        <a href="{{ path('forum') }}"     class="nav-link active">💬 Forum</a>
+        <a href="{{ path('taches') }}"    class="nav-link">📚 Tâches</a>
+        <a href="{{ path('evenements') }}" class="nav-link">📅 Événements</a>
+        <a href="{{ path('nutrition') }}" class="nav-link">🥗 Nutrition</a>
+        <a href="{{ path('meditation') }}" class="nav-link">🧘 Méditation</a>
+        <a href="{{ path('journal') }}"   class="nav-link">📔 Journal</a>
+        <a href="{{ path('library') }}"   class="nav-link">📖 Library</a>
+    </nav>
+    <div class="topbar-right">
+        <button class="logout-btn">🚪 Déconnexion</button>
+        <div class="avatar">E</div>
+    </div>
+</header>
+
+<main class="page">
+    <div class="breadcrumb">
+        <a href="{{ path('forum') }}">💬 Forum</a>
+        <span>›</span>
+        <span>Modifier commentaire</span>
+    </div>
+
+    <div class="post-ref">
+        💬 Commentaire sur le post : <strong>{{ post.titre }}</strong>
+    </div>
+
+    <div class="form-card">
+        <div class="form-title">✏️ Modifier le commentaire</div>
+        {% for msg in app.flashes('error_moderation') %}
+            <div style="background:#FEF2F2;border:1px solid rgba(239,68,68,.2);
+                        border-radius:12px;padding:14px 18px;margin-bottom:20px;
+                        color:#E05252;font-size:14px;font-weight:500;
+                        display:flex;align-items:center;gap:10px;">
+                <span style="font-size:20px;">🚫</span>
+                {{ msg }}
+            </div>
+        {% endfor %}
+
+        {{ form_start(form) }}
+
+            <div class="form-group">
+                <label class="form-label">Ton commentaire *</label>
+                <div class="spell-container">
+                    {{ form_widget(form.contenu, {
+                        'attr': {
+                            'id': 'comment_contenu',
+                            'oninput': 'scheduleSpellCheck("comment_contenu", "comment-errors", "comment-status")'
+                        }
+                    }) }}
+                    <div class="spell-checking" id="comment-status" style="display:none;font-size:11px;color:#9590B8;margin-top:6px;">
+                        ✏️ Vérification...
+                    </div>
+                    <div class="spell-errors" id="comment-errors"></div>
+                </div>
+                {% for error in form.contenu.vars.errors %}
+                    <div class="error-box">⚠️ {{ error.message }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="form-actions">
+                <a href="{{ path('forum_posts', {id: post.idCategorie}) }}" class="btn-cancel">Annuler</a>
+                <button type="submit" class="btn-submit">💾 Enregistrer</button>
+            </div>
+
+        {{ form_end(form) }}
+    </div>
+</main>
+{% block javascripts %}
+<script>
+let spellTimers = {};
+
+function scheduleSpellCheck(inputId, errorsId, statusId) {
+    if (spellTimers[inputId]) clearTimeout(spellTimers[inputId]);
+    const input = document.getElementById(inputId);
+    const text  = input.value.trim();
+    if (text.length < 5) {
+        document.getElementById(errorsId).innerHTML = '';
+        document.getElementById(statusId).style.display = 'none';
+        return;
+    }
+    document.getElementById(statusId).style.display = 'block';
+    spellTimers[inputId] = setTimeout(() => doSpellCheck(text, inputId, errorsId, statusId), 1000);
+}
+
+
+
+
+async function doSpellCheck(text, inputId, errorsId, statusId) {
+    try {
+        const fd = new FormData();
+        fd.append('text', text);
+        fd.append('language', 'fr');
+        const res  = await fetch('/forum/spellcheck', { method: 'POST', body: fd });
+        const data = await res.json();
+        const errorsDiv = document.getElementById(errorsId);
+        document.getElementById(statusId).style.display = 'none';
+        if (!data.errors || data.errors.length === 0) {
+            errorsDiv.innerHTML = '<div style="font-size:11px;color:#16A34A;margin-top:4px;">✅ Aucune faute détectée</div>';
+            return;
+        }
+        errorsDiv.innerHTML = data.errors.map(err => `
+            <div class="spell-error-item">
+                <span>⚠️</span>
+                <div style="flex:1;">
+                    <div><span class="spell-error-word">${esc(err.word)}</span> — ${esc(err.message)}</div>
+                    ${err.suggestions.length > 0 ? `
+                    <div class="spell-suggestions">
+                        <span style="font-size:11px;">Suggestions :</span>
+                        ${err.suggestions.map(s => `
+                            <button class="spell-suggestion-btn"
+                                onclick="applySuggestion('${inputId}','${esc(err.word)}','${esc(s)}',${err.offset},${err.length})">
+                                ${esc(s)}
+                            </button>`).join('')}
+                    </div>` : ''}
+                </div>
+            </div>`).join('');
+    } catch(e) {
+        document.getElementById(statusId).style.display = 'none';
+    }
+}
+
+function applySuggestion(inputId, wrong, suggestion, offset, length) {
+    const input = document.getElementById(inputId);
+    input.value = input.value.substring(0, offset) + suggestion + input.value.substring(offset + length);
+    scheduleSpellCheck(inputId, 'comment-errors', 'comment-status');
+}
+
+function esc(str) {
+    const d = document.createElement('div');
+    d.textContent = str || '';
+    return d.innerHTML;
+}
+</script>
+{% endblock %}
+
+{% endblock %}

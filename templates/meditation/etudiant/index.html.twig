@@ -1,0 +1,154 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Méditation - Harmony{% endblock %}
+
+{% block stylesheets %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --purple:#6A5ACD;--purple-dark:#4B3B9E;--purple-soft:#8B7FD4;
+            --purple-pale:#EDE8FA;--purple-ghost:#F7F5FD;
+            --text:#1C1733;--text-mid:#4A4570;--text-muted:#9590B8;
+            --border:rgba(106,90,205,.12);--white:#FFFFFF;
+            --font-head:'Syne',sans-serif;--font-body:'Inter',sans-serif;
+        }
+        html,body{height:100%;font-family:var(--font-body);background:var(--purple-ghost);color:var(--text);}
+
+
+        /* PAGE */
+        .container{max-width:1200px;margin:0 auto;padding:48px 40px 80px;}
+        .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;}
+        .page-title{font-family:var(--font-head);font-weight:800;font-size:32px;color:var(--purple);}
+
+        .toolbar{display:flex;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap;}
+        .search-box{flex:1;min-width:200px;display:flex;align-items:center;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:0 14px;height:42px;}
+        .search-box input{border:none;outline:none;flex:1;font-size:14px;font-family:var(--font-body);background:transparent;color:var(--text);}
+        .sort-btn{height:42px;padding:0 18px;border-radius:12px;border:1px solid var(--border);background:var(--white);color:var(--text-mid);font-size:13px;font-weight:500;cursor:pointer;transition:.15s;font-family:var(--font-body);}
+        .sort-btn:hover{background:var(--purple-pale);color:var(--purple);border-color:var(--purple);}
+        .sort-btn.active{background:var(--purple);color:white;border-color:var(--purple);}
+
+        .results-count{font-size:13px;color:var(--text-muted);margin-bottom:16px;}
+        .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;}
+        .card{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:24px;transition:box-shadow .2s;cursor:pointer;text-decoration:none;color:inherit;display:block;}
+        .card:hover{box-shadow:0 8px 30px rgba(106,90,205,.1);}
+        .card-theme{font-family:var(--font-head);font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px;}
+        .card-meta{font-size:13px;color:var(--text-muted);margin-bottom:4px;}
+        .card-meta span{color:var(--text-mid);font-weight:500;}
+        .badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;background:var(--purple-pale);color:var(--purple);padding:3px 10px;border-radius:20px;margin-top:8px;}
+        .card-footer{margin-top:14px;font-size:13px;color:var(--purple);font-weight:500;}
+
+        .loading{display:none;text-align:center;padding:40px;color:var(--text-muted);font-size:14px;}
+        .empty-state{text-align:center;padding:60px 20px;color:var(--text-muted);}
+        .empty-state .icon{font-size:48px;margin-bottom:12px;}
+
+        @media(max-width:640px){.topbar{padding:0 20px;}.nav-links{display:none;}.container{padding:24px 20px 60px;}}
+    </style>
+{% endblock %}
+
+{% block body %}
+    {% include '_planning_topbar.html.twig' %}
+
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">🧘 Méditation</h1>
+        </div>
+
+        <div class="toolbar">
+            <div class="search-box">
+                <span style="margin-right:8px;color:var(--text-muted)">🔍</span>
+                <input type="text" id="searchInput" placeholder="Rechercher par thème ou auteur..." value="{{ q }}">
+            </div>
+            <button class="sort-btn {{ sort == 'theme' ? 'active' }}" data-sort="theme">Thème</button>
+            <button class="sort-btn {{ sort == 'auteur' ? 'active' }}" data-sort="auteur">Auteur</button>
+            <button class="sort-btn {{ sort == 'duree' ? 'active' }}" data-sort="duree">Durée</button>
+        </div>
+
+        <div class="results-count" id="resultsCount">{{ sessions|length }} session(s)</div>
+        <div class="loading" id="loading">⏳ Chargement...</div>
+
+        <div class="cards-grid" id="cardsGrid">
+            {% for s in sessions %}
+                <a href="{{ path('meditation_show', {id: s.id}) }}" class="card">
+                    <div class="card-theme">{{ s.theme }}</div>
+                    <div class="card-meta">👨‍⚕️ Auteur : <span>{{ s.auteur }}</span></div>
+                    <div class="card-meta">⏱ Durée : <span>{{ s.duree }} min</span></div>
+                    <div class="badge">💡 {{ s.conseils|length }} conseil(s)</div>
+                    <div class="card-footer">Voir les détails →</div>
+                </a>
+            {% else %}
+                <div class="empty-state">
+                    <div class="icon">🧘</div>
+                    <p>Aucune session de méditation disponible.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+    (function(){
+        const btn = document.getElementById('avatarBtn');
+        const drop = document.getElementById('profileDropdown');
+        btn.addEventListener('click', e => { e.stopPropagation(); drop.classList.toggle('open'); });
+        document.addEventListener('click', () => drop.classList.remove('open'));
+
+        const searchInput = document.getElementById('searchInput');
+        const grid = document.getElementById('cardsGrid');
+        const count = document.getElementById('resultsCount');
+        const loading = document.getElementById('loading');
+        const sortBtns = document.querySelectorAll('.sort-btn');
+        let currentSort = '{{ sort }}';
+        let currentDir = '{{ dir }}';
+        let debounce;
+
+        function doSearch() {
+            const q = searchInput.value.trim();
+            loading.style.display = 'block';
+            grid.style.opacity = '0.4';
+
+            fetch(`{{ path('meditation_search') }}?q=${encodeURIComponent(q)}&sort=${currentSort}&dir=${currentDir}`)
+                .then(r => r.json())
+                .then(data => {
+                    loading.style.display = 'none';
+                    grid.style.opacity = '1';
+                    count.textContent = data.length + ' session(s)';
+
+                    if (data.length === 0) {
+                        grid.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><p>Aucun résultat.</p></div>';
+                        return;
+                    }
+
+                    grid.innerHTML = data.map(s => `
+                        <a href="/meditation/${s.id}" class="card">
+                            <div class="card-theme">${esc(s.theme)}</div>
+                            <div class="card-meta">👨‍⚕️ Auteur : <span>${esc(s.auteur)}</span></div>
+                            <div class="card-meta">⏱ Durée : <span>${s.duree} min</span></div>
+                            <div class="badge">💡 ${s.conseilsCount} conseil(s)</div>
+                            <div class="card-footer">Voir les détails →</div>
+                        </a>
+                    `).join('');
+                });
+        }
+
+        searchInput.addEventListener('input', () => {
+            clearTimeout(debounce);
+            debounce = setTimeout(doSearch, 250);
+        });
+
+        sortBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const s = btn.dataset.sort;
+                if (currentSort === s) currentDir = currentDir === 'ASC' ? 'DESC' : 'ASC';
+                else { currentSort = s; currentDir = 'ASC'; }
+                sortBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                doSearch();
+            });
+        });
+
+        function esc(str) { const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
+    })();
+    </script>
+{% endblock %}

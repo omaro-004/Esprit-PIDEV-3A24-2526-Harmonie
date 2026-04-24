@@ -1,0 +1,63 @@
+{% extends 'admin/base.html.twig' %}
+{% block title %}Comptes suspendus — Harmony{% endblock %}
+{% block page_title %}🔒 Comptes suspendus{% endblock %}
+
+{% block stylesheets %}
+    <style>
+        .sus-table-wrap { background: var(--white); border: 1px solid var(--border); border-radius: 18px; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: var(--text-muted); padding: 12px 20px; text-align: left; background: var(--purple-ghost); }
+        td { padding: 14px 20px; font-size: 13.5px; color: var(--text); border-bottom: 1px solid var(--purple-ghost); }
+        tr:last-child td { border: none; }
+        tr:hover td { background: var(--purple-ghost); }
+        .btn-sm { padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; text-decoration: none; cursor: pointer; border: none; }
+        .btn-activate { background: #D1FAE5; color: #065F46; }
+        .btn-activate:hover { background: #A7F3D0; }
+        .btn-view { background: var(--purple-pale); color: var(--purple); margin-right: 6px; }
+        .btn-view:hover { background: #ddd8f8; }
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+    </style>
+{% endblock %}
+
+{% block body %}
+    {% if users is empty %}
+        <div class="empty-state">
+            <div style="font-size:48px;margin-bottom:12px;">🎉</div>
+            <p style="font-size:15px;">Aucun compte suspendu. Tout est en ordre !</p>
+        </div>
+    {% else %}
+        <p style="font-size:13.5px;color:var(--text-muted);margin-bottom:16px;">
+            {{ users|length }} compte(s) suspendu(s)
+        </p>
+        <div class="sus-table-wrap">
+            <table>
+                <thead>
+                <tr>
+                    <th>Utilisateur</th>
+                    <th>Email</th>
+                    <th>Inscrit le</th>
+                    <th>Niveau</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for u in users %}
+                    <tr>
+                        <td><strong>{{ u.userPrenom }} {{ u.userNom }}</strong></td>
+                        <td style="color:var(--text-muted);">{{ u.userEmail }}</td>
+                        <td style="color:var(--text-muted);">{{ u.dateInscription }}</td>
+                        <td>{{ u.userNiveauScolaire ?? '—' }}</td>
+                        <td>
+                            <a href="{{ path('admin_users_show', {id: u.userId}) }}" class="btn-sm btn-view">Voir</a>
+                            <form method="post" action="{{ path('admin_users_toggle', {id: u.userId}) }}" style="display:inline;margin:0;">
+                                <input type="hidden" name="_token" value="{{ csrf_token('toggle' ~ u.userId) }}">
+                                <button type="submit" class="btn-sm btn-activate">✅ Réactiver</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+{% endblock %}

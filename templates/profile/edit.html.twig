@@ -1,0 +1,102 @@
+{% extends 'base.html.twig' %}
+{% block title %}Modifier mon profil — Harmony{% endblock %}
+{% block stylesheets %}
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        :root{--purple:#6A5ACD;--purple-dark:#4B3B9E;--purple-pale:#EDE8FA;--purple-ghost:#F7F5FD;--text:#1C1733;--text-mid:#4A4570;--text-muted:#9590B8;--border:rgba(106,90,205,.12);--font-head:'Syne',sans-serif;--font-body:'Inter',sans-serif}
+        html,body{min-height:100vh;font-family:var(--font-body);background:var(--purple-ghost);padding:40px 20px}
+        .wrap{max-width:600px;margin:0 auto}
+        .card{background:#fff;border:1px solid var(--border);border-radius:22px;padding:44px;box-shadow:0 20px 60px rgba(106,90,205,.08)}
+        .card-title{font-family:var(--font-head);font-size:22px;font-weight:800;color:var(--text);margin-bottom:6px}
+        .card-sub{font-size:13.5px;color:var(--text-muted);margin-bottom:28px}
+        .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+        .form-group{margin-bottom:14px}
+        .form-group label{display:block;font-size:13px;font-weight:500;color:var(--text-mid);margin-bottom:5px}
+        .form-group input,.form-group select{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:var(--font-body);font-size:14px;color:var(--text);background:var(--purple-ghost);outline:none;transition:border-color .15s}
+        .form-group input:focus,.form-group select:focus{border-color:var(--purple);background:#fff}
+        .form-error{color:#E05252;font-size:12px;margin-top:4px}
+        .section-divider{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin:20px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+        .btn-submit{width:100%;padding:13px;background:var(--purple);color:#fff;border:none;border-radius:11px;font-family:var(--font-body);font-size:14px;font-weight:600;cursor:pointer;margin-top:10px;box-shadow:0 4px 18px rgba(106,90,205,.3);transition:background .15s}
+        .btn-submit:hover{background:var(--purple-dark)}
+        .btn-back{display:inline-flex;align-items:center;gap:6px;color:var(--text-mid);text-decoration:none;font-size:13px;font-weight:500;margin-bottom:20px}
+        .btn-back:hover{color:var(--purple)}
+    </style>
+{% endblock %}
+{% block body %}
+    <div class="wrap">
+        <a href="{{ path('app_profile') }}" class="btn-back">← Retour au profil</a>
+        <div class="card">
+            <div class="card-title">Modifier mon profil ✏</div>
+            <div class="card-sub">Mettez à jour vos informations personnelles</div>
+
+            {{ form_start(form, {'method': 'POST', 'attr': {'enctype': 'multipart/form-data', 'novalidate': 'novalidate'}}) }}
+            <div class="section-divider">Informations personnelles</div>
+            <div class="form-row">
+                <div class="form-group">
+                    {{ form_label(form.userNom) }}
+                    {{ form_widget(form.userNom) }}
+                    <div class="form-error">{{ form_errors(form.userNom) }}</div>
+                </div>
+                <div class="form-group">
+                    {{ form_label(form.userPrenom) }}
+                    {{ form_widget(form.userPrenom) }}
+                    <div class="form-error">{{ form_errors(form.userPrenom) }}</div>
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form_label(form.userEmail) }}
+                {{ form_widget(form.userEmail) }}
+                <div class="form-error">{{ form_errors(form.userEmail) }}</div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    {{ form_label(form.userDateDeNaissance) }}
+                    {{ form_widget(form.userDateDeNaissance, {'attr': {'type': 'date'}}) }}
+                    <div class="form-error">{{ form_errors(form.userDateDeNaissance) }}</div>
+                </div>
+                <div class="form-group">
+                    {{ form_label(form.userSexe) }}
+                    {{ form_widget(form.userSexe) }}
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form_label(form.avatarFile) }}
+                {{ form_widget(form.avatarFile) }}
+                <div class="form-error">{{ form_errors(form.avatarFile) }}</div>
+            </div>
+
+            <div class="section-divider">Physique (optionnel)</div>
+            <div class="form-row">
+                <div class="form-group">
+                    {{ form_label(form.userPoids) }}
+                    {{ form_widget(form.userPoids) }}
+                    <div class="form-error">{{ form_errors(form.userPoids) }}</div>
+                </div>
+                <div class="form-group">
+                    {{ form_label(form.userTaille) }}
+                    {{ form_widget(form.userTaille) }}
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form_label(form.userNiveauActivitePhysique) }}
+                {{ form_widget(form.userNiveauActivitePhysique) }}
+            </div>
+
+            <div class="section-divider">Scolarité (optionnel)</div>
+            <div class="form-row">
+                <div class="form-group">
+                    {{ form_label(form.userNiveauScolaire) }}
+                    {{ form_widget(form.userNiveauScolaire) }}
+                </div>
+                <div class="form-group">
+                    {{ form_label(form.userEtablissementScolaire) }}
+                    {{ form_widget(form.userEtablissementScolaire) }}
+                </div>
+            </div>
+
+            <button class="btn-submit" type="submit">Sauvegarder les modifications →</button>
+            {{ form_end(form) }}
+        </div>
+    </div>
+{% endblock %}

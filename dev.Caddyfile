@@ -1,0 +1,28 @@
+{
+	admin off
+}
+
+:3000 {
+	log
+
+	route {
+		redir / /.well-known/mercure/ui/
+
+		mercure {
+			transport bolt {
+				path mercure.db
+			}
+
+			publisher_jwt harmony-secret-key-change-in-prod HS256
+			subscriber_jwt harmony-secret-key-change-in-prod HS256
+
+			anonymous
+			demo
+			subscriptions
+
+			cors_origins http://localhost http://localhost:8000 http://127.0.0.1:8000
+		}
+
+		respond "Not Found" 404
+	}
+}

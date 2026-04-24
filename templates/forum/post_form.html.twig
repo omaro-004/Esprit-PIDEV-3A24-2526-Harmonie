@@ -1,0 +1,467 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ post ? 'Modifier' : 'Nouveau' }} post — Harmony{% endblock %}
+
+
+{% block stylesheets %}
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+    /* Styles correction orthographique */
+    .spell-container { position: relative; }
+
+
+    .spell-errors {
+        margin-top: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+
+    .spell-error-item {
+        background: #FFF8E7;
+        border: 1px solid rgba(245,158,11,.2);
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 12.5px;
+        color: #92400E;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+
+    .spell-error-word {
+        font-weight: 700;
+        background: rgba(245,158,11,.15);
+        padding: 1px 6px;
+        border-radius: 4px;
+    }
+
+
+    .spell-suggestions {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 6px;
+    }
+
+
+    .spell-suggestion-btn {
+        padding: 3px 10px;
+        background: #6A5ACD;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: var(--font-body);
+        transition: background .15s;
+    }
+
+
+    .spell-suggestion-btn:hover { background: #4B3B9E; }
+
+
+    .spell-checking {
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-top: 6px;
+        display: none;
+    }
+
+
+    .spell-ok {
+        font-size: 11px;
+        color: #16A34A;
+        margin-top: 6px;
+        display: none;
+    }
+
+
+
+
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{--purple:#6A5ACD;--purple-dark:#4B3B9E;--purple-soft:#8B7FD4;
+        --purple-pale:#EDE8FA;--purple-ghost:#F7F5FD;--text:#1C1733;
+        --text-mid:#4A4570;--text-muted:#9590B8;--border:rgba(106,90,205,.12);
+        --white:#FFFFFF;--font-head:'Syne',sans-serif;--font-body:'Inter',sans-serif;}
+    html,body{font-family:var(--font-body);background:var(--purple-ghost);color:var(--text);}
+    .topbar{position:sticky;top:0;z-index:200;background:var(--white);
+        border-bottom:1px solid var(--border);height:62px;display:flex;
+        align-items:center;padding:0 40px;gap:8px;}
+    .topbar-logo{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:32px;}
+    .logo-mark{width:34px;height:34px;border-radius:10px;object-fit:contain;}
+    .nav-links{display:flex;align-items:center;gap:2px;flex:1;}
+    .nav-link{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;
+        border-radius:9px;font-size:13.5px;font-weight:500;color:var(--text-mid);
+        text-decoration:none;transition:background .15s,color .15s;}
+    .nav-link:hover,.nav-link.active{background:var(--purple-pale);color:var(--purple);font-weight:600;}
+    .topbar-right{display:flex;align-items:center;gap:10px;margin-left:auto;}
+    .logout-btn{padding:7px 16px;border-radius:9px;border:1.5px solid rgba(239,68,68,.2);
+        background:transparent;color:#E05252;font-size:13px;cursor:pointer;}
+    .avatar{width:36px;height:36px;border-radius:50%;background:var(--purple);
+        color:white;font-family:var(--font-head);font-weight:700;font-size:14px;
+        display:grid;place-items:center;}
+
+
+    .page{max-width:680px;margin:0 auto;padding:48px 40px 80px;}
+    .breadcrumb{display:flex;align-items:center;gap:8px;font-size:13px;
+        color:var(--text-muted);margin-bottom:24px;}
+    .breadcrumb a{color:var(--purple);text-decoration:none;font-weight:500;}
+
+
+    .form-card{background:var(--white);border:1px solid var(--border);
+        border-radius:20px;padding:40px;}
+    .form-title{font-family:var(--font-head);font-size:24px;font-weight:800;
+        color:var(--text);margin-bottom:28px;}
+    .cat-badge{display:inline-flex;align-items:center;gap:6px;
+        background:var(--purple-pale);color:var(--purple);
+        padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;
+        margin-bottom:20px;}
+
+
+    .form-group{margin-bottom:20px;}
+    .form-label{display:block;font-size:13px;font-weight:600;color:var(--text-mid);margin-bottom:7px;}
+    .form-input,.form-textarea{width:100%;padding:11px 14px;border:1.5px solid var(--border);
+        border-radius:10px;font-family:var(--font-body);font-size:14px;color:var(--text);
+        background:var(--white);transition:border-color .15s,box-shadow .15s;outline:none;}
+    .form-input:focus,.form-textarea:focus{border-color:var(--purple);
+        box-shadow:0 0 0 3px rgba(106,90,205,.1);}
+    .form-input.error,.form-textarea.error{border-color:#E05252;}
+    .form-textarea{resize:vertical;min-height:160px;}
+    .char-count{font-size:11px;color:var(--text-muted);text-align:right;margin-top:4px;}
+
+
+    .error-box{background:#FEF2F2;border:1px solid rgba(239,68,68,.2);
+        border-radius:10px;padding:12px 16px;margin-bottom:20px;
+        color:#E05252;font-size:13px;display:flex;align-items:center;gap:8px;}
+
+
+    .form-actions{display:flex;gap:12px;margin-top:28px;}
+    .btn-submit{flex:1;padding:12px;background:var(--purple);color:white;border:none;
+        border-radius:11px;font-family:var(--font-body);font-size:14px;font-weight:600;
+        cursor:pointer;transition:background .15s;}
+    .btn-submit:hover{background:var(--purple-dark);}
+    .btn-cancel{padding:12px 24px;background:var(--purple-ghost);color:var(--text-mid);
+        border:1.5px solid var(--border);border-radius:11px;font-family:var(--font-body);
+        font-size:14px;font-weight:500;cursor:pointer;text-decoration:none;
+        display:inline-flex;align-items:center;}
+</style>
+{% endblock %}
+
+
+{% block body %}
+<header class="topbar">
+    <a href="{{ path('homepage') }}" class="topbar-logo">
+        <img src="{{ asset('images/logo.png') }}" class="logo-mark" alt="Harmony">
+    </a>
+    <nav class="nav-links">
+        <a href="{{ path('activites') }}" class="nav-link">🏋 Activités</a>
+        <a href="{{ path('forum') }}"     class="nav-link active">💬 Forum</a>
+        <a href="{{ path('taches') }}"    class="nav-link">📚 Tâches</a>
+        <a href="{{ path('evenements') }}" class="nav-link">📅 Événements</a>
+        <a href="{{ path('nutrition') }}" class="nav-link">🥗 Nutrition</a>
+        <a href="{{ path('meditation') }}" class="nav-link">🧘 Méditation</a>
+        <a href="{{ path('journal') }}"   class="nav-link">📔 Journal</a>
+        <a href="{{ path('library') }}"   class="nav-link">📖 Library</a>
+    </nav>
+    <div class="topbar-right">
+        <button class="logout-btn">🚪 Déconnexion</button>
+        <div class="avatar">E</div>
+    </div>
+</header>
+
+
+
+
+<main class="page">
+    <div class="breadcrumb">
+        <a href="{{ path('forum') }}">💬 Forum</a>
+        <span>›</span>
+        <a href="{{ path('forum_posts', {id: categorie.idCategorie}) }}">{{ categorie.nomCategorie }}</a>
+        <span>›</span>
+        <span>{{ post ? 'Modifier le post' : 'Nouveau post' }}</span>
+    </div>
+
+
+    <div class="form-card">
+        <div class="form-title">{{ post ? '✏️ Modifier le post' : '📝 Nouveau post' }}</div>
+        <div class="cat-badge">🗂 {{ categorie.nomCategorie }}</div>
+
+
+        {# Message modération #}
+        {% for msg in app.flashes('error_moderation') %}
+            <div style="background:#FEF2F2;border:1px solid rgba(239,68,68,.2);
+                        border-radius:12px;padding:14px 18px;margin-bottom:20px;
+                        color:#E05252;font-size:14px;font-weight:500;
+                        display:flex;align-items:center;gap:10px;">
+                <span style="font-size:20px;">🚫</span>
+                {{ msg }}
+            </div>
+        {% endfor %}
+
+
+
+
+
+
+        {{ form_start(form, {'attr': {'enctype': 'multipart/form-data', 'novalidate': 'novalidate'}}) }}
+
+
+            <div class="form-group">
+                <label class="form-label">Titre *</label>
+                <div class="spell-container">
+                    {{ form_widget(form.titre, {'attr': {'id': 'post_titre', 'oninput': 'scheduleSpellCheck("post_titre", "titre-errors", "titre-status")'}}) }}
+                    <div class="spell-checking" id="titre-status">✏️ Vérification...</div>
+                    <div class="spell-ok" id="titre-ok">✅ Aucune faute détectée</div>
+                    <div class="spell-errors" id="titre-errors"></div>
+                </div>
+                {% for error in form.titre.vars.errors %}
+                    <div class="error-box">⚠️ {{ error.message }}</div>
+                {% endfor %}
+                <div class="char-count"><span id="titreCount">0</span>/150</div>
+            </div>
+
+
+            <div class="form-group">
+                <label class="form-label">Contenu *</label>
+                <div class="spell-container">
+                    {{ form_widget(form.contenu, {'attr': {'id': 'post_contenu', 'oninput': 'scheduleSpellCheck("post_contenu", "contenu-errors", "contenu-status")'}}) }}
+                    <div class="spell-checking" id="contenu-status">✏️ Vérification...</div>
+                    <div class="spell-ok" id="contenu-ok">✅ Aucune faute détectée</div>
+                    <div class="spell-errors" id="contenu-errors"></div>
+                </div>
+                {% for error in form.contenu.vars.errors %}
+                    <div class="error-box">⚠️ {{ error.message }}</div>
+                {% endfor %}
+            </div>
+
+
+            <div class="form-group">
+                <label class="form-label">Image (optionnelle)</label>
+
+
+                {# Aperçu si image existante #}
+                {% if post and post.imagePath %}
+                    <div style="margin-bottom:10px;">
+                        <img src="{{ asset('uploads/posts/' ~ post.imagePath) }}"
+                            alt="Image actuelle"
+                            style="max-width:200px;border-radius:10px;border:1px solid var(--border);">
+                        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">
+                            Image actuelle — choisir un nouveau fichier pour la remplacer
+                        </div>
+                    </div>
+                {% endif %}
+
+
+                {{ form_widget(form.imageFile, {'attr': {'class': 'form-input', 'accept': 'image/*', 'id': 'imageFileInput'}}) }}
+                {% for error in form.imageFile.vars.errors %}
+                    <div class="error-box">⚠️ {{ error.message }}</div>
+                {% endfor %}
+
+
+                {# Aperçu avant upload #}
+                <div id="imagePreview" style="display:none;margin-top:10px;">
+                    <img id="previewImg" src="" alt="Aperçu"
+                        style="max-width:200px;border-radius:10px;border:1px solid var(--border);">
+                </div>
+            </div>
+
+
+            <div class="form-actions">
+                <a href="{{ path('forum_posts', {id: categorie.idCategorie}) }}" class="btn-cancel">Annuler</a>
+                <button type="submit" class="btn-submit">
+                    {{ post ? '💾 Enregistrer' : '📤 Publier le post' }}
+                </button>
+            </div>
+
+
+        {{ form_end(form) }}
+    </div>
+</main>
+
+
+{% block javascripts %}
+<script>
+// ── COMPTEUR DE CARACTÈRES ──────────────────────────
+const titreInput   = document.getElementById('post_titre');
+const titreCount   = document.getElementById('titreCount');
+
+
+function updateTitre() {
+    if (titreCount && titreInput) {
+        titreCount.textContent = titreInput.value.length;
+    }
+}
+if (titreInput) titreInput.addEventListener('input', updateTitre);
+updateTitre();
+
+
+// ── APERÇU IMAGE ───────────────────────────────────
+const imageInput = document.getElementById('imageFileInput');
+if (imageInput) {
+    imageInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                document.getElementById('previewImg').src = ev.target.result;
+                document.getElementById('imagePreview').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+}
+
+
+// ── CORRECTION ORTHOGRAPHIQUE ──────────────────────
+
+
+// Timer pour le debounce — attend 1s après que l'user arrête de taper
+let spellTimers = {};
+
+
+/**
+ * Planifie une vérification orthographique après 1 seconde de pause
+ * @param {string} inputId   - ID du champ textarea/input
+ * @param {string} errorsId  - ID du div où afficher les erreurs
+ * @param {string} statusId  - ID du div de statut (checking/ok)
+ */
+function scheduleSpellCheck(inputId, errorsId, statusId) {
+    // Annule le timer précédent pour ce champ
+    if (spellTimers[inputId]) {
+        clearTimeout(spellTimers[inputId]);
+    }
+
+
+    const input = document.getElementById(inputId);
+    const text  = input.value.trim();
+
+
+    // Efface les erreurs si texte vide
+    if (text.length < 5) {
+        document.getElementById(errorsId).innerHTML = '';
+        document.getElementById(statusId).style.display = 'none';
+        return;
+    }
+
+
+    // Affiche "Vérification..."
+    document.getElementById(statusId).style.display = 'block';
+    document.getElementById(statusId).textContent = '✏️ Vérification...';
+
+
+    // Lance la vérification après 1 seconde
+    spellTimers[inputId] = setTimeout(() => {
+        doSpellCheck(text, inputId, errorsId, statusId);
+    }, 1000);
+}
+
+
+/**
+ * Envoie le texte au controller Symfony qui appelle LanguageTool API
+ */
+async function doSpellCheck(text, inputId, errorsId, statusId) {
+    try {
+        const formData = new FormData();
+        formData.append('text', text);
+        formData.append('language', 'fr');
+
+
+        const res  = await fetch('/forum/spellcheck', {
+            method: 'POST',
+            body: formData,
+        });
+        const data = await res.json();
+
+
+        const errorsDiv  = document.getElementById(errorsId);
+        const statusDiv  = document.getElementById(statusId);
+
+
+        // Cache le statut
+        statusDiv.style.display = 'none';
+
+
+        if (!data.errors || data.errors.length === 0) {
+            // Aucune faute
+            statusDiv.textContent   = '✅ Aucune faute détectée';
+            statusDiv.style.color   = '#16A34A';
+            statusDiv.style.display = 'block';
+            errorsDiv.innerHTML     = '';
+            return;
+        }
+
+
+        // Remet la couleur normale du statut
+        statusDiv.style.color = '#9590B8';
+
+
+        // Affiche chaque erreur avec ses suggestions
+        errorsDiv.innerHTML = data.errors.map(err => `
+            <div class="spell-error-item">
+                <span style="font-size:16px;">⚠️</span>
+                <div style="flex:1;">
+                    <div>
+                        <span class="spell-error-word">${escHtml(err.word)}</span>
+                        — ${escHtml(err.message)}
+                    </div>
+                    ${err.suggestions.length > 0 ? `
+                    <div class="spell-suggestions">
+                        <span style="font-size:11px;color:#92400E;">Suggestions :</span>
+                        ${err.suggestions.map(s => `
+                            <button class="spell-suggestion-btn"
+                                onclick="applySuggestion('${inputId}', '${escHtml(err.word)}', '${escHtml(s)}', ${err.offset}, ${err.length})">
+                                ${escHtml(s)}
+                            </button>
+                        `).join('')}
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+        `).join('');
+
+
+    } catch(e) {
+        console.error('SpellCheck error:', e);
+        document.getElementById(statusId).style.display = 'none';
+    }
+}
+
+
+/**
+ * Applique une suggestion — remplace le mot erroné dans le textarea
+ * @param {string} inputId    - ID du champ
+ * @param {string} wrongWord  - Le mot erroné
+ * @param {string} suggestion - La correction proposée
+ * @param {number} offset     - Position du mot dans le texte
+ * @param {number} length     - Longueur du mot erroné
+ */
+function applySuggestion(inputId, wrongWord, suggestion, offset, length) {
+    const input = document.getElementById(inputId);
+    const text  = input.value;
+
+
+    // Remplace le mot erroné à la position exacte
+    input.value = text.substring(0, offset) + suggestion + text.substring(offset + length);
+
+
+    // Relance la vérification après correction
+    scheduleSpellCheck(inputId, inputId === 'post_titre' ? 'titre-errors' : 'contenu-errors',
+                                inputId === 'post_titre' ? 'titre-status' : 'contenu-status');
+}
+
+
+/**
+ * Échappe le HTML pour éviter les injections XSS
+ */
+function escHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str || '';
+    return d.innerHTML;
+}
+</script>
+{% endblock %}
+{% endblock %}
+

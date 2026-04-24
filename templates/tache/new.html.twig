@@ -1,0 +1,22 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvelle tâche — Harmony{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="{{ asset('harmonie/css/harmony-theme.css') }}" rel="stylesheet">
+    <link href="{{ asset('harmonie/css/harmony-forms.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+{% include '_planning_topbar.html.twig' %}
+<main class="page">
+<div class="harmony-form-page">
+    <div class="harmony-form-card">
+        <h1>Nouvelle tâche</h1>
+        {{ include('tache/_form.html.twig') }}
+        <a href="{{ path('app_tache_index') }}" class="harmony-form-back">← Retour au tableau Kanban</a>
+    </div>
+</div>
+</main>
+{% endblock %}

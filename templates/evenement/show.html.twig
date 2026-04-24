@@ -1,0 +1,81 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ evenement.titre ?? 'Événement' }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="{{ asset('harmonie/css/harmony-theme.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+{% include '_planning_topbar.html.twig' %}
+<main class="page">
+    <h1>{{ evenement.titre ?? 'Événement' }}</h1>
+
+    <table class="table">
+        <tbody>
+            <tr>
+                <th>Id</th>
+                <td>{{ evenement.id }}</td>
+            </tr>
+            <tr>
+                <th>Titre</th>
+                <td>{{ evenement.titre }}</td>
+            </tr>
+            <tr>
+                <th>Type</th>
+                <td>{{ evenement.eventType ?? evenement.typeEvenement ?? '—' }}</td>
+            </tr>
+            <tr>
+                <th>Mode lieu</th>
+                <td>{{ evenement.lieuType ?? '—' }}</td>
+            </tr>
+            <tr>
+                <th>Détail lieu</th>
+                <td>{{ evenement.lieuAdresse ?? '—' }}</td>
+            </tr>
+            <tr>
+                <th>Salle</th>
+                <td>{{ evenement.salle ? evenement.salle.nom : '—' }}</td>
+            </tr>
+            <tr>
+                <th>Lieu (affichage)</th>
+                <td>{{ evenement.lieu }}</td>
+            </tr>
+            <tr>
+                <th>Description</th>
+                <td>{{ evenement.description }}</td>
+            </tr>
+            <tr>
+                <th>Date début</th>
+                <td>{{ evenement.dateDebut ? evenement.dateDebut|date('Y-m-d H:i:s') : '' }}</td>
+            </tr>
+            <tr>
+                <th>Date fin</th>
+                <td>{{ evenement.dateFin ? evenement.dateFin|date('Y-m-d H:i:s') : '' }}</td>
+            </tr>
+            <tr>
+                <th>Priorité</th>
+                <td>{{ evenement.priorite }}</td>
+            </tr>
+            <tr>
+                <th>Rappel actif</th>
+                <td>{{ evenement.rappelActif ? 'Oui' : 'Non' }}</td>
+            </tr>
+            <tr>
+                <th>Approuvé</th>
+                <td>{{ evenement.approuve ? 'Oui' : 'Non' }}</td>
+            </tr>
+            <tr>
+                <th>Statut demande salle</th>
+                <td>{{ evenement.statutDemandeSalle ?? '—' }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p><a href="{{ path('app_evenement_index') }}">← Calendrier</a></p>
+    <p><a href="{{ path('app_evenement_edit', {'id': evenement.id}) }}">Modifier</a></p>
+
+    {{ include('evenement/_delete_form.html.twig') }}
+</main>
+{% endblock %}

@@ -1,0 +1,664 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Ajouter un Aliment — Harmony{% endblock %}
+
+{% block stylesheets %}
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --pu:#6A5ACD;--pu-dk:#4B3B9E;--pu-lt:#8B7FD4;--pu-pale:#EDE8FA;--pu-ghost:#F7F5FD;--pu-deep:#2D2060;
+  --tx:#1C1733;--tx-mid:#4A4570;--tx-muted:#9590B8;
+  --border:rgba(106,90,205,.12);--white:#FFFFFF;--shadow:0 8px 32px rgba(106,90,205,.14);
+  --green:#22C55E;--red:#EF4444;
+  --card-r:20px;
+  --font-h:'Syne',sans-serif;--font-b:'DM Sans',sans-serif;--font-m:'JetBrains Mono',monospace;
+  --breakfast:#F59E0B;--lunch:#10B981;--dinner:#6366F1;--snack:#F43F5E;
+}
+
+html,body{font-family:var(--font-b);background:var(--pu-ghost);color:var(--tx);overflow-x:hidden;min-height:100vh}
+
+/* ── PAGE LAYOUT ── */
+.page-wrapper{
+  min-height:calc(100vh - 62px);
+  background:linear-gradient(135deg,var(--pu-deep) 0%,#3D2A8A 40%,#6A5ACD 100%);
+  display:flex;align-items:flex-start;justify-content:center;
+  padding:36px 20px 60px;
+  position:relative;overflow:hidden;
+}
+.page-wrapper::before{
+  content:'';position:absolute;inset:0;
+  background:url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Ccircle cx='40' cy='40' r='1.5' fill='%23ffffff' fill-opacity='0.06'/%3E%3C/g%3E%3C/svg%3E");
+}
+/* Decorative blobs */
+.page-wrapper::after{
+  content:'';position:absolute;width:400px;height:400px;
+  background:radial-gradient(circle,rgba(255,255,255,.08) 0%,transparent 70%);
+  top:-100px;right:-100px;border-radius:50%;pointer-events:none;
+}
+
+/* ── MAIN CARD ── */
+.main-card{
+  position:relative;z-index:1;
+  width:100%;max-width:660px;
+  background:var(--white);border-radius:var(--card-r);
+  box-shadow:0 24px 64px rgba(0,0,0,.25),0 0 0 1px rgba(255,255,255,.1);
+  overflow:hidden;
+}
+
+/* Back bar */
+.back-bar{
+  padding:14px 22px;
+  background:linear-gradient(90deg,var(--pu-ghost),var(--white));
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;
+}
+.back-btn{
+  display:inline-flex;align-items:center;gap:6px;padding:6px 13px;
+  border-radius:8px;border:1.5px solid var(--border);background:var(--white);
+  font-family:var(--font-b);font-size:12.5px;font-weight:600;color:var(--tx-mid);
+  text-decoration:none;cursor:pointer;transition:all .15s;
+}
+.back-btn:hover{background:var(--pu-pale);color:var(--pu);border-color:var(--pu-lt)}
+.back-bar-info{display:flex;align-items:center;gap:8px}
+.repas-chip{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;
+}
+
+/* ── CARD HEADER ── */
+.card-header{padding:26px 28px 20px}
+.card-header h2{font-family:var(--font-h);font-size:22px;font-weight:800;color:var(--tx);margin-bottom:5px}
+.card-header p{font-size:13.5px;color:var(--tx-mid)}
+
+/* ── SEARCH SECTION ── */
+.search-section{padding:0 28px 20px}
+.search-wrap{position:relative}
+.search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none;opacity:.6}
+.search-input{
+  width:100%;padding:13px 16px 13px 44px;
+  border:2px solid var(--border);border-radius:13px;
+  font-family:var(--font-b);font-size:14px;color:var(--tx);
+  background:var(--pu-ghost);outline:none;
+  transition:border-color .2s,box-shadow .2s,background .2s;
+}
+.search-input:focus{
+  border-color:var(--pu);background:var(--white);
+  box-shadow:0 0 0 4px rgba(106,90,205,.1);
+}
+.search-input::placeholder{color:var(--tx-muted)}
+.search-count{font-size:11.5px;color:var(--tx-muted);margin-top:7px;padding-left:2px}
+
+/* ── FOOD LIST ── */
+.food-list-section{padding:0 28px;max-height:320px;overflow-y:auto}
+.food-list-section::-webkit-scrollbar{width:4px}
+.food-list-section::-webkit-scrollbar-thumb{background:var(--pu-pale);border-radius:4px}
+.food-list{display:flex;flex-direction:column;gap:6px}
+.food-list-item{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:12px 14px;border-radius:12px;border:1.5px solid var(--border);
+  background:var(--white);cursor:pointer;transition:all .15s;
+}
+.food-list-item:hover{border-color:var(--pu-lt);background:var(--pu-ghost);transform:translateX(3px)}
+.food-list-item.selected{
+  border-color:var(--pu);background:var(--pu-pale);
+  box-shadow:0 0 0 3px rgba(106,90,205,.12);
+}
+.food-list-item.hidden{display:none}
+.food-item-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.food-item-check{
+  width:20px;height:20px;border-radius:50%;border:2px solid var(--border);
+  display:grid;place-items:center;flex-shrink:0;font-size:10px;
+  transition:all .15s;background:var(--white);
+}
+.food-list-item.selected .food-item-check{background:var(--pu);border-color:var(--pu);color:white}
+.food-item-name{font-family:var(--font-h);font-size:13.5px;font-weight:700;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.food-item-macros{font-size:10.5px;color:var(--tx-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.food-item-cal{text-align:right;flex-shrink:0}
+.food-item-cal-val{font-family:var(--font-m);font-size:13px;font-weight:700;color:var(--pu)}
+.food-item-cal-lbl{font-size:9.5px;color:var(--tx-muted)}
+.no-results{text-align:center;padding:28px 20px;color:var(--tx-muted);display:none}
+.no-results-icon{font-size:28px;opacity:.4;margin-bottom:6px}
+.no-results-text{font-size:13px}
+
+/* ── SELECTED PREVIEW ── */
+.selected-preview{
+  margin:0 28px 20px;
+  background:linear-gradient(135deg,var(--pu-ghost),var(--pu-pale));
+  border:1.5px solid var(--pu-pale);border-radius:14px;
+  padding:16px 18px;display:none;
+}
+.selected-preview.show{display:block}
+.preview-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.preview-name{font-family:var(--font-h);font-size:14px;font-weight:800;color:var(--pu)}
+.preview-cal100{font-family:var(--font-m);font-size:12px;color:var(--tx-mid)}
+.preview-macros{display:flex;gap:14px}
+.preview-macro{text-align:center}
+.preview-macro-val{font-family:var(--font-m);font-size:13px;font-weight:700;color:var(--tx)}
+.preview-macro-lbl{font-size:10px;color:var(--tx-muted)}
+
+/* ── FORM SECTION ── */
+.form-section{padding:20px 28px 28px;border-top:1px solid var(--border)}
+.form-section-title{font-family:var(--font-h);font-size:14px;font-weight:700;color:var(--tx);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.form-group{display:flex;flex-direction:column;gap:4px;margin-bottom:14px}
+.form-group:last-of-type{margin-bottom:0}
+label{font-size:11.5px;font-weight:600;color:var(--tx-mid);text-transform:uppercase;letter-spacing:.4px}
+.err-msg{font-size:11px;color:var(--red);font-weight:500;display:none;margin-bottom:2px}
+.err-msg.show{display:block}
+.input-unit-wrap{position:relative;display:flex;align-items:center}
+.form-input{
+  width:100%;padding:11px 50px 11px 14px;
+  border:1.5px solid var(--border);border-radius:10px;
+  font-family:var(--font-b);font-size:14px;color:var(--tx);
+  background:var(--white);outline:none;
+  transition:border-color .15s,box-shadow .15s;
+}
+.form-input:focus{border-color:var(--pu);box-shadow:0 0 0 3px rgba(106,90,205,.1)}
+.form-input.err{border-color:var(--red)}
+.input-unit{
+  position:absolute;right:12px;
+  font-family:var(--font-m);font-size:12px;font-weight:600;color:var(--tx-muted);
+  pointer-events:none;
+}
+
+/* Live calorie display */
+.cal-preview-card{
+  background:linear-gradient(135deg,var(--pu-deep),#4B3B9E);
+  border-radius:14px;padding:16px 20px;
+  display:flex;align-items:center;justify-content:space-between;
+  margin:16px 0;
+}
+.cal-preview-label{font-size:13px;color:rgba(255,255,255,.75);font-weight:500}
+.cal-preview-val{font-family:var(--font-h);font-size:28px;font-weight:800;color:white;display:flex;align-items:baseline;gap:5px}
+.cal-preview-unit{font-size:14px;font-weight:600;opacity:.7}
+.cal-preview-macros{display:flex;gap:14px;margin-top:10px}
+.cal-prev-macro{text-align:center}
+.cal-prev-macro-val{font-family:var(--font-m);font-size:12px;font-weight:700;color:rgba(255,255,255,.9)}
+.cal-prev-macro-lbl{font-size:9.5px;color:rgba(255,255,255,.55);margin-top:1px}
+
+/* Select repas */
+.repas-selector{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.repas-opt{
+  padding:10px 8px;border-radius:11px;border:2px solid var(--border);
+  background:var(--white);cursor:pointer;text-align:center;
+  font-family:var(--font-b);font-size:11px;font-weight:600;color:var(--tx-mid);
+  transition:all .15s;
+}
+.repas-opt:hover{border-color:var(--pu-lt);color:var(--pu);background:var(--pu-ghost)}
+.repas-opt.active{border-color:var(--pu);color:var(--pu);background:var(--pu-pale)}
+.repas-opt-icon{font-size:20px;display:block;margin-bottom:4px}
+.repas-opt.r-breakfast.active{border-color:var(--breakfast);color:var(--breakfast);background:#FEF3C7}
+.repas-opt.r-lunch.active{border-color:var(--lunch);color:var(--lunch);background:#D1FAE5}
+.repas-opt.r-dinner.active{border-color:var(--dinner);color:var(--dinner);background:#E0E7FF}
+.repas-opt.r-snack.active{border-color:var(--snack);color:var(--snack);background:#FFE4E6}
+
+/* Date input */
+.date-input{
+  width:100%;padding:11px 14px;
+  border:1.5px solid var(--border);border-radius:10px;
+  font-family:var(--font-b);font-size:14px;color:var(--tx);
+  background:var(--white);outline:none;
+  transition:border-color .15s;cursor:pointer;
+}
+.date-input:focus{border-color:var(--pu)}
+.date-input.err{border-color:var(--red)}
+
+/* Submit button */
+.btn-submit{
+  width:100%;padding:15px;border-radius:13px;border:none;
+  background:linear-gradient(135deg,var(--pu),var(--pu-dk));
+  color:white;font-family:var(--font-h);font-size:16px;font-weight:700;
+  cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  margin-top:20px;box-shadow:0 6px 20px rgba(106,90,205,.35);
+}
+.btn-submit:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(106,90,205,.45)}
+.btn-submit:active{transform:translateY(0)}
+.btn-submit:disabled{background:var(--tx-muted);box-shadow:none;cursor:not-allowed;transform:none}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:26px;right:26px;z-index:2000;padding:12px 18px;border-radius:11px;font-family:var(--font-b);font-size:13px;font-weight:500;display:flex;align-items:center;gap:9px;transform:translateY(80px);opacity:0;transition:transform .3s,opacity .3s;max-width:340px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:#ECFDF5;color:#065F46;border:1px solid #A7F3D0}
+.toast.error{background:#FEF2F2;color:#991B1B;border:1px solid #FCA5A5}
+.toast.info{background:var(--pu-pale);color:var(--pu-dk);border:1px solid rgba(106,90,205,.25)}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.fade{animation:fadeUp .35s ease both}
+
+@media(max-width:640px){
+  .topbar{padding:0 14px}.nav-links{display:none}
+  .page-wrapper{padding:20px 12px 40px}
+  .card-header{padding:20px 18px 14px}
+  .search-section,.food-list-section,.form-section{padding-left:18px;padding-right:18px}
+  .selected-preview{margin-left:18px;margin-right:18px}
+  .repas-selector{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+{% endblock %}
+
+{% block body %}
+{% include '_planning_topbar.html.twig' %}
+
+{# Meal meta #}
+{% set repasData = {
+  'Petit-déjeuner': {'icon': '🌅', 'cls': 'r-breakfast', 'color': '#F59E0B', 'bg': '#FEF3C7'},
+  'Déjeuner':       {'icon': '☀️',  'cls': 'r-lunch',     'color': '#10B981', 'bg': '#D1FAE5'},
+  'Dîner':          {'icon': '🌙',  'cls': 'r-dinner',    'color': '#6366F1', 'bg': '#E0E7FF'},
+  'Snack':          {'icon': '🍎',  'cls': 'r-snack',     'color': '#F43F5E', 'bg': '#FFE4E6'},
+} %}
+{% set currentRepasData = repasData[repas] ?? repasData['Déjeuner'] %}
+
+<!-- ═══ PAGE ═══ -->
+<div class="page-wrapper">
+  <div class="main-card fade">
+
+    <!-- Back bar -->
+    <div class="back-bar">
+      <a href="{{ path('nutrition', {'date': date}) }}" class="back-btn">← Retour au journal</a>
+      <div class="back-bar-info">
+        <span style="font-size:12px;color:var(--tx-muted)">Ajouter pour :</span>
+        <span class="repas-chip"
+              style="background:{{ currentRepasData.bg }};color:{{ currentRepasData.color }};border:1.5px solid {{ currentRepasData.color }}22">
+          {{ currentRepasData.icon }} {{ repas }}
+        </span>
+        <span style="font-size:12px;color:var(--tx-muted)">· {{ date|date('d/m/Y') }}</span>
+      </div>
+    </div>
+
+    <!-- Card header -->
+    <div class="card-header">
+      <h2>🔍 Catalogue Alimentaire</h2>
+      <p>Recherchez et sélectionnez un aliment, puis indiquez la quantité consommée.</p>
+    </div>
+
+    <!-- Search -->
+    <div class="search-section">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="searchInput"
+               placeholder="Rechercher un aliment (ex : Poulet, Pomme, Riz…)"
+               oninput="filterAliments(this.value)"
+               autocomplete="off">
+      </div>
+      <div class="search-count" id="searchCount">{{ aliments|length }} aliment{{ aliments|length != 1 ? 's' : '' }} disponible{{ aliments|length != 1 ? 's' : '' }}</div>
+    </div>
+
+    <!-- Food list -->
+    <div class="food-list-section">
+      <div class="food-list" id="foodList">
+        {% if aliments is empty %}
+          <div class="no-results" style="display:block">
+            <div class="no-results-icon">🍽️</div>
+            <div class="no-results-text">Aucun aliment en base de données.</div>
+          </div>
+        {% else %}
+          {% for a in aliments %}
+            <div class="food-list-item"
+                 id="foodItem-{{ a.id }}"
+                 data-id="{{ a.id }}"
+                 data-nom="{{ a.nomAliment|e('html_attr') }}"
+                 data-cal="{{ a.caloriesPour100g }}"
+                 data-prot="{{ a.proteines }}"
+                 data-gluc="{{ a.glucides }}"
+                 data-lip="{{ a.lipides }}"
+                 data-search="{{ a.nomAliment|lower|e('html_attr') }}"
+                 onclick="selectAliment(this)">
+              <div class="food-item-left">
+                <div class="food-item-check" id="check-{{ a.id }}">✓</div>
+                <div>
+                  <div class="food-item-name">{{ a.nomAliment }}</div>
+                  <div class="food-item-macros">
+                    🥩 {{ a.proteines }}g prot · 🌾 {{ a.glucides }}g gluc · 💧 {{ a.lipides }}g lip
+                  </div>
+                </div>
+              </div>
+              <div class="food-item-cal">
+                <div class="food-item-cal-val">{{ a.caloriesPour100g }}</div>
+                <div class="food-item-cal-lbl">kcal/100g</div>
+              </div>
+            </div>
+          {% endfor %}
+          <div class="no-results" id="noResults">
+            <div class="no-results-icon">🔍</div>
+            <div class="no-results-text">Aucun résultat pour votre recherche.</div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Selected preview -->
+    <div class="selected-preview" id="selectedPreview">
+      <div class="preview-header">
+        <div class="preview-name" id="previewName">—</div>
+        <div class="preview-cal100" id="previewCal100">— kcal/100g</div>
+      </div>
+      <div class="preview-macros">
+        <div class="preview-macro">
+          <div class="preview-macro-val" id="previewProt">—</div>
+          <div class="preview-macro-lbl">Protéines/100g</div>
+        </div>
+        <div class="preview-macro">
+          <div class="preview-macro-val" id="previewGluc">—</div>
+          <div class="preview-macro-lbl">Glucides/100g</div>
+        </div>
+        <div class="preview-macro">
+          <div class="preview-macro-val" id="previewLip">—</div>
+          <div class="preview-macro-lbl">Lipides/100g</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <div class="form-section">
+      <div class="form-section-title">⚖️ Détails de la consommation</div>
+
+      <!-- Repas selector -->
+      <div style="margin-bottom:14px">
+        <label style="font-size:11.5px;font-weight:600;color:var(--tx-mid);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:8px">
+          Type de repas *
+        </label>
+        <span class="err-msg" id="err-repas">⚠ Veuillez sélectionner un type de repas.</span>
+        <div class="repas-selector" id="repasSelectorWrap">
+          {% for r, info in repasData %}
+            <div class="repas-opt {{ info.cls }} {{ r == repas ? 'active' : '' }}"
+                 data-repas="{{ r }}"
+                 onclick="selectRepas(this)">
+              <span class="repas-opt-icon">{{ info.icon }}</span>
+              {{ r }}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Date -->
+      <div class="form-group">
+        <label>Date *</label>
+        <span class="err-msg" id="err-date">⚠ La date est requise.</span>
+        <input type="date" class="date-input" id="dateInput" value="{{ date }}">
+      </div>
+
+      <!-- Aliment error -->
+      <span class="err-msg" id="err-aliment" style="display:none;font-size:11.5px;color:var(--red);font-weight:600;margin-bottom:10px">
+        ⚠ Veuillez sélectionner un aliment dans la liste ci-dessus.
+      </span>
+
+      <!-- Poids -->
+      <div class="form-group">
+        <label>Quantité consommée *</label>
+        <span class="err-msg" id="err-poids">⚠ La quantité doit être supérieure à 0 g.</span>
+        <div class="input-unit-wrap">
+          <input type="number" class="form-input" id="poidsInput"
+                 placeholder="Ex : 150" min="1" max="5000" step="1"
+                 oninput="updateCalPreview()">
+          <span class="input-unit">g</span>
+        </div>
+      </div>
+
+      <!-- Live calorie card -->
+      <div class="cal-preview-card" id="calPreviewCard">
+        <div>
+          <div class="cal-preview-label">Apport calculé</div>
+          <div class="cal-preview-val">
+            <span id="calPreviewVal">—</span>
+            <span class="cal-preview-unit">kcal</span>
+          </div>
+          <div class="cal-preview-macros" id="calPrevMacros" style="display:none">
+            <div class="cal-prev-macro">
+              <div class="cal-prev-macro-val" id="prevProtVal">—</div>
+              <div class="cal-prev-macro-lbl">Prot.</div>
+            </div>
+            <div class="cal-prev-macro">
+              <div class="cal-prev-macro-val" id="prevGlucVal">—</div>
+              <div class="cal-prev-macro-lbl">Gluc.</div>
+            </div>
+            <div class="cal-prev-macro">
+              <div class="cal-prev-macro-val" id="prevLipVal">—</div>
+              <div class="cal-prev-macro-lbl">Lip.</div>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:42px;opacity:.35" id="calPreviewEmoji">🍽️</div>
+      </div>
+
+      <!-- Submit -->
+      <button class="btn-submit" id="submitBtn" onclick="submitForm()">
+        <span>✅</span> Enregistrer dans le journal
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let selectedAliment = null;
+let selectedRepas   = '{{ repas|e('html') }}';
+const RETURN_DATE   = '{{ date }}';
+
+// ═══════════════════════════════════════════════════════
+// SEARCH / FILTER
+// ═══════════════════════════════════════════════════════
+function filterAliments(q) {
+  const query   = q.trim().toLowerCase();
+  const items   = document.querySelectorAll('.food-list-item');
+  const noRes   = document.getElementById('noResults');
+  let visible   = 0;
+
+  items.forEach(item => {
+    const searchVal = (item.dataset.search || '').toLowerCase();
+    const match = !query || searchVal.includes(query);
+    item.classList.toggle('hidden', !match);
+    if (match) visible++;
+  });
+
+  const total = items.length;
+  const countEl = document.getElementById('searchCount');
+  if (query) {
+    countEl.textContent = visible + ' résultat' + (visible !== 1 ? 's' : '') + ' pour "' + q + '"';
+  } else {
+    countEl.textContent = total + ' aliment' + (total !== 1 ? 's' : '') + ' disponible' + (total !== 1 ? 's' : '');
+  }
+
+  noRes.style.display = visible === 0 ? 'block' : 'none';
+}
+
+// ═══════════════════════════════════════════════════════
+// SELECT ALIMENT
+// ═══════════════════════════════════════════════════════
+function selectAliment(el) {
+  // Deselect previous
+  document.querySelectorAll('.food-list-item.selected').forEach(i => i.classList.remove('selected'));
+
+  el.classList.add('selected');
+  selectedAliment = {
+    id:   el.dataset.id,
+    nom:  el.dataset.nom,
+    cal:  parseFloat(el.dataset.cal),
+    prot: parseFloat(el.dataset.prot),
+    gluc: parseFloat(el.dataset.gluc),
+    lip:  parseFloat(el.dataset.lip),
+  };
+
+  // Show preview
+  document.getElementById('previewName').textContent    = selectedAliment.nom;
+  document.getElementById('previewCal100').textContent  = selectedAliment.cal + ' kcal / 100g';
+  document.getElementById('previewProt').textContent    = selectedAliment.prot + 'g';
+  document.getElementById('previewGluc').textContent    = selectedAliment.gluc + 'g';
+  document.getElementById('previewLip').textContent     = selectedAliment.lip + 'g';
+  document.getElementById('selectedPreview').classList.add('show');
+
+  // Hide aliment error
+  document.getElementById('err-aliment').classList.remove('show');
+  document.getElementById('err-aliment').style.display = 'none';
+
+  // Update calorie preview
+  updateCalPreview();
+
+  // Scroll to form
+  document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ═══════════════════════════════════════════════════════
+// SELECT REPAS
+// ═══════════════════════════════════════════════════════
+function selectRepas(el) {
+  document.querySelectorAll('.repas-opt').forEach(o => o.classList.remove('active'));
+  el.classList.add('active');
+  selectedRepas = el.dataset.repas;
+  document.getElementById('err-repas').classList.remove('show');
+}
+
+// ═══════════════════════════════════════════════════════
+// LIVE CALORIE PREVIEW
+// ═══════════════════════════════════════════════════════
+function updateCalPreview() {
+  const poids    = parseFloat(document.getElementById('poidsInput').value);
+  const calEl    = document.getElementById('calPreviewVal');
+  const macroEl  = document.getElementById('calPrevMacros');
+  const emojiEl  = document.getElementById('calPreviewEmoji');
+
+  if (!selectedAliment || isNaN(poids) || poids <= 0) {
+    calEl.textContent   = '—';
+    macroEl.style.display = 'none';
+    emojiEl.textContent   = '🍽️';
+    return;
+  }
+
+  const cal  = Math.round(selectedAliment.cal  * poids / 100);
+  const prot = (selectedAliment.prot * poids / 100).toFixed(1);
+  const gluc = (selectedAliment.gluc * poids / 100).toFixed(1);
+  const lip  = (selectedAliment.lip  * poids / 100).toFixed(1);
+
+  calEl.textContent = cal;
+  document.getElementById('prevProtVal').textContent = prot + 'g';
+  document.getElementById('prevGlucVal').textContent = gluc + 'g';
+  document.getElementById('prevLipVal').textContent  = lip  + 'g';
+  macroEl.style.display = 'flex';
+
+  // Dynamic emoji based on calories
+  emojiEl.textContent = cal < 100 ? '🥗' : cal < 300 ? '🍽️' : cal < 600 ? '🍳' : '🔥';
+}
+
+// ═══════════════════════════════════════════════════════
+// FORM VALIDATION + SUBMIT
+// ═══════════════════════════════════════════════════════
+async function submitForm() {
+  let valid = true;
+
+  // Validate aliment
+  const errAl = document.getElementById('err-aliment');
+  if (!selectedAliment) {
+    errAl.classList.add('show');
+    errAl.style.display = 'block';
+    valid = false;
+  } else {
+    errAl.classList.remove('show');
+    errAl.style.display = 'none';
+  }
+
+  // Validate repas
+  const errRepas = document.getElementById('err-repas');
+  if (!selectedRepas) {
+    errRepas.classList.add('show'); valid = false;
+  } else {
+    errRepas.classList.remove('show');
+  }
+
+  // Validate date
+  const dateVal  = document.getElementById('dateInput').value;
+  const errDate  = document.getElementById('err-date');
+  const dateInp  = document.getElementById('dateInput');
+  if (!dateVal) {
+    errDate.classList.add('show'); dateInp.classList.add('err'); valid = false;
+  } else {
+    errDate.classList.remove('show'); dateInp.classList.remove('err');
+  }
+
+  // Validate poids
+  const poids    = parseFloat(document.getElementById('poidsInput').value);
+  const errPoids = document.getElementById('err-poids');
+  const poidsInp = document.getElementById('poidsInput');
+  if (!poids || poids <= 0) {
+    errPoids.classList.add('show'); poidsInp.classList.add('err'); valid = false;
+  } else {
+    errPoids.classList.remove('show'); poidsInp.classList.remove('err');
+  }
+
+  if (!valid) {
+    showToast('error', '⚠ Veuillez corriger les erreurs avant de continuer.');
+    return;
+  }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Enregistrement en cours…';
+
+  const payload = {
+    aliment_id:   parseInt(selectedAliment.id),
+    type_repas:   selectedRepas,
+    date:         dateVal,
+    poids_grammes: poids,
+  };
+
+  try {
+    const res  = await fetch('/nutrition/api/ajouter', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      showToast('success', '✅ ' + selectedAliment.nom + ' ajouté au journal !');
+      // Redirect after brief delay
+      setTimeout(() => {
+        window.location.href = '/nutrition?date=' + dateVal;
+      }, 800);
+    } else {
+      if (data.errors) {
+        Object.entries(data.errors).forEach(([key, msg]) => {
+          const errEl = document.getElementById('err-' + key);
+          if (errEl) { errEl.textContent = '⚠ ' + msg; errEl.classList.add('show'); }
+        });
+      }
+      showToast('error', '⚠ Erreur lors de l\'enregistrement.');
+      btn.disabled = false;
+      btn.innerHTML = '<span>✅</span> Enregistrer dans le journal';
+    }
+  } catch (err) {
+    showToast('error', '⚠ Erreur réseau. Vérifiez votre connexion.');
+    btn.disabled = false;
+    btn.innerHTML = '<span>✅</span> Enregistrer dans le journal';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════
+function showToast(type, msg) {
+  const t = document.getElementById('toast');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._to);
+  t._to = setTimeout(() => t.classList.remove('show'), 3400);
+}
+
+// ═══════════════════════════════════════════════════════
+// KEYBOARD
+// ═══════════════════════════════════════════════════════
+document.getElementById('searchInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const first = document.querySelector('.food-list-item:not(.hidden)');
+    if (first) { selectAliment(first); document.getElementById('poidsInput').focus(); }
+  }
+});
+</script>
+{% endblock %}

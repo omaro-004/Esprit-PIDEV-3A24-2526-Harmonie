@@ -1,0 +1,132 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Journal Intime — Admin{% endblock %}
+{% block page_title %}📔 Journal Intime des étudiants{% endblock %}
+
+{% block stylesheets %}
+<style>
+    .journal-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 20px;
+    }
+    .journal-card {
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 24px;
+        transition: box-shadow .2s, border-color .2s;
+        position: relative;
+    }
+    .journal-card:hover { box-shadow: 0 8px 30px rgba(106,90,205,.1); }
+    .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; gap: 8px; }
+    .card-meta { display: flex; flex-direction: column; gap: 4px; }
+    .card-student { font-size: 13px; font-weight: 600; color: var(--purple); }
+    .card-date { font-size: 12px; color: var(--text-muted); }
+    .mood-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 20px; flex-shrink: 0; }
+    .mood-5 { background: #D1FAE5; color: #065F46; }
+    .mood-4 { background: #DBEAFE; color: #1E40AF; }
+    .mood-3 { background: #F3F4F6; color: #4B5563; }
+    .mood-2 { background: #FEF3C7; color: #92400E; }
+    .mood-1 { background: #FEE2E2; color: #991B1B; }
+    .card-contenu { font-size: 14px; color: var(--text); line-height: 1.6; margin-top: 12px; }
+    .card-footer { margin-top: 14px; display: flex; align-items: center; gap: 8px; }
+    .card-time { font-size: 11px; color: var(--text-muted); }
+    .new-badge {
+        font-size: 10px; font-weight: 700;
+        background: var(--purple); color: #fff;
+        border-radius: 20px; padding: 2px 8px;
+    }
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+
+    @keyframes journalShine {
+        0%   { box-shadow: 0 0 0 0 rgba(106,90,205,0); border-color: var(--border); }
+        25%  { box-shadow: 0 0 18px 6px rgba(106,90,205,.35); border-color: var(--purple); }
+        75%  { box-shadow: 0 0 18px 6px rgba(106,90,205,.35); border-color: var(--purple); }
+        100% { box-shadow: 0 0 0 0 rgba(106,90,205,0); border-color: var(--border); }
+    }
+    .journal-card.unread {
+        animation: journalShine 1.4s ease-in-out infinite;
+        border-color: var(--purple);
+        background: linear-gradient(135deg, #fff 0%, #f3f0fd 100%);
+    }
+    .journal-card.read-transition {
+        animation: none;
+        border-color: var(--border);
+        background: var(--white);
+        transition: background .6s ease, border-color .6s ease, box-shadow .6s ease;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div style="margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+    <div>
+        <p style="font-size:14px; color:var(--text-muted); margin-top:4px;">
+            {{ entries|length }} entrée(s) au total
+            {% if unreadIds|length > 0 %}
+                — <strong style="color:var(--purple)">{{ unreadIds|length }} nouvelle(s) non lue(s)</strong>
+            {% endif %}
+        </p>
+    </div>
+    <a href="{{ path('admin_journal_students') }}" style="padding:8px 18px;border-radius:10px;font-size:13px;font-weight:500;text-decoration:none;border:1px solid var(--border);background:var(--white);color:var(--text-mid);display:inline-flex;align-items:center;gap:6px;">
+        📊 Statistiques par étudiant
+    </a>
+</div>
+
+{% if entries is empty %}
+    <div class="empty-state">
+        <div class="icon">📔</div>
+        <p>Aucune entrée dans le journal pour le moment.</p>
+    </div>
+{% else %}
+    <div class="journal-grid" id="journalGrid">
+        {% for entry in entries %}
+            <div class="journal-card {% if entry.id in unreadIds %}unread{% endif %}"
+                 data-id="{{ entry.id }}"
+                 data-unread="{{ entry.id in unreadIds ? 'true' : 'false' }}">
+                <div class="card-header">
+                    <div class="card-meta">
+                        <span class="card-student">
+                            👤 {{ entry.user ? entry.user.userPrenom ~ ' ' ~ entry.user.userNom : '—' }}
+                        </span>
+                        <span class="card-date">📅 {{ entry.dateJournal|date('d/m/Y') }}</span>
+                    </div>
+                    <span class="mood-badge mood-{{ entry.score }}">
+                        {{ entry.humeur.emoji }} {{ entry.humeur.label }}
+                    </span>
+                </div>
+                <div class="card-contenu">{{ entry.contenu }}</div>
+                <div class="card-footer">
+                    <span class="card-time">🕐 {{ entry.createdAt|date('d/m/Y H:i') }}</span>
+                    {% if entry.id in unreadIds %}
+                        <span class="new-badge">✨ Nouveau</span>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<script>
+(function () {
+    const unreadIds = {{ unreadIds|json_encode|raw }};
+    if (unreadIds.length === 0) return;
+
+    setTimeout(function () {
+        fetch('{{ path('admin_journal_mark_read') }}', {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }).then(function () {
+            document.querySelectorAll('.journal-card.unread').forEach(function (card) {
+                card.classList.remove('unread');
+                card.classList.add('read-transition');
+                var badge = card.querySelector('.new-badge');
+                if (badge) badge.remove();
+            });
+        });
+    }, 5000);
+})();
+</script>
+{% endblock %}

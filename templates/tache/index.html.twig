@@ -1,0 +1,525 @@
+{% extends 'base.html.twig' %}
+
+{% macro kan_card(tache, today) %}
+    {% set dl = tache.deadline %}
+    {% set is_overdue = dl and dl|date('Y-m-d') < today|date('Y-m-d') and tache.statutTache != 'TERMINEE' %}
+    <li class="kan-card" data-tache-id="{{ tache.id }}">
+        <h3 class="kan-card-title"><span class="kan-card-title-text">{{ tache.nom }}</span></h3>
+        {% if dl %}
+            <div class="kan-card-meta{% if is_overdue %} overdue{% endif %}{% if is_overdue and dl|date('Y-m-d') < today|date_modify('-7 days')|date('Y-m-d') %} late{% endif %}">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+                </svg>
+                <span>{{ dl|date('d/m/Y') }}</span>
+            </div>
+        {% endif %}
+        {% if tache.notes %}
+            <p class="kan-card-notes">{{ tache.notes }}</p>
+        {% endif %}
+        <div class="kan-card-actions">
+            <a href="{{ path('app_tache_show', {id: tache.id}) }}" class="kan-card-icon-link" title="Voir" aria-label="Voir la tâche">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </a>
+            <a href="{{ path('app_tache_edit', {id: tache.id}) }}" class="kan-card-icon-link" title="Modifier" aria-label="Modifier la tâche">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            </a>
+        </div>
+    </li>
+{% endmacro %}
+{% import _self as kan %}
+
+{% block title %}Tâches — Kanban{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="{{ asset('harmonie/css/harmony-theme.css') }}" rel="stylesheet">
+    <link href="{{ asset('harmonie/css/harmony-panel.css') }}" rel="stylesheet">
+    <style>
+        .kan-page { max-width: 1120px; margin: 0 auto; }
+        .kan-top {
+            display: flex; flex-wrap: wrap; align-items: flex-start;
+            justify-content: space-between; gap: 16px; margin-bottom: 20px;
+        }
+        .kan-advice {
+            font-size: 13px; color: var(--text-muted, #9590B8); max-width: 62%;
+            line-height: 1.5;
+        }
+        .kan-advice strong { color: var(--text-mid, #4A4570); font-weight: 600; }
+        .kan-export-wrap { position: relative; margin-left: auto; }
+        .kan-export-summary {
+            list-style: none; cursor: pointer;
+            padding: 8px 16px; border-radius: 10px;
+            border: 1px solid #e5e7eb;
+            background: linear-gradient(180deg, #fafafa, #f3f4f6);
+            font-size: 13px; font-weight: 500; color: var(--text-mid, #4A4570);
+        }
+        .kan-export-summary::-webkit-details-marker { display: none; }
+        .kan-export-menu {
+            position: absolute; right: 0; top: calc(100% + 6px);
+            background: var(--white, #fff); border: 1px solid var(--border, rgba(106,90,205,.12));
+            border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.08);
+            min-width: 200px; padding: 6px; z-index: 50;
+        }
+        .kan-export-menu a {
+            display: block; padding: 10px 12px; border-radius: 8px;
+            color: var(--text, #1C1733); text-decoration: none; font-size: 14px;
+        }
+        .kan-export-menu a:hover { background: var(--purple-pale, #EDE8FA); color: var(--purple, #6A5ACD); }
+
+        .kan-board {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+            align-items: stretch;
+        }
+        @media (max-width: 960px) { .kan-board { grid-template-columns: 1fr; } }
+
+        .kan-col {
+            background: rgba(255,255,255,.7); border: 1px solid var(--border, rgba(106,90,205,.12));
+            border-radius: 18px; padding: 16px 14px 20px;
+            min-height: 280px; position: relative;
+            box-shadow: 0 2px 16px rgba(106,90,205,.06);
+            display: flex; flex-direction: column;
+        }
+        .kan-col-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 200px;
+            margin-top: 4px;
+            padding: 10px 8px 12px;
+            border-radius: 14px;
+            border: 1px dashed rgba(124, 58, 237, 0.22);
+            background: rgba(255, 255, 255, 0.35);
+            transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+        }
+        .kan-col-body:hover {
+            border-color: rgba(124, 58, 237, 0.45);
+            background: rgba(255, 255, 255, 0.75);
+            box-shadow: inset 0 0 0 1px rgba(124, 58, 237, 0.08);
+        }
+        .kan-col-body:focus-visible {
+            outline: 2px solid #7c3aed;
+            outline-offset: 2px;
+        }
+        .kan-col-title {
+            font-family: var(--font-head, 'Syne', sans-serif); font-weight: 800; font-size: 13px;
+            letter-spacing: 0.06em; text-transform: uppercase;
+            color: var(--text-muted, #9590B8); margin: 0 0 10px 4px;
+        }
+        .kan-col--doing { min-height: 320px; }
+        .kan-col-list {
+            list-style: none; margin: 0; padding: 0;
+            flex: 1; min-height: 140px;
+        }
+        .kan-col-list--doing { position: relative; }
+        .kan-card {
+            background: var(--white, #fff); border-radius: 14px;
+            padding: 14px 14px 12px;
+            box-shadow: 0 4px 14px rgba(0,0,0,.06);
+            border: 1px solid rgba(124,58,237,.1);
+            margin-bottom: 12px;
+            cursor: grab;
+        }
+        .kan-card:active { cursor: grabbing; }
+        .kan-card-title { font-weight: 700; font-size: 15px; color: var(--text, #1C1733); margin: 0 0 10px; line-height: 1.3; }
+        .kan-card-title-text { cursor: pointer; }
+        .kan-card-title-text:hover { color: var(--purple, #6A5ACD); }
+        .kan-card-meta {
+            display: flex; align-items: center; gap: 6px; font-size: 13px;
+            color: #7c3aed; font-weight: 500; margin-bottom: 6px;
+        }
+        .kan-card-meta.overdue { color: #ea580c; font-weight: 600; }
+        .kan-card-meta.late { color: #dc2626; font-weight: 600; }
+        .kan-card-notes { font-size: 13px; color: var(--text-muted, #9590B8); line-height: 1.4; }
+        .kan-card-actions {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 12px;
+        }
+        .kan-card-icon-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px;
+            border-radius: 10px;
+            color: var(--purple, #6A5ACD);
+            text-decoration: none;
+            transition: background 0.15s ease, color 0.15s ease;
+        }
+        .kan-card-icon-link:hover {
+            background: var(--purple-pale, #EDE8FA);
+            color: #5b21b6;
+        }
+        .kan-card-icon-link:focus-visible {
+            outline: 2px solid #7c3aed;
+            outline-offset: 2px;
+        }
+
+        .kan-col-list.sortable-drag { min-height: 40px; }
+        .kan-card.sortable-ghost { opacity: 0.45; }
+    </style>
+{% endblock %}
+
+{% block body %}
+{% include '_planning_topbar.html.twig' %}
+<main class="page">
+<div class="kan-page"
+     id="kanban-root"
+     data-csrf="{{ csrf_token('tache_dnd') }}"
+     data-url-template="{{ path('app_tache_update_statut', {id: 888888888})|e('html_attr') }}"
+     data-edit-url-template="{{ path('app_tache_edit', { id: 888888888 })|e('html_attr') }}">
+    <div class="kan-top">
+        <p class="kan-advice"><strong>Conseil du jour :</strong> {{ advice }}</p>
+        <div style="display:flex;align-items:center;gap:8px;">
+            <button onclick="document.getElementById('githubModal').style.display='flex'"
+                    style="display:inline-flex;align-items:center;gap:7px;padding:7px 14px;background:#fff;border:1.5px solid #333;border-radius:20px;font-size:12.5px;font-weight:600;color:#333;cursor:pointer;transition:background .15s;"
+                    onmouseover="this.style.background='#f6f8fa'" onmouseout="this.style.background='#fff'">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12"/></svg>
+                GitHub Sync
+            </button>
+            <details class="kan-export-wrap">
+                <summary class="kan-export-summary">Exporter ▾</summary>
+                <div class="kan-export-menu">
+                    <a href="#" class="js-kanban-export-pdf" data-type="pdf">Exporter en PDF</a>
+                    <a href="#" class="js-kanban-export-excel" data-type="excel">Exporter en Excel</a>
+                    <a href="{{ path('app_tache_export_csv') }}">Télécharger CSV (legacy)</a>
+                </div>
+            </details>
+        </div>
+    </div>
+
+    {# ── GitHub Settings Modal ── #}
+    <div id="githubModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center;">
+        <div style="background:#fff;border-radius:20px;padding:28px;width:420px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.25);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+                <h3 style="margin:0;font-family:'Syne',sans-serif;font-size:17px;font-weight:700;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:6px;"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12"/></svg>
+                    GitHub Issues Sync
+                </h3>
+                <button onclick="document.getElementById('githubModal').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888;">✕</button>
+            </div>
+            <p style="font-size:13px;color:#666;margin:0 0 18px;">Chaque tâche créée/modifiée sera synchronisée avec vos GitHub Issues.</p>
+            <div style="margin-bottom:12px;">
+                <label style="display:block;font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Personal Access Token</label>
+                <input id="gh-token" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                       style="width:100%;padding:9px 12px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:13.5px;outline:none;box-sizing:border-box;">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="display:block;font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Dépôt (owner/repo)</label>
+                <input id="gh-repo" type="text" placeholder="monuser/mon-projet"
+                       style="width:100%;padding:9px 12px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:13.5px;outline:none;box-sizing:border-box;">
+            </div>
+            <div id="gh-status" style="font-size:12.5px;color:#666;min-height:18px;margin-bottom:14px;"></div>
+            <div style="display:flex;gap:10px;">
+                <button onclick="githubSave()" style="flex:1;padding:10px;background:linear-gradient(135deg,#333,#111);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;">💾 Sauvegarder</button>
+                <button onclick="githubSyncDoing()" style="padding:10px 14px;background:#fff;border:1.5px solid #333;border-radius:10px;font-size:13px;cursor:pointer;">🔄 Re-sync EN COURS</button>
+            </div>
+        </div>
+    </div>
+    <script>
+    (function(){
+        fetch('/api/github/settings').then(r=>r.json()).then(d=>{
+            if(d.token) document.getElementById('gh-token').value = d.token;
+            if(d.repo)  document.getElementById('gh-repo').value  = d.repo;
+        }).catch(()=>{});
+        window.githubSave = function(){
+            var token = document.getElementById('gh-token').value.trim();
+            var repo  = document.getElementById('gh-repo').value.trim();
+            // Strip full GitHub URL → keep only owner/repo
+            repo = repo.replace(/^https?:\/\/github\.com\//, '').replace(/\/tree\/.*$/, '').replace(/\/$/, '');
+            var st    = document.getElementById('gh-status');
+            st.textContent = 'Sauvegarde…';
+            fetch('/api/github/settings',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,repo})})
+            .then(r=>r.json()).then(()=>{ st.style.color='#34a853'; st.textContent='✅ Sauvegardé !'; setTimeout(()=>st.textContent='',3000); })
+            .catch(()=>{ st.style.color='#b91c1c'; st.textContent='❌ Erreur réseau'; });
+        };
+        window.githubSyncDoing = function(){
+            var st = document.getElementById('gh-status');
+            st.textContent = 'Synchronisation…';
+            fetch('/api/github/settings/sync-doing',{method:'POST'})
+            .then(r=>r.json()).then(d=>{ st.style.color='#34a853'; st.textContent='✅ '+(d.synced||0)+' tâche(s) synchronisée(s)'; })
+            .catch(()=>{ st.style.color='#b91c1c'; st.textContent='❌ Erreur'; });
+        };
+    })();
+    </script>
+
+    <div class="kan-board" id="kan-board-root">
+        <div class="kan-col" data-statut="A_FAIRE">
+            <h2 class="kan-col-title">TODO</h2>
+            <div class="kan-col-body js-kan-col-zone" tabindex="0" aria-label="Colonne À faire — clic dans la zone vide pour ajouter une tâche. Glisser une carte pour la déplacer.">
+                <ul class="kan-col-list" data-statut="A_FAIRE" aria-label="À faire">
+                    {% for tache in columns.A_FAIRE %}
+                        {{ kan.kan_card(tache, today) }}
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="kan-col kan-col--doing" data-statut="EN_COURS">
+            <h2 class="kan-col-title">DOING</h2>
+            <div class="kan-col-body js-kan-col-zone" tabindex="0" aria-label="Colonne En cours">
+                <ul class="kan-col-list kan-col-list--doing" data-statut="EN_COURS" aria-label="En cours">
+                    {% for tache in columns.EN_COURS %}
+                        {{ kan.kan_card(tache, today) }}
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="kan-col" data-statut="TERMINEE">
+            <h2 class="kan-col-title">DONE</h2>
+            <div class="kan-col-body js-kan-col-zone" tabindex="0" aria-label="Colonne Terminées">
+                <ul class="kan-col-list" data-statut="TERMINEE" aria-label="Terminées">
+                    {% for tache in columns.TERMINEE %}
+                        {{ kan.kan_card(tache, today) }}
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div id="harmony-panel-backdrop" class="harmony-panel-backdrop" aria-hidden="true"></div>
+    <aside id="harmony-side-panel"
+           class="harmony-side-panel"
+           role="dialog"
+           aria-modal="true"
+           aria-labelledby="harmony-panel-title"
+           aria-hidden="true">
+        <div class="harmony-panel-inner">
+            <h2 id="harmony-panel-title" class="harmony-panel-title">Nouvelle tâche</h2>
+            <div id="harmony-panel-form-slot"></div>
+        </div>
+    </aside>
+
+    <template id="harmony-tpl-tache-form-new">
+        {% include 'tache/_form_panel.html.twig' with { form: tacheFormNew, panel_mode: 'new' } only %}
+    </template>
+</div>
+</main>
+{% endblock %}
+
+{% block body_javascripts %}
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js" crossorigin="anonymous"></script>
+    <script src="{{ asset('harmonie/js/export-handler.js') }}"></script>
+    <script>
+    (function () {
+        var root = document.getElementById('kanban-root');
+        if (!root || typeof Sortable === 'undefined') return;
+
+        var csrf = root.getAttribute('data-csrf');
+        var urlTpl = root.getAttribute('data-url-template');
+        if (!csrf || !urlTpl) return;
+
+        function updateUrl(id) {
+            return urlTpl.replace('888888888', String(id));
+        }
+
+        var backdrop = document.getElementById('harmony-panel-backdrop');
+        var panel = document.getElementById('harmony-side-panel');
+        var titleEl = document.getElementById('harmony-panel-title');
+        var slot = document.getElementById('harmony-panel-form-slot');
+        var tpl = document.getElementById('harmony-tpl-tache-form-new');
+        var editTpl = root.getAttribute('data-edit-url-template') || '';
+        var board = document.getElementById('kan-board-root');
+        var suppressCardClickUntil = 0;
+
+        function editUrl(id) {
+            return editTpl.replace('888888888', String(id)) + '?panel=1';
+        }
+
+        function openPanel() {
+            backdrop.classList.add('is-open');
+            panel.classList.add('is-open');
+            backdrop.setAttribute('aria-hidden', 'false');
+            panel.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePanel() {
+            backdrop.classList.remove('is-open');
+            panel.classList.remove('is-open');
+            backdrop.setAttribute('aria-hidden', 'true');
+            panel.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+            if (slot) slot.innerHTML = '';
+        }
+
+        function bindCancel(scope) {
+            var el = scope || document;
+            el.querySelectorAll('.js-harmony-panel-cancel').forEach(function (btn) {
+                btn.addEventListener('click', function () { closePanel(); });
+            });
+        }
+
+        function bindAjaxForm(scope) {
+            var form = scope.querySelector('#tache-panel-form');
+            if (!form) return;
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                fetch(form.getAttribute('action') || form.action, {
+                    method: 'POST',
+                    body: new FormData(form),
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin'
+                }).then(function (res) {
+                    var ct = (res.headers.get('Content-Type') || '').toLowerCase();
+                    if (ct.indexOf('application/json') !== -1) {
+                        return res.json().then(function (data) {
+                            if (data.redirect) {
+                                window.location.href = data.redirect;
+                                return;
+                            }
+                            if (data.ok === false && data.error) {
+                                window.alert(data.error);
+                            }
+                        });
+                    }
+                    return res.text().then(function (html) {
+                        if (!slot) return;
+                        slot.innerHTML = html;
+                        bindCancel(slot);
+                        bindAjaxForm(slot);
+                    });
+                }).catch(function () {
+                    window.alert('Une erreur réseau est survenue.');
+                });
+            });
+        }
+
+        function mountNewForm() {
+            if (!slot || !tpl || !tpl.content) return;
+            slot.innerHTML = '';
+            slot.appendChild(tpl.content.cloneNode(true));
+            return slot.querySelector('#tache-panel-form');
+        }
+
+        function setTacheStatut(form, statut) {
+            if (!form || !statut) return;
+            var sel = form.querySelector('select[name="tache[statutTache]"]');
+            if (sel) sel.value = statut;
+        }
+
+        function openNew(statut) {
+            if (titleEl) titleEl.textContent = 'Nouvelle tâche';
+            var form = mountNewForm();
+            if (form) {
+                setTacheStatut(form, statut);
+                bindCancel(slot);
+                bindAjaxForm(slot);
+            }
+            openPanel();
+        }
+
+        function openEdit(id) {
+            if (titleEl) titleEl.textContent = 'Modifier la tâche';
+            if (!slot) return;
+            slot.innerHTML = '<p style="color:#9590B8;font-size:14px;">Chargement…</p>';
+            openPanel();
+            fetch(editUrl(id), {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin'
+            }).then(function (r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.text();
+            }).then(function (html) {
+                slot.innerHTML = html;
+                bindCancel(slot);
+                bindAjaxForm(slot);
+            }).catch(function () {
+                slot.innerHTML = '<p style="color:#dc2626;font-size:14px;">Impossible de charger le formulaire.</p>';
+            });
+        }
+
+        if (backdrop) {
+            backdrop.addEventListener('click', function () { closePanel(); });
+        }
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && panel && panel.classList.contains('is-open')) {
+                closePanel();
+            }
+        });
+
+        document.querySelectorAll('.kan-col-list').forEach(function (list) {
+            new Sortable(list, {
+                group: 'taches-kanban',
+                animation: 160,
+                draggable: '.kan-card',
+                filter: '.kan-card-actions, .kan-card-actions *',
+                preventOnFilter: false,
+                distance: 8,
+                ghostClass: 'sortable-ghost',
+                dragClass: 'sortable-drag',
+                emptyInsertThreshold: 40,
+                fallbackTolerance: 4,
+                onEnd: function (evt) {
+                    suppressCardClickUntil = Date.now() + 400;
+                    if (evt.from === evt.to) {
+                        return;
+                    }
+
+                    var item = evt.item;
+                    var id = item.getAttribute('data-tache-id');
+                    var newStatut = evt.to.getAttribute('data-statut');
+                    if (!id || !newStatut) return;
+
+                    fetch(updateUrl(id), {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({ statut: newStatut, _token: csrf })
+                    }).then(function (res) {
+                        if (!res.ok) {
+                            throw new Error('HTTP ' + res.status);
+                        }
+                        return res.json();
+                    }).then(function (data) {
+                        if (!data.ok) {
+                            throw new Error(data.error || 'Erreur');
+                        }
+                    }).catch(function () {
+                        alert('Impossible d’enregistrer le déplacement. La page va se recharger.');
+                        window.location.reload();
+                    });
+                }
+            });
+        });
+
+        /* Clic « ajouter » : phase capture pour passer avant Sortable (qui bloquait le click sur la liste). */
+        board.querySelectorAll('.js-kan-col-zone').forEach(function (zone) {
+            zone.addEventListener('click', function (e) {
+                if (e.target.closest('.kan-card')) return;
+                if (e.target.closest('a')) return;
+                if (e.target.closest('button')) return;
+                var col = zone.closest('.kan-col');
+                var st = col ? col.getAttribute('data-statut') : null;
+                if (st) {
+                    e.stopPropagation();
+                    openNew(st);
+                }
+            }, true);
+            zone.addEventListener('keydown', function (e) {
+                if (e.key !== 'Enter' && e.key !== ' ') return;
+                e.preventDefault();
+                var col = zone.closest('.kan-col');
+                var st = col ? col.getAttribute('data-statut') : null;
+                if (st) openNew(st);
+            });
+        });
+
+        if (board) {
+            board.addEventListener('click', function (e) {
+                if (e.target.closest('.kan-card-actions a')) return;
+                var card = e.target.closest('.kan-card');
+                if (!card || Date.now() < suppressCardClickUntil) return;
+                var id = card.getAttribute('data-tache-id');
+                if (id) openEdit(id);
+            });
+        }
+    })();
+    </script>
+{% endblock %}

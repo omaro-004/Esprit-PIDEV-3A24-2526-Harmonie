@@ -1,0 +1,315 @@
+{% extends 'base.html.twig' %}
+{% block title %}Vérification Face ID — Harmony{% endblock %}
+
+{% block stylesheets %}
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        :root{
+            --purple:#6A5ACD;--purple-dark:#4B3B9E;--purple-pale:#EDE8FA;
+            --purple-ghost:#F7F5FD;--text:#1C1733;--text-mid:#4A4570;
+            --text-muted:#9590B8;--border:rgba(106,90,205,.15);
+            --green:#10B981;--red:#EF4444;
+            --font-head:'Syne',sans-serif;--font-body:'Inter',sans-serif
+        }
+        html,body{min-height:100vh;font-family:var(--font-body);background:var(--purple-ghost);display:flex;align-items:center;justify-content:center;padding:40px 20px}
+        .wrap{width:100%;max-width:460px}
+        .card{background:#fff;border:1px solid var(--border);border-radius:24px;padding:44px;box-shadow:0 20px 60px rgba(106,90,205,.09);animation:fadeUp .4s ease both}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+        .card-logo{display:flex;align-items:center;gap:10px;margin-bottom:24px;justify-content:center}
+        .card-logo img{width:32px;height:32px;border-radius:9px;object-fit:contain}
+        .card-logo span{font-family:var(--font-head);font-size:18px;font-weight:800;color:var(--text)}
+        .card-title{font-family:var(--font-head);font-size:24px;font-weight:800;color:var(--text);margin-bottom:4px;text-align:center}
+        .card-sub{font-size:13px;color:var(--text-muted);margin-bottom:24px;text-align:center}
+        .cam-section{position:relative;background:#0f0f1a;border-radius:18px;overflow:hidden;margin-bottom:20px;aspect-ratio:1}
+        #video{width:100%;height:100%;object-fit:cover;display:block}
+        .cam-overlay{
+            position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+            width:220px;height:220px;border-radius:50%;
+            border:3px solid rgba(106,90,205,.8);
+            box-shadow:0 0 0 9999px rgba(0,0,0,.5);
+            pointer-events:none;
+        }
+        .cam-overlay.scanning::before{
+            content:'';position:absolute;inset:-3px;border-radius:50%;
+            border:3px solid transparent;
+            border-top-color:var(--purple);
+            animation:spin 1.5s linear infinite;
+        }
+        .cam-overlay.success{border-color:var(--green);box-shadow:0 0 0 9999px rgba(0,0,0,.5),0 0 30px rgba(16,185,129,.5);}
+        .cam-overlay.fail{border-color:var(--red);box-shadow:0 0 0 9999px rgba(0,0,0,.5),0 0 30px rgba(239,68,68,.4);}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .cam-status{
+            position:absolute;bottom:12px;left:0;right:0;text-align:center;
+            font-size:12px;font-weight:600;color:white;
+            background:rgba(0,0,0,.6);padding:8px;
+        }
+        .cam-status.ok{background:rgba(16,185,129,.8)}
+        .cam-status.error{background:rgba(239,68,68,.8)}
+        .btn-verify{
+            width:100%;padding:13px;background:var(--purple);color:#fff;
+            border:none;border-radius:12px;font-family:var(--font-body);
+            font-size:14px;font-weight:600;cursor:pointer;
+            box-shadow:0 4px 18px rgba(106,90,205,.35);transition:.15s;
+            display:flex;align-items:center;justify-content:center;gap:8px;
+            margin-bottom:12px;
+        }
+        .btn-verify:hover{background:var(--purple-dark)}
+        .btn-verify:disabled{opacity:.5;cursor:not-allowed}
+        .btn-logout{
+            width:100%;padding:11px;background:transparent;
+            color:var(--text-muted);border:1.5px solid var(--border);
+            border-radius:12px;font-family:var(--font-body);font-size:13px;
+            font-weight:500;cursor:pointer;text-decoration:none;
+            display:flex;align-items:center;justify-content:center;transition:.15s;
+        }
+        .btn-logout:hover{border-color:#E05252;color:#E05252}
+        .attempts-info{text-align:center;font-size:12px;color:var(--text-muted);margin-bottom:16px}
+        .attempts-info span{font-weight:700;color:var(--red)}
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="wrap">
+        <div class="card">
+            <div class="card-logo">
+                <img src="{{ asset('images/logo.png') }}" alt="Harmony">
+                <span>Harmony</span>
+            </div>
+            <div class="card-title">🔐 Vérification Face ID</div>
+            <div class="card-sub">Regardez la caméra pour confirmer votre identité</div>
+
+            <div class="cam-section">
+                <video id="video" autoplay muted playsinline></video>
+                <div class="cam-overlay scanning" id="overlay"></div>
+                <div class="cam-status" id="camStatus">📷 Initialisation de la caméra…</div>
+            </div>
+
+            <div class="attempts-info" id="attemptsInfo" style="display:none">
+                Tentatives restantes : <span id="attemptsLeft">3</span>
+            </div>
+
+            <button class="btn-verify" id="btnVerify" disabled>
+                🔍 Vérifier mon identité
+            </button>
+
+            <a href="{{ path('app_logout') }}" class="btn-logout">
+                🚪 Se connecter avec un autre compte
+            </a>
+        </div>
+    </div>
+{% endblock %}
+
+{% block body_javascripts %}
+    <!-- face-api.js : doit être chargé EN PREMIER avant le script inline -->
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <script>
+        let stream       = null;
+        let referenceImg = null;
+        let attempts     = 3;
+        let verifying    = false;
+
+        const video     = document.getElementById('video');
+        const overlay   = document.getElementById('overlay');
+        const status    = document.getElementById('camStatus');
+        const btnVerify = document.getElementById('btnVerify');
+        const attInfo   = document.getElementById('attemptsInfo');
+        const attLeft   = document.getElementById('attemptsLeft');
+
+        // ── Démarrer la caméra ────────────────────────────────────────────────
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 640, height: 480, facingMode: 'user' },
+                    audio: false
+                });
+                video.srcObject = stream;
+                video.onloadedmetadata = async () => {
+                    status.textContent = '✅ Caméra prête';
+                    status.className   = 'cam-status ok';
+                    await loadReference();
+                };
+            } catch (err) {
+                status.textContent = '❌ Caméra inaccessible : ' + err.message;
+                status.className   = 'cam-status error';
+                console.error('getUserMedia error:', err);
+            }
+        }
+
+        // ── Charger l'image de référence depuis le serveur ───────────────────
+        async function loadReference() {
+            try {
+                const r    = await fetch('/face-verify/check', { method: 'POST' });
+                const data = await r.json();
+                if (data.bypass) {
+                    await confirmSuccess();
+                    return;
+                }
+                if (data.referenceImage) {
+                    referenceImg          = data.referenceImage;
+                    btnVerify.disabled    = false;
+                    attInfo.style.display = 'block';
+                    status.textContent    = '👤 Cliquez sur "Vérifier" quand vous êtes prêt';
+                    status.className      = 'cam-status ok';
+                } else {
+                    status.textContent = '❌ Image de référence introuvable';
+                    status.className   = 'cam-status error';
+                }
+            } catch (e) {
+                console.error('loadReference error:', e);
+                status.textContent = '❌ Erreur de chargement';
+                status.className   = 'cam-status error';
+            }
+        }
+
+        // ── Lancer la vérification ────────────────────────────────────────────
+        async function verifyFace() {
+            if (verifying || !referenceImg) return;
+            verifying          = true;
+            btnVerify.disabled = true;
+            status.textContent = '🔍 Analyse en cours…';
+            status.className   = 'cam-status';
+
+            try {
+                // Capturer le frame courant de la webcam
+                const canvas  = document.createElement('canvas');
+                canvas.width  = video.videoWidth  || 640;
+                canvas.height = video.videoHeight || 480;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+                const capturedB64 = canvas.toDataURL('image/png');
+
+                const match = await compareFaces(referenceImg, capturedB64);
+
+                if (match) {
+                    overlay.className  = 'cam-overlay success';
+                    status.textContent = '✅ Identité confirmée !';
+                    status.className   = 'cam-status ok';
+                    if (stream) stream.getTracks().forEach(t => t.stop());
+                    await confirmSuccess();
+                } else {
+                    attempts--;
+                    attLeft.textContent = attempts;
+                    overlay.className   = 'cam-overlay fail';
+                    status.textContent  = '❌ Visage non reconnu. Réessayez.';
+                    status.className    = 'cam-status error';
+
+                    if (attempts <= 0) {
+                        btnVerify.disabled = true;
+                        status.textContent = '🔒 Trop de tentatives. Reconnectez-vous.';
+                        setTimeout(() => { window.location.href = '/logout'; }, 3000);
+                    } else {
+                        setTimeout(() => {
+                            overlay.className  = 'cam-overlay scanning';
+                            btnVerify.disabled = false;
+                            verifying          = false;
+                        }, 2000);
+                    }
+                }
+            } catch (e) {
+                console.error('verifyFace exception:', e);
+                status.textContent = '❌ Erreur lors de la vérification : ' + e.message;
+                status.className   = 'cam-status error';
+                btnVerify.disabled = false;
+                verifying          = false;
+            }
+        }
+
+        // ── Comparaison faciale ───────────────────────────────────────────────
+        // FIX CRITIQUE : withFaceLandmarks(true) pour utiliser le tiny model
+        // (faceLandmark68TinyNet) qui est le seul chargé.
+        // Sans le "true", face-api attend faceLandmark68Net (plein modèle) qui
+        // n'est pas chargé → la Promise ne se résout jamais → blocage infini.
+        async function compareFaces(refB64, capB64) {
+            try {
+                const opts   = new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.4 });
+                const refImg = await loadImg(refB64);
+                const capImg = await loadImg(capB64);
+
+                console.log('Détection visage référence…');
+                const refDet = await faceapi
+                    .detectSingleFace(refImg, opts)
+                    .withFaceLandmarks(true)   // <-- true = utilise faceLandmark68TinyNet
+                    .withFaceDescriptor();
+
+                console.log('Détection visage caméra…');
+                const capDet = await faceapi
+                    .detectSingleFace(capImg, opts)
+                    .withFaceLandmarks(true)   // <-- true = utilise faceLandmark68TinyNet
+                    .withFaceDescriptor();
+
+                if (!refDet) {
+                    console.warn('Aucun visage détecté dans l\'image de référence');
+                    return false;
+                }
+                if (!capDet) {
+                    console.warn('Aucun visage détecté dans le flux caméra');
+                    return false;
+                }
+
+                const distance = faceapi.euclideanDistance(refDet.descriptor, capDet.descriptor);
+                console.log('Distance faciale :', distance, '(seuil : 0.5)');
+
+                // Seuil légèrement assoupli à 0.55 pour compenser les variations
+                // d'éclairage entre l'inscription et la connexion
+                return distance < 0.55;
+
+            } catch (e) {
+                console.error('compareFaces error:', e);
+                return false;
+            }
+        }
+
+        // ── Utilitaire : charger une image depuis un src base64 ou URL ────────
+        function loadImg(src) {
+            return new Promise((resolve, reject) => {
+                const img   = new Image();
+                img.onload  = () => resolve(img);
+                img.onerror = (err) => {
+                    console.error('loadImg error for src:', src.substring(0, 50), err);
+                    reject(err);
+                };
+                img.crossOrigin = 'anonymous';
+                img.src = src;
+            });
+        }
+
+        // ── Notifier le serveur du succès et rediriger ───────────────────────
+        async function confirmSuccess() {
+            try {
+                const r    = await fetch('/face-verify/success', { method: 'POST' });
+                const data = await r.json();
+                if (data.redirect) {
+                    window.location.href = data.redirect;
+                } else {
+                    window.location.href = '/';
+                }
+            } catch (e) {
+                console.error('confirmSuccess error:', e);
+                window.location.href = '/';
+            }
+        }
+
+        // ── Charger les modèles IA puis démarrer la caméra ───────────────────
+        async function loadFaceApi() {
+            status.textContent = '⏳ Chargement des modèles IA…';
+            const MODEL_URL    = '/models';
+            try {
+                await Promise.all([
+                    faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+                ]);
+                console.log('Modèles face-api chargés avec succès');
+                status.textContent = '✅ Modèles chargés';
+                await startCamera();
+            } catch (e) {
+                console.error('Erreur chargement modèles:', e);
+                status.textContent = '❌ Impossible de charger les modèles IA';
+                status.className   = 'cam-status error';
+            }
+        }
+
+        btnVerify.addEventListener('click', verifyFace);
+        loadFaceApi();
+    </script>
+{% endblock %}

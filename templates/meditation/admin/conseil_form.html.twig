@@ -1,0 +1,63 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ editing ? 'Modifier' : 'Nouveau' }} conseil - Admin{% endblock %}
+{% block page_title %}💡 {{ editing ? 'Modifier le' : 'Nouveau' }} conseil{% endblock %}
+
+{% block stylesheets %}
+    <style>
+        .back-link { display:inline-flex; align-items:center; gap:6px; color:var(--text-muted); text-decoration:none; font-size:13px; margin-bottom:20px; }
+        .back-link:hover { color:var(--purple); }
+        .form-card {
+            background:var(--white); border:1px solid var(--border); border-radius:16px;
+            padding:32px; max-width:640px;
+        }
+        .form-card h2 { font-family:var(--font-head); font-size:20px; font-weight:700; margin-bottom:8px; color:var(--text); }
+        .form-card .sub { font-size:13px; color:var(--text-muted); margin-bottom:24px; }
+        .form-group { margin-bottom:20px; }
+        .form-group label { display:block; font-size:13px; font-weight:600; color:var(--text-mid); margin-bottom:6px; }
+        .form-group textarea {
+            width:100%; padding:10px 14px; border:1px solid var(--border); border-radius:10px;
+            font-size:14px; font-family:var(--font-body); color:var(--text); background:var(--white);
+            resize:vertical; transition:border-color .15s;
+        }
+        .form-group textarea:focus { outline:none; border-color:var(--purple); }
+        .form-group ul { list-style:none; padding:0; margin:4px 0 0; }
+        .form-group ul li { color:#E05252; font-size:12px; font-weight:500; }
+        .form-actions { display:flex; gap:12px; margin-top:24px; }
+        .btn-submit {
+            padding:10px 24px; border-radius:10px; border:none; background:var(--purple);
+            color:white; font-size:14px; font-weight:600; cursor:pointer; font-family:var(--font-body);
+        }
+        .btn-submit:hover { background:var(--purple-dark); }
+        .btn-cancel {
+            padding:10px 24px; border-radius:10px; border:1px solid var(--border); background:var(--white);
+            color:var(--text-mid); font-size:14px; font-weight:500; text-decoration:none;
+            display:inline-flex; align-items:center;
+        }
+        .btn-cancel:hover { background:var(--purple-ghost); }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <a href="{{ path('admin_meditation_show', {id: session.id}) }}" class="back-link">← Retour à la session</a>
+
+    <div class="form-card">
+        <h2>{{ editing ? 'Modifier le conseil' : 'Ajouter un conseil' }}</h2>
+        <div class="sub">Session : {{ session.theme }}</div>
+
+        {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+
+        <div class="form-group">
+            {{ form_label(form.contenu) }}
+            {{ form_widget(form.contenu) }}
+            {{ form_errors(form.contenu) }}
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-submit">{{ editing ? '💾 Enregistrer' : '✅ Ajouter' }}</button>
+            <a href="{{ path('admin_meditation_show', {id: session.id}) }}" class="btn-cancel">Annuler</a>
+        </div>
+
+        {{ form_end(form) }}
+    </div>
+{% endblock %}

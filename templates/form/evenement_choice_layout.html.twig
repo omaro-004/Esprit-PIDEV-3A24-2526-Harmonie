@@ -1,0 +1,13 @@
+{# Paires radio + label dans un flex (le layout Symfony « expanded » est plat sans div intermédiaire). #}
+{% use "form_div_layout.html.twig" %}
+
+{%- block choice_widget_expanded -%}
+    <div {{ block('widget_container_attributes') }}>
+        {%- for child in form %}
+            <div class="harmony-lieu-segment-pair">
+                {{- form_widget(child) -}}
+                {{- form_label(child, null, {translation_domain: choice_translation_domain}) -}}
+            </div>
+        {% endfor -%}
+    </div>
+{%- endblock choice_widget_expanded -%}

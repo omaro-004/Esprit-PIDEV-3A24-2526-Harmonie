@@ -1,0 +1,231 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Événements - Harmony{% endblock %}
+
+{% block stylesheets %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --purple:       #6A5ACD;
+            --purple-dark:  #4B3B9E;
+            --purple-soft:  #8B7FD4;
+            --purple-pale:  #EDE8FA;
+            --purple-ghost: #F7F5FD;
+            --text:         #1C1733;
+            --text-mid:     #4A4570;
+            --text-muted:   #9590B8;
+            --border:       rgba(106,90,205,.12);
+            --white:        #FFFFFF;
+            --font-head:    'Syne', sans-serif;
+            --font-body:    'Inter', sans-serif;
+        }
+
+        html, body {
+            height: 100%;
+            font-family: var(--font-body);
+            background: var(--purple-ghost);
+            color: var(--text);
+        }
+
+        /* ── TOPBAR ───────────────────────────────── */
+        .topbar {
+            position: sticky; top: 0; z-index: 200;
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            height: 62px;
+            display: flex;
+            align-items: center;
+            padding: 0 40px;
+            gap: 8px;
+        }
+        .topbar-logo {
+            display: flex; align-items: center; gap: 10px;
+            text-decoration: none;
+            margin-right: 32px;
+        }
+        .logo-mark {
+            width: 34px; height: 34px;
+            border-radius: 10px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            flex: 1;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+        }
+        .nav-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border-radius: 9px;
+            font-size: 13.5px;
+            font-weight: 500;
+            color: var(--text-mid);
+            text-decoration: none;
+            white-space: nowrap;
+            transition: background .15s, color .15s;
+        }
+        .nav-link:hover { background: var(--purple-pale); color: var(--purple); }
+        .nav-link.active { background: var(--purple-pale); color: var(--purple); font-weight: 600; }
+        .nav-link .nav-emoji { font-size: 14px; }
+        .topbar-right {
+            display: flex; align-items: center;
+            gap: 10px; margin-left: auto; flex-shrink: 0;
+        }
+        .logout-btn {
+            padding: 7px 16px;
+            border-radius: 9px;
+            border: 1.5px solid rgba(239,68,68,.2);
+            background: transparent;
+            color: #E05252;
+            font-family: var(--font-body);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background .15s, border-color .15s;
+            white-space: nowrap;
+        }
+        .logout-btn:hover { background: #FEF2F2; border-color: #E05252; }
+        .profile-wrap { position: relative; }
+        .avatar {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: var(--purple);
+            color: white;
+            font-family: var(--font-head);
+            font-weight: 700;
+            font-size: 14px;
+            display: grid; place-items: center;
+            cursor: pointer;
+            border: 2px solid var(--purple-pale);
+            transition: box-shadow .15s;
+        }
+        .avatar:hover { box-shadow: 0 0 0 3px rgba(106,90,205,.25); }
+        .profile-dropdown {
+            position: absolute; top: calc(100% + 10px); right: 0;
+            width: 220px;
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            box-shadow: 0 12px 40px rgba(0,0,0,.1);
+            padding: 16px;
+            display: none;
+            z-index: 500;
+        }
+        .profile-dropdown.open { display: block; }
+        .pd-name  { font-size: 14px; font-weight: 600; color: var(--text); }
+        .pd-email { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        .pd-divider { height: 1px; background: var(--border); margin: 12px 0; }
+        .pd-hint { font-size: 11px; color: var(--text-muted); font-style: italic; }
+
+        /* ── PAGE ── */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 48px 40px 80px;
+        }
+        .content-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            padding: 60px 40px;
+            text-align: center;
+        }
+        .page-title {
+            font-family: var(--font-head);
+            font-weight: 800;
+            font-size: 48px;
+            color: var(--purple);
+            margin-bottom: 16px;
+            letter-spacing: -.5px;
+        }
+        .page-description {
+            font-size: 16px;
+            font-weight: 300;
+            color: var(--text-mid);
+            line-height: 1.7;
+            max-width: 500px;
+            margin: 0 auto 28px;
+        }
+        .wip-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: .8px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            background: var(--purple-ghost);
+            border: 1px solid var(--border);
+            padding: 6px 16px;
+            border-radius: 20px;
+        }
+
+        @media (max-width: 640px) {
+            .topbar { padding: 0 20px; }
+            .nav-links { display: none; }
+            .container { padding: 24px 20px 60px; }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    {% set current_route = app.request.attributes.get('_route') %}
+
+    <!-- ═══ TOPBAR ════════════════════════════════════════════════════ -->
+    <header class="topbar">
+        <a href="{{ path('homepage') }}" class="topbar-logo">
+            <img src="{{ asset('images/logo.png') }}" class="logo-mark" alt="Harmony">
+        </a>
+        <nav class="nav-links">
+            <a href="{{ path('activites') }}" class="nav-link {{ current_route == 'activites' ? 'active' }}"><span class="nav-emoji">🏋</span> Activités</a>
+            <a href="{{ path('forum') }}" class="nav-link {{ current_route == 'forum' ? 'active' }}"><span class="nav-emoji">💬</span> Forum</a>
+            <a href="{{ path('taches') }}" class="nav-link {{ current_route == 'taches' ? 'active' }}"><span class="nav-emoji">📚</span> Tâches</a>
+            <a href="{{ path('evenements') }}" class="nav-link {{ current_route == 'evenements' ? 'active' }}"><span class="nav-emoji">📅</span> Événements</a>
+            <a href="{{ path('nutrition') }}" class="nav-link {{ current_route == 'nutrition' ? 'active' }}"><span class="nav-emoji">🥗</span> Nutrition</a>
+            <a href="{{ path('meditation') }}" class="nav-link {{ current_route == 'meditation' ? 'active' }}"><span class="nav-emoji">🧘</span> Méditation</a>
+            <a href="{{ path('journal') }}" class="nav-link {{ current_route == 'journal' ? 'active' }}"><span class="nav-emoji">📔</span> Journal</a>
+            <a href="{{ path('library') }}" class="nav-link {{ current_route == 'library' ? 'active' }}"><span class="nav-emoji">📖</span> Library</a>
+        </nav>
+        <div class="topbar-right">
+            <button class="logout-btn">🚪 Déconnexion</button>
+            <div class="profile-wrap">
+                <div class="avatar" id="avatarBtn">
+                    {{ app.user ? app.user.firstName|first|upper : 'E' }}
+                </div>
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="pd-name">{{ app.user ? app.user.firstName ~ ' ' ~ app.user.lastName : 'Étudiant' }}</div>
+                    <div class="pd-email">{{ app.user ? app.user.email : 'email@exemple.com' }}</div>
+                    <div class="pd-divider"></div>
+                    <div class="pd-hint">Double-clic pour modifier</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ═══ PAGE ═════════════════════════════════════════════════════ -->
+    <div class="container">
+        <div class="content-card">
+            <h1 class="page-title">📅 Événements</h1>
+            <p class="page-description">Découvrez et participez aux événements de la communauté étudiante.</p>
+            <span class="wip-badge">🚧 En cours de développement</span>
+        </div>
+    </div>
+
+    <script>
+        const btn = document.getElementById('avatarBtn');
+        const drop = document.getElementById('profileDropdown');
+        btn.addEventListener('click', e => { e.stopPropagation(); drop.classList.toggle('open'); });
+        document.addEventListener('click', () => drop.classList.remove('open'));
+    </script>
+{% endblock %}

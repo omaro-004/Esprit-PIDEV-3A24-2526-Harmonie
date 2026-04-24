@@ -1,0 +1,429 @@
+{% extends 'base.html.twig' %}
+{% block title %}Mon Journal — Harmony{% endblock %}
+
+{% block stylesheets %}
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+    --purple:#6A5ACD; --purple-dark:#4B3B9E; --purple-soft:#8B7FD4;
+    --purple-pale:#EDE8FA; --purple-ghost:#F0EDF9;
+    --text:#1C1733; --text-mid:#4A4570; --text-muted:#9590B8;
+    --border:rgba(106,90,205,.12); --white:#FFFFFF;
+    --font-head:'Syne',sans-serif; --font-body:'Inter',sans-serif;
+}
+html,body { font-family:var(--font-body); background:var(--purple-ghost); color:var(--text); }
+
+/* ── PAGE LAYOUT ── */
+.j-page { max-width:1240px; margin:0 auto; padding:28px 20px 80px; display:grid; grid-template-columns:280px 1fr 280px; gap:24px; align-items:start; }
+
+/* ── SHARED CARD ── */
+.side-card { background:var(--white); border:1px solid var(--border); border-radius:20px; padding:20px; margin-bottom:16px; }
+.side-card:last-child { margin-bottom:0; }
+.side-title { font-family:var(--font-head); font-size:13px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:16px; }
+
+/* ── LEFT SIDEBAR ── */
+.left-col { position:sticky; top:24px; }
+
+.profile-banner {
+    background:linear-gradient(135deg,#6A5ACD,#A78BFA);
+    border-radius:20px; padding:24px 20px; margin-bottom:16px;
+    text-align:center; color:#fff; position:relative; overflow:hidden;
+}
+.profile-banner::before { content:'📔'; position:absolute; right:-8px; bottom:-10px; font-size:80px; opacity:.15; }
+.profile-avatar {
+    width:56px; height:56px; border-radius:50%;
+    background:rgba(255,255,255,.25); border:3px solid rgba(255,255,255,.5);
+    font-family:var(--font-head); font-size:22px; font-weight:800;
+    display:grid; place-items:center; margin:0 auto 10px;
+}
+.profile-name { font-family:var(--font-head); font-size:16px; font-weight:700; }
+.profile-sub  { font-size:12px; opacity:.75; margin-top:2px; }
+
+.stat-row { display:flex; justify-content:space-between; gap:8px; margin-bottom:16px; }
+.mini-stat { flex:1; text-align:center; }
+.mini-stat-val { font-family:var(--font-head); font-size:22px; font-weight:800; color:var(--purple); }
+.mini-stat-lbl { font-size:11px; color:var(--text-muted); margin-top:2px; }
+
+.new-btn {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; padding:11px; border-radius:14px;
+    background:var(--purple); color:#fff;
+    font-size:13.5px; font-weight:700; font-family:var(--font-body);
+    text-decoration:none; transition:background .15s; border:none; cursor:pointer;
+}
+.new-btn:hover { background:var(--purple-dark); }
+
+.filter-label { font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:8px; display:block; }
+.mood-filter-list { display:flex; flex-direction:column; gap:4px; }
+.mood-filter-item {
+    display:flex; align-items:center; gap:10px;
+    padding:9px 12px; border-radius:12px;
+    font-size:13px; font-weight:500; color:var(--text-mid);
+    cursor:pointer; border:none; background:transparent;
+    text-align:left; width:100%; font-family:var(--font-body);
+    transition:background .15s, color .15s;
+}
+.mood-filter-item:hover, .mood-filter-item.active { background:var(--purple-pale); color:var(--purple); }
+.mood-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+
+/* ── CENTER FEED ── */
+.feed-col { min-width:0; }
+
+.compose-card {
+    background:var(--white); border:1px solid var(--border);
+    border-radius:20px; padding:16px 20px; margin-bottom:20px;
+    display:flex; align-items:center; gap:14px;
+}
+.compose-avatar {
+    width:42px; height:42px; border-radius:50%;
+    background:var(--purple); color:#fff;
+    font-family:var(--font-head); font-weight:700; font-size:16px;
+    display:grid; place-items:center; flex-shrink:0;
+}
+.compose-fake {
+    flex:1; background:var(--purple-ghost); border:1.5px solid var(--border);
+    border-radius:24px; padding:11px 18px;
+    font-size:14px; color:var(--text-muted); cursor:pointer;
+    transition:border-color .15s, background .15s;
+    text-decoration:none; display:block;
+}
+.compose-fake:hover { border-color:var(--purple); background:var(--purple-pale); color:var(--purple); }
+
+.search-bar {
+    background:var(--white); border:1px solid var(--border);
+    border-radius:16px; padding:10px 16px; margin-bottom:16px;
+    display:flex; align-items:center; gap:10px;
+}
+.search-bar input { border:none; outline:none; flex:1; font-size:14px; font-family:var(--font-body); background:transparent; color:var(--text); }
+
+.results-meta { font-size:13px; color:var(--text-muted); font-weight:500; margin-bottom:14px; padding:0 2px; }
+.loading-bar { display:none; text-align:center; padding:32px; color:var(--text-muted); font-size:14px; }
+
+/* ── FEED POST CARD ── */
+.post-card {
+    background:var(--white); border:1px solid var(--border);
+    border-radius:20px; overflow:hidden; margin-bottom:16px;
+    transition:box-shadow .2s;
+}
+.post-card:hover { box-shadow:0 8px 32px rgba(106,90,205,.1); }
+
+.post-head {
+    padding:18px 20px 14px;
+    display:flex; align-items:center; gap:12px;
+}
+.post-avatar {
+    width:44px; height:44px; border-radius:50%;
+    background:linear-gradient(135deg,var(--purple),var(--purple-soft));
+    color:#fff; font-family:var(--font-head); font-weight:700; font-size:16px;
+    display:grid; place-items:center; flex-shrink:0;
+}
+.post-meta { flex:1; }
+.post-name { font-size:14px; font-weight:700; color:var(--text); }
+.post-date { font-size:12px; color:var(--text-muted); margin-top:2px; }
+.post-mood { flex-shrink:0; }
+.mood-chip { display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:700; padding:5px 13px; border-radius:20px; }
+.mood-5{background:#D1FAE5;color:#065F46;} .mood-4{background:#DBEAFE;color:#1E40AF;}
+.mood-3{background:#F3F4F6;color:#374151;} .mood-2{background:#FEF3C7;color:#92400E;}
+.mood-1{background:#FEE2E2;color:#991B1B;}
+
+.mood-bar { height:3px; }
+.bar-5{background:linear-gradient(90deg,#10B981,#34D399);} .bar-4{background:linear-gradient(90deg,#3B82F6,#60A5FA);}
+.bar-3{background:linear-gradient(90deg,#9CA3AF,#D1D5DB);} .bar-2{background:linear-gradient(90deg,#F59E0B,#FCD34D);}
+.bar-1{background:linear-gradient(90deg,#EF4444,#F87171);}
+
+.post-body { padding:16px 20px 18px; font-size:14.5px; color:var(--text-mid); line-height:1.75; }
+
+.post-actions {
+    border-top:1px solid var(--border); padding:10px 20px;
+    display:flex; gap:6px; align-items:center;
+}
+.post-btn {
+    display:inline-flex; align-items:center; gap:5px;
+    padding:8px 16px; border-radius:10px;
+    font-size:13px; font-weight:600; cursor:pointer;
+    font-family:var(--font-body); border:none; text-decoration:none;
+    transition:background .15s;
+}
+.post-btn-edit { background:var(--purple-pale); color:var(--purple); }
+.post-btn-edit:hover { background:#ddd8f8; }
+.post-btn-del { background:#FEF2F2; color:#E05252; }
+.post-btn-del:hover { background:#FECACA; }
+
+.empty-feed { text-align:center; padding:60px 20px; }
+.empty-feed .big-e { font-size:60px; margin-bottom:12px; }
+.empty-feed h3 { font-family:var(--font-head); font-size:19px; font-weight:700; color:var(--text); margin-bottom:6px; }
+.empty-feed p { font-size:13px; color:var(--text-muted); margin-bottom:20px; }
+
+/* ── RIGHT SIDEBAR ── */
+.right-col { position:sticky; top:24px; }
+
+.chart-box { margin-bottom:16px; }
+.chart-title { font-family:var(--font-head); font-size:13px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:14px; }
+
+.mood-score-list { display:flex; flex-direction:column; gap:10px; }
+.score-row { display:flex; align-items:center; gap:10px; }
+.score-label { font-size:12px; font-weight:600; color:var(--text-mid); width:68px; flex-shrink:0; }
+.score-track { flex:1; height:6px; background:var(--purple-ghost); border-radius:10px; overflow:hidden; }
+.score-fill { height:100%; border-radius:10px; }
+.fill-5{background:#10B981;} .fill-4{background:#3B82F6;} .fill-3{background:#9CA3AF;} .fill-2{background:#F59E0B;} .fill-1{background:#EF4444;}
+.score-count { font-size:12px; font-weight:700; color:var(--text-muted); width:20px; text-align:right; }
+
+@media(max-width:1100px){ .j-page{ grid-template-columns:240px 1fr; } .right-col{ display:none; } }
+@media(max-width:720px){ .j-page{ grid-template-columns:1fr; padding:16px 12px 60px; } .left-col{ position:static; display:none; } }
+</style>
+{% endblock %}
+
+{% block body %}
+{% include '_planning_topbar.html.twig' %}
+
+{% for msg in app.flashes('success') %}
+<div style="max-width:1240px;margin:12px auto 0;padding:0 20px;">
+    <div style="background:#D1FAE5;color:#065F46;border:1px solid #6EE7B7;border-radius:12px;padding:12px 18px;font-size:14px;font-weight:500;">✅ {{ msg }}</div>
+</div>
+{% endfor %}
+
+<div class="j-page">
+
+    <!-- ── LEFT SIDEBAR ── -->
+    <aside class="left-col">
+
+        <div class="profile-banner">
+            <div class="profile-avatar">{{ app.user ? app.user.firstName|first|upper : 'E' }}</div>
+            <div class="profile-name">{{ app.user ? app.user.firstName ~ ' ' ~ app.user.lastName : 'Étudiant' }}</div>
+            <div class="profile-sub">Mon espace journal</div>
+        </div>
+
+        {% if stats.total > 0 %}
+        <div class="side-card">
+            <div class="stat-row">
+                <div class="mini-stat">
+                    <div class="mini-stat-val">{{ stats.total }}</div>
+                    <div class="mini-stat-lbl">Entrées</div>
+                </div>
+                <div style="width:1px;background:var(--border);"></div>
+                <div class="mini-stat">
+                    <div class="mini-stat-val">{{ stats.avgScore }}</div>
+                    <div class="mini-stat-lbl">Score /5</div>
+                </div>
+            </div>
+            <a href="{{ path('journal_new') }}" class="new-btn">✏️ Écrire une entrée</a>
+        </div>
+        {% else %}
+        <div class="side-card">
+            <a href="{{ path('journal_new') }}" class="new-btn">✏️ Écrire ma première entrée</a>
+        </div>
+        {% endif %}
+
+        <div class="side-card">
+            <div class="side-title">Filtrer par humeur</div>
+            <div class="mood-filter-list">
+                <button class="mood-filter-item active" data-humeur="" id="filterAll">
+                    <span class="mood-dot" style="background:var(--purple);"></span> Toutes les humeurs
+                </button>
+                {% for h in humeurs %}
+                <button class="mood-filter-item" data-humeur="{{ h.value }}">
+                    <span class="mood-dot" style="background:
+                        {% if h.value == 'TRES_BIEN' %}#10B981
+                        {% elseif h.value == 'BIEN' %}#3B82F6
+                        {% elseif h.value == 'NEUTRE' %}#9CA3AF
+                        {% elseif h.value == 'MAL' %}#F59E0B
+                        {% else %}#EF4444{% endif %};"></span>
+                    {{ h.emoji }} {{ h.label }}
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+
+    </aside>
+
+    <!-- ── CENTER FEED ── -->
+    <main class="feed-col">
+
+        <div class="compose-card">
+            <div class="compose-avatar">{{ app.user ? app.user.firstName|first|upper : 'E' }}</div>
+            <a href="{{ path('journal_new') }}" class="compose-fake">📝 Comment vous sentez-vous aujourd'hui ?</a>
+        </div>
+
+        <div class="search-bar">
+            <span style="font-size:15px;color:var(--text-muted);">🔍</span>
+            <input type="text" id="searchInput" placeholder="Rechercher dans vos entrées…">
+        </div>
+
+        <div class="results-meta" id="resultsCount">{{ entries|length }} entrée(s)</div>
+        <div class="loading-bar" id="loading">⏳ Chargement…</div>
+
+        <div id="feedList">
+            {% for e in entries %}
+            <div class="post-card">
+                <div class="post-head">
+                    <div class="post-avatar">{{ app.user ? app.user.firstName|first|upper : 'E' }}</div>
+                    <div class="post-meta">
+                        <div class="post-name">{{ app.user ? app.user.firstName ~ ' ' ~ app.user.lastName : 'Moi' }}</div>
+                        <div class="post-date">{{ e.dateJournal|date('d/m/Y') }}</div>
+                    </div>
+                    <div class="post-mood">
+                        <span class="mood-chip mood-{{ e.score }}">{{ e.humeur.emoji }} {{ e.humeur.label }}</span>
+                    </div>
+                </div>
+                <div class="mood-bar bar-{{ e.score }}"></div>
+                <div class="post-body">{{ e.contenu }}</div>
+                <div class="post-actions">
+                    <a href="{{ path('journal_edit', {id: e.id}) }}" class="post-btn post-btn-edit">✏️ Modifier</a>
+                    <form method="post" action="{{ path('journal_delete', {id: e.id}) }}" style="display:inline" onsubmit="return confirm('Supprimer cette entrée ?')">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ e.id) }}">
+                        <button type="submit" class="post-btn post-btn-del">🗑 Supprimer</button>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <div class="empty-feed">
+                <div class="big-e">📔</div>
+                <h3>Aucune entrée pour l'instant</h3>
+                <p>Commencez à écrire pour suivre votre humeur au quotidien.</p>
+                <a href="{{ path('journal_new') }}" class="new-btn" style="display:inline-flex;width:auto;padding:11px 24px;">✏️ Écrire ma première entrée</a>
+            </div>
+            {% endfor %}
+        </div>
+
+    </main>
+
+    <!-- ── RIGHT SIDEBAR ── -->
+    <aside class="right-col">
+
+        {% if trend|length > 1 %}
+        <div class="side-card chart-box">
+            <div class="chart-title">📈 Évolution</div>
+            <canvas id="trendChart" height="130"></canvas>
+        </div>
+        {% endif %}
+
+        {% if dist|length > 0 %}
+        <div class="side-card">
+            <div class="chart-title">🥧 Répartition</div>
+            <div class="mood-score-list">
+                {% set maxCnt = 1 %}
+                {% for d in dist %}{% if d.cnt > maxCnt %}{% set maxCnt = d.cnt %}{% endif %}{% endfor %}
+                {% for d in dist %}
+                <div class="score-row">
+                    <div class="score-label">
+                        {% for h in humeurs %}{% if h.value == d.humeur %}{{ h.emoji }} {{ h.label }}{% endif %}{% endfor %}
+                    </div>
+                    <div class="score-track">
+                        <div class="score-fill fill-{{ loop.index == 1 ? '5' : (loop.index == 2 ? '4' : (loop.index == 3 ? '3' : (loop.index == 4 ? '2' : '1'))) }}"
+                             style="width:{{ (d.cnt / maxCnt * 100)|round }}%"></div>
+                    </div>
+                    <div class="score-count">{{ d.cnt }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="side-card">
+            <div class="chart-title">🌡 Humeur du moment</div>
+            {% if entries|length > 0 %}
+                {% set last = entries|first %}
+                <div style="text-align:center;padding:10px 0;">
+                    <div style="font-size:40px;margin-bottom:8px;">{{ last.humeur.emoji }}</div>
+                    <div style="font-family:var(--font-head);font-size:16px;font-weight:700;color:var(--text);">{{ last.humeur.label }}</div>
+                    <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Dernière entrée · {{ last.dateJournal|date('d/m/Y') }}</div>
+                </div>
+            {% else %}
+                <div style="text-align:center;color:var(--text-muted);font-size:13px;padding:10px 0;">Aucune entrée encore</div>
+            {% endif %}
+        </div>
+
+    </aside>
+
+</div>
+
+<script>
+(function(){
+    const searchInput = document.getElementById('searchInput');
+    const feedList    = document.getElementById('feedList');
+    const countEl     = document.getElementById('resultsCount');
+    const loading     = document.getElementById('loading');
+    const filterBtns  = document.querySelectorAll('.mood-filter-item');
+    let activeHumeur  = '';
+    let timer;
+
+    function moodClass(s){ return 'mood-'+s; }
+    function barClass(s){ return 'bar-'+s; }
+    function esc(str){ const d=document.createElement('div'); d.textContent=str||''; return d.innerHTML; }
+
+    function doSearch(){
+        const q = searchInput.value.trim();
+        loading.style.display = 'block';
+        feedList.style.opacity = '.4';
+
+        fetch(`{{ path('journal_search') }}?q=${encodeURIComponent(q)}&humeur=${encodeURIComponent(activeHumeur)}`)
+            .then(r => r.json())
+            .then(data => {
+                loading.style.display = 'none';
+                feedList.style.opacity = '1';
+                countEl.textContent = data.length + ' entrée(s)';
+                if(!data.length){
+                    feedList.innerHTML = `<div class="empty-feed"><div class="big-e">🔍</div><h3>Aucun résultat</h3><p>Essayez avec d'autres mots-clés.</p></div>`;
+                    return;
+                }
+                feedList.innerHTML = data.map(e => `
+                    <div class="post-card">
+                        <div class="post-head">
+                            <div class="post-avatar">${esc('{{ app.user ? app.user.firstName|first|upper : "E" }}')}</div>
+                            <div class="post-meta">
+                                <div class="post-name">${esc('{{ app.user ? app.user.firstName ~ " " ~ app.user.lastName : "Moi" }}')}</div>
+                                <div class="post-date">${esc(e.date)}</div>
+                            </div>
+                            <div class="post-mood"><span class="mood-chip ${moodClass(e.score)}">${esc(e.humeurEmoji)} ${esc(e.humeurLabel)}</span></div>
+                        </div>
+                        <div class="mood-bar ${barClass(e.score)}"></div>
+                        <div class="post-body">${esc(e.contenu)}</div>
+                        <div class="post-actions">
+                            <a href="/journal/${e.id}/edit" class="post-btn post-btn-edit">✏️ Modifier</a>
+                        </div>
+                    </div>`).join('');
+            });
+    }
+
+    searchInput.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(doSearch, 250); });
+
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            activeHumeur = btn.dataset.humeur;
+            doSearch();
+        });
+    });
+})();
+</script>
+
+{% if trend|length > 1 %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function(){
+    const trend = {{ trend|json_encode|raw }};
+    new Chart(document.getElementById('trendChart'), {
+        type: 'line',
+        data: {
+            labels: trend.map(d => d.date),
+            datasets:[{
+                data: trend.map(d => d.score),
+                borderColor:'#6A5ACD', backgroundColor:'rgba(106,90,205,.08)',
+                tension:0.45, fill:true,
+                pointBackgroundColor:'#6A5ACD', pointRadius:3, pointHoverRadius:5,
+            }]
+        },
+        options:{
+            responsive:true,
+            scales:{
+                y:{ min:1, max:5, ticks:{stepSize:1}, grid:{color:'rgba(106,90,205,.06)'} },
+                x:{ grid:{display:false}, ticks:{font:{size:10}} }
+            },
+            plugins:{ legend:{display:false} }
+        }
+    });
+})();
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,438 @@
+{% extends 'base.html.twig' %}
+{% block title %}Forum — Harmony{% endblock %}
+
+
+{% block stylesheets %}
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Clash+Display:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+    --ink:#0D0D14;--ink-mid:#3A3A52;--ink-muted:#8A8AA8;
+    --surface:#F4F3FF;--card:#FFFFFF;
+    --v:#6C47FF;--v2:#8B6BFF;--v3:#EDE9FF;
+    --accent:#FF6B6B;--accent2:#FFD93D;--accent3:#6BCB77;
+    --border:rgba(108,71,255,.1);
+    --font-head:'Clash Display',sans-serif;
+    --font-body:'DM Sans',sans-serif;
+    --shadow:0 4px 24px rgba(108,71,255,.12);
+    --shadow-lg:0 12px 48px rgba(108,71,255,.18);
+}
+html,body{font-family:var(--font-body);background:var(--surface);color:var(--ink);min-height:100vh;}
+
+
+/* ── TOPBAR ── */
+.topbar{position:sticky;top:0;z-index:300;background:rgba(244,243,255,.85);
+    backdrop-filter:blur(16px);border-bottom:1px solid var(--border);
+    height:60px;display:flex;align-items:center;padding:0 32px;gap:6px;}
+.topbar-logo{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:28px;}
+.logo-mark{width:32px;height:32px;border-radius:9px;object-fit:contain;}
+.logo-name{font-family:var(--font-head);font-size:17px;font-weight:600;color:var(--ink);}
+.nav-links{display:flex;align-items:center;gap:2px;flex:1;}
+.nav-link{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;
+    border-radius:8px;font-size:13px;font-weight:500;color:var(--ink-mid);
+    text-decoration:none;transition:all .15s;}
+.nav-link:hover{background:var(--v3);color:var(--v);}
+.nav-link.active{background:var(--v);color:white;font-weight:600;}
+.topbar-right{display:flex;align-items:center;gap:10px;margin-left:auto;}
+.logout-btn{padding:6px 14px;border-radius:8px;border:1.5px solid rgba(255,107,107,.25);
+    background:transparent;color:var(--accent);font-size:13px;font-weight:500;cursor:pointer;
+    transition:all .15s;}
+.logout-btn:hover{background:rgba(255,107,107,.08);}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--v),var(--v2));
+    color:white;font-family:var(--font-head);font-weight:600;font-size:13px;
+    display:grid;place-items:center;cursor:pointer;}
+
+
+/* ── PAGE ── */
+.page{max-width:1180px;margin:0 auto;padding:40px 32px 80px;}
+
+
+/* ── HERO ── */
+.hero{
+    background:linear-gradient(135deg,var(--v) 0%,#4B2FCC 60%,#2D1B8C 100%);
+    border-radius:24px;padding:44px 48px;margin-bottom:32px;
+    display:grid;grid-template-columns:1fr auto;align-items:center;gap:24px;
+    position:relative;overflow:hidden;
+}
+.hero::before{
+    content:'';position:absolute;right:-80px;top:-80px;
+    width:320px;height:320px;border-radius:50%;
+    background:rgba(255,255,255,.05);pointer-events:none;
+}
+.hero::after{
+    content:'';position:absolute;right:120px;bottom:-60px;
+    width:180px;height:180px;border-radius:50%;
+    background:rgba(255,255,255,.04);pointer-events:none;
+}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:6px;
+    background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);
+    border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;
+    color:rgba(255,255,255,.9);letter-spacing:.5px;text-transform:uppercase;
+    margin-bottom:12px;}
+.hero h1{font-family:var(--font-head);font-size:34px;font-weight:700;
+    color:white;line-height:1.15;margin-bottom:8px;}
+.hero p{color:rgba(255,255,255,.65);font-size:14px;line-height:1.6;}
+.hero-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:relative;z-index:1;}
+
+
+/* Bouton IA HERO — ultra visible */
+.btn-ai-hero{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:12px 22px;
+    background:linear-gradient(135deg,#FFD93D,#FF6B6B);
+    color:#1a0a00;border:none;border-radius:12px;
+    font-size:13px;font-weight:700;cursor:pointer;
+    font-family:var(--font-body);
+    box-shadow:0 4px 20px rgba(255,217,61,.4);
+    transition:all .2s;white-space:nowrap;
+}
+.btn-ai-hero:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(255,217,61,.5);}
+
+
+.btn-new-cat{
+    display:inline-flex;align-items:center;gap:7px;
+    padding:12px 20px;background:white;color:var(--ink);
+    border-radius:12px;font-size:13px;font-weight:700;
+    text-decoration:none;transition:all .2s;white-space:nowrap;
+    box-shadow:0 2px 12px rgba(0,0,0,.12);
+}
+.btn-new-cat:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.18);}
+
+
+.hero-stats{display:flex;gap:20px;margin-top:20px;}
+.stat-pill{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.15);
+    border-radius:20px;padding:6px 16px;font-size:12px;font-weight:600;color:white;}
+.stat-pill span{opacity:.7;font-weight:400;}
+
+
+/* ── AI BANNER ── */
+.ai-banner{
+    background:linear-gradient(135deg,#1a0a2e 0%,#2D1B8C 50%,var(--v) 100%);
+    border-radius:16px;padding:20px 28px;margin-bottom:28px;
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    border:1px solid rgba(108,71,255,.3);
+}
+.ai-banner-left{display:flex;align-items:center;gap:14px;}
+.ai-badge{width:44px;height:44px;background:linear-gradient(135deg,#FFD93D,#FF6B6B);
+    border-radius:12px;display:grid;place-items:center;font-size:20px;flex-shrink:0;}
+.ai-banner-title{font-family:var(--font-head);font-size:15px;font-weight:600;color:white;}
+.ai-banner-sub{font-size:12px;color:rgba(255,255,255,.6);margin-top:2px;}
+.ai-features{display:flex;gap:8px;flex-wrap:wrap;}
+.ai-feat-chip{
+    display:inline-flex;align-items:center;gap:5px;
+    padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;
+    border:1.5px solid;transition:all .2s;cursor:default;
+}
+.chip-summary{background:rgba(107,203,119,.15);color:#6BCB77;border-color:rgba(107,203,119,.3);}
+.chip-translate{background:rgba(255,217,61,.15);color:#FFD93D;border-color:rgba(255,217,61,.3);}
+.chip-sentiment{background:rgba(255,107,107,.15);color:#FF6B6B;border-color:rgba(255,107,107,.3);}
+.chip-image{background:rgba(139,107,255,.15);color:#8B6BFF;border-color:rgba(139,107,255,.3);}
+
+
+/* ── GRID CATÉGORIES ── */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.section-title{font-family:var(--font-head);font-size:20px;font-weight:600;color:var(--ink);}
+.section-count{font-size:13px;color:var(--ink-muted);}
+
+
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;}
+
+
+.cat-card{
+    background:var(--card);border:1.5px solid var(--border);
+    border-radius:18px;overflow:hidden;
+    display:flex;flex-direction:column;
+    transition:all .2s;position:relative;
+    box-shadow:0 2px 8px rgba(108,71,255,.06);
+}
+.cat-card:hover{border-color:var(--v);transform:translateY(-4px);box-shadow:var(--shadow-lg);}
+
+
+.cat-card-accent{height:4px;background:linear-gradient(90deg,var(--v),var(--v2));transition:all .2s;}
+.cat-card:hover .cat-card-accent{background:linear-gradient(90deg,#FFD93D,var(--v));}
+
+
+.cat-card-body{padding:20px;flex:1;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:10px;}
+.cat-icon-wrap{width:46px;height:46px;background:var(--v3);border-radius:13px;
+    display:grid;place-items:center;font-size:22px;transition:all .2s;}
+.cat-card:hover .cat-icon-wrap{background:var(--v);transform:rotate(-5deg);}
+.cat-name{font-family:var(--font-head);font-size:15px;font-weight:600;color:var(--ink);line-height:1.3;}
+.cat-desc{font-size:12.5px;color:var(--ink-muted);line-height:1.6;flex:1;}
+.cat-meta{display:inline-flex;align-items:center;gap:4px;
+    font-size:11px;color:var(--v);font-weight:600;
+    background:var(--v3);padding:4px 10px;border-radius:20px;width:fit-content;}
+
+
+.cat-card-footer{
+    display:flex;gap:6px;padding:12px 20px 16px;
+    border-top:1px solid var(--v3);
+}
+.btn-edit{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;
+    background:var(--v3);color:var(--v);border:none;border-radius:8px;
+    font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .15s;}
+.btn-edit:hover{background:var(--v);color:white;}
+.btn-delete{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;
+    background:rgba(255,107,107,.1);color:var(--accent);border:none;border-radius:8px;
+    font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;}
+.btn-delete:hover{background:var(--accent);color:white;}
+
+
+/* ── MODALE CONFIRM ── */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:1000;
+    background:rgba(13,13,20,.6);backdrop-filter:blur(8px);
+    align-items:center;justify-content:center;}
+.modal-box{background:white;border-radius:20px;padding:36px 40px;
+    max-width:380px;width:90%;box-shadow:var(--shadow-lg);}
+
+
+/* ── MODALE IMAGE IA ── */
+#imageModal{display:none;position:fixed;inset:0;z-index:1000;
+    background:rgba(13,13,20,.7);backdrop-filter:blur(10px);
+    align-items:center;justify-content:center;}
+.image-modal-box{background:white;border-radius:24px;padding:36px;
+    max-width:560px;width:90%;box-shadow:var(--shadow-lg);
+    max-height:90vh;overflow-y:auto;}
+.style-chip{padding:6px 14px;border:1.5px solid var(--border);border-radius:20px;
+    font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-body);
+    background:white;color:var(--ink-mid);transition:all .15s;}
+.style-chip.active{background:var(--v);color:white;border-color:var(--v);}
+.prompt-example{padding:4px 12px;background:var(--v3);color:var(--v);
+    border:none;border-radius:20px;font-size:11px;font-weight:600;
+    cursor:pointer;font-family:var(--font-body);transition:all .15s;}
+.prompt-example:hover{background:var(--v);color:white;}
+
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.fade{animation:fadeUp .4s ease both;}
+</style>
+{% endblock %}
+
+
+{% block body %}
+<header class="topbar">
+    <a href="{{ path('homepage') }}" class="topbar-logo">
+        <img src="{{ asset('images/logo.png') }}" class="logo-mark" alt="Harmony">
+        <span class="logo-name">Harmony</span>
+    </a>
+    <nav class="nav-links">
+        <a href="{{ path('activites') }}"  class="nav-link">🏋 Activités</a>
+        <a href="{{ path('forum') }}"      class="nav-link active">💬 Forum</a>
+        <a href="{{ path('taches') }}"     class="nav-link">📚 Tâches</a>
+        <a href="{{ path('evenements') }}" class="nav-link">📅 Événements</a>
+        <a href="{{ path('nutrition') }}"  class="nav-link">🥗 Nutrition</a>
+        <a href="{{ path('meditation') }}" class="nav-link">🧘 Méditation</a>
+        <a href="{{ path('journal') }}"    class="nav-link">📔 Journal</a>
+        <a href="{{ path('library') }}"    class="nav-link">📖 Library</a>
+    </nav>
+    <div class="topbar-right">
+        <button class="logout-btn">🚪 Déconnexion</button>
+        <div class="avatar">{{ app.user ? app.user.getUserPrenom()|first|upper : 'U' }}</div>
+    </div>
+</header>
+
+
+<main class="page">
+
+
+    {# ── HERO ── #}
+    <div class="hero fade">
+        <div>
+            <div class="hero-eyebrow">✨ Propulsé par l'IA</div>
+            <h1>Forum &<br>Communauté</h1>
+            <p>Pose tes questions, partage tes connaissances.<br>L'IA résume, traduit et analyse pour toi.</p>
+            <div class="hero-stats">
+                <div class="stat-pill">{{ categories|length }} <span>catégories</span></div>
+                <div class="stat-pill">🤖 <span>Groq LLaMA 3.3</span></div>
+                <div class="stat-pill">⚡ <span>Temps réel</span></div>
+            </div>
+        </div>
+        <div class="hero-actions">
+            <button onclick="openImageModal()" class="btn-ai-hero">
+                🎨 Générer une image IA
+            </button>
+            <a href="{{ path('forum_categorie_new') }}" class="btn-new-cat">
+                ➕ Nouvelle catégorie
+            </a>
+        </div>
+    </div>
+
+
+   
+
+
+    {# ── GRILLE CATÉGORIES ── #}
+    <div class="section-header fade" style="animation-delay:.15s;">
+        <div class="section-title">📂 Catégories</div>
+        <div class="section-count">{{ categories|length }} espaces de discussion</div>
+    </div>
+
+
+    <div class="cat-grid">
+        {% for cat in categories %}
+        <div class="cat-card fade" style="animation-delay:{{ loop.index * 0.05 }}s;">
+            <div class="cat-card-accent"></div>
+            <a href="{{ path('forum_posts', {id: cat.idCategorie}) }}" class="cat-card-body">
+                <div class="cat-icon-wrap">💬</div>
+                <div class="cat-name">{{ cat.nomCategorie }}</div>
+                {% if cat.description %}
+                    <div class="cat-desc">{{ cat.description }}</div>
+                {% endif %}
+                <div class="cat-meta">Voir les posts →</div>
+            </a>
+            <div class="cat-card-footer">
+                <a href="{{ path('forum_categorie_edit', {id: cat.idCategorie}) }}" class="btn-edit">✏️ Modifier</a>
+                <form method="POST" action="{{ path('forum_categorie_delete', {id: cat.idCategorie}) }}"
+                      onsubmit="return confirm('Supprimer cette catégorie ?');" style="display:inline;">
+                    <button type="submit" class="btn-delete">🗑 Supprimer</button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <p style="color:var(--ink-muted);grid-column:1/-1;text-align:center;padding:40px;">
+            Aucune catégorie — commence par en créer une !
+        </p>
+        {% endfor %}
+    </div>
+
+
+</main>
+
+
+{# ── MODALE IMAGE IA ── #}
+<div id="imageModal" style="display:none;position:fixed;inset:0;z-index:1000;
+    background:rgba(13,13,20,.75);backdrop-filter:blur(10px);
+    align-items:center;justify-content:center;">
+    <div class="image-modal-box">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+            <div>
+                <div style="font-family:'Clash Display',sans-serif;font-size:20px;font-weight:600;color:#0D0D14;">
+                    🎨 Génération d'image IA
+                </div>
+                <div style="font-size:12px;color:#8A8AA8;margin-top:3px;">Stable Diffusion XL via HuggingFace</div>
+            </div>
+            <button onclick="closeImageModal()" style="width:32px;height:32px;border-radius:50%;
+                border:none;background:#EDE9FF;color:#6C47FF;font-size:16px;cursor:pointer;">✕</button>
+        </div>
+
+
+        <div style="margin-bottom:16px;">
+            <div style="font-size:12px;color:#8A8AA8;margin-bottom:8px;font-weight:600;">🎨 Style :</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;" id="styleBox">
+                {% set styles = {'': '✨ Aucun','photorealistic, 4k': '📷 Réaliste','digital art, vibrant': '🎨 Digital','oil painting, classic': '🖼️ Peinture','anime style, colorful': '🌸 Anime','watercolor, soft': '💧 Aquarelle'} %}
+                {% for styleValue, styleLabel in styles %}
+                <button onclick="selectStyle('{{ styleValue }}', this)" class="style-chip {{ styleValue == '' ? 'active' }}">{{ styleLabel }}</button>
+                {% endfor %}
+            </div>
+        </div>
+
+
+        <div style="margin-bottom:16px;">
+            <div style="font-size:12px;color:#8A8AA8;margin-bottom:8px;font-weight:600;">💡 Exemples :</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                {% for ex in ['A peaceful meditation garden','Students in a modern library','Neural network visualization','Mountain landscape at sunset'] %}
+                <button onclick="setPrompt('{{ ex }}')" class="prompt-example">{{ ex|slice(0,22) }}…</button>
+                {% endfor %}
+            </div>
+        </div>
+
+
+        <div style="margin-bottom:16px;">
+            <label style="display:block;font-size:13px;font-weight:600;color:#3A3A52;margin-bottom:7px;">
+                Description (en anglais) *
+            </label>
+            <textarea id="imagePrompt" rows="3"
+                placeholder="Ex: A beautiful purple forest with glowing trees..."
+                style="width:100%;padding:11px 14px;border:1.5px solid rgba(108,71,255,.2);
+                border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;
+                color:#0D0D14;outline:none;resize:vertical;box-sizing:border-box;"
+                onfocus="this.style.borderColor='#6C47FF'"
+                onblur="this.style.borderColor='rgba(108,71,255,.2)'"></textarea>
+        </div>
+
+
+        <button onclick="generateImage()" id="generateBtn"
+            style="width:100%;padding:13px;background:linear-gradient(135deg,#6C47FF,#4B2FCC);
+            color:white;border:none;border-radius:12px;font-size:14px;font-weight:600;
+            cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:16px;">
+            🎨 Générer l'image
+        </button>
+
+
+        <div id="imageLoading" style="display:none;text-align:center;padding:24px;">
+            <div style="font-size:36px;animation:spin 2s linear infinite;display:inline-block;">⚙️</div>
+            <div style="font-size:13px;color:#6C47FF;font-weight:600;margin-top:8px;">Génération en cours…</div>
+            <div style="font-size:11px;color:#8A8AA8;margin-top:4px;">10 à 30 secondes</div>
+        </div>
+
+
+        <div id="imageError" style="display:none;background:#FEF2F2;border:1px solid rgba(255,107,107,.2);
+            border-radius:10px;padding:12px;color:#FF6B6B;font-size:13px;margin-bottom:12px;"></div>
+
+
+        <div id="imageResult" style="display:none;">
+            <div style="font-size:13px;font-weight:600;color:#3A3A52;margin-bottom:10px;">✅ Image générée :</div>
+            <img id="generatedImg" src="" alt="Image IA" style="width:100%;border-radius:14px;
+                border:1px solid rgba(108,71,255,.15);margin-bottom:14px;">
+            <div style="display:flex;gap:10px;">
+                <a id="downloadBtn" href="#" download="harmony-ia.png"
+                style="flex:1;padding:10px;background:#EDE9FF;color:#6C47FF;border-radius:10px;
+                font-size:13px;font-weight:600;text-align:center;text-decoration:none;">💾 Télécharger</a>
+                <button onclick="resetModal()" style="flex:1;padding:10px;background:#F4F3FF;
+                color:#3A3A52;border:1.5px solid rgba(108,71,255,.15);border-radius:10px;
+                font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">🔄 Nouvelle</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<style>@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}</style>
+
+
+<script>
+let selectedStyle = '';
+function selectStyle(v, btn) {
+    selectedStyle = v;
+    document.querySelectorAll('#styleBox button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+}
+function openImageModal() { document.getElementById('imageModal').style.display = 'flex'; }
+function closeImageModal() { document.getElementById('imageModal').style.display = 'none'; }
+document.getElementById('imageModal').addEventListener('click', function(e) { if(e.target===this) closeImageModal(); });
+function setPrompt(t) { document.getElementById('imagePrompt').value = t; }
+async function generateImage() {
+    const prompt = document.getElementById('imagePrompt').value.trim();
+    if (!prompt) { showImgError('Merci de décrire l\'image.'); return; }
+    const btn = document.getElementById('generateBtn');
+    btn.disabled = true; btn.textContent = '⏳ Génération…';
+    document.getElementById('imageLoading').style.display = 'block';
+    document.getElementById('imageResult').style.display  = 'none';
+    document.getElementById('imageError').style.display   = 'none';
+    try {
+        const fd = new FormData();
+        fd.append('prompt', prompt); fd.append('style', selectedStyle);
+        const res  = await fetch('{{ path("forum_generate_image") }}', {method:'POST',body:fd});
+        const data = await res.json();
+        document.getElementById('imageLoading').style.display = 'none';
+        if (data.error) { showImgError(data.error); resetBtn(); return; }
+        const src = 'data:image/png;base64,' + data.image;
+        document.getElementById('generatedImg').src = src;
+        document.getElementById('downloadBtn').href = src;
+        document.getElementById('imageResult').style.display = 'block';
+        resetBtn();
+    } catch(e) { document.getElementById('imageLoading').style.display='none'; showImgError('Erreur réseau.'); resetBtn(); }
+}
+function showImgError(msg) { const el=document.getElementById('imageError'); el.textContent='❌ '+msg; el.style.display='block'; }
+function resetBtn() { const b=document.getElementById('generateBtn'); b.disabled=false; b.textContent='🎨 Générer l\'image'; }
+function resetModal() {
+    document.getElementById('imageResult').style.display='none';
+    document.getElementById('imageError').style.display='none';
+    document.getElementById('imagePrompt').value='';
+    selectedStyle='';
+    document.querySelectorAll('#styleBox button').forEach((b,i) => { b.classList.toggle('active',i===0); });
+}
+</script>
+{% endblock %}
+
+
+

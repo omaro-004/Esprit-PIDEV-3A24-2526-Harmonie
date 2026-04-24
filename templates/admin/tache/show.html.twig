@@ -1,0 +1,23 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Tâche #{{ tache.id }} — Admin{% endblock %}
+
+{% block body %}
+<div class="admin-topbar">
+    <h1 class="admin-page-title">{{ tache.nom }}</h1>
+    <div class="admin-actions">
+        <a href="{{ path('admin_tache_index') }}" class="admin-btn admin-btn-ghost">Liste</a>
+        <a href="{{ path('admin_tache_edit', {id: tache.id}) }}" class="admin-btn admin-btn-primary">Modifier</a>
+    </div>
+</div>
+<div class="admin-card admin-table-wrap">
+    <table class="admin-table">
+        <tbody>
+            <tr><th>Statut</th><td>{{ tache.statutTache }}</td></tr>
+            <tr><th>Deadline</th><td>{{ tache.deadline ? tache.deadline|date('d/m/Y') : '—' }}</td></tr>
+            <tr><th>Calendrier</th><td>Harmony (unique)</td></tr>
+            <tr><th>Notes</th><td>{{ tache.notes|nl2br }}</td></tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

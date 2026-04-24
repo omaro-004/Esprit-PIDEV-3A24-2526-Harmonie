@@ -1,0 +1,131 @@
+{% extends 'admin/base.html.twig' %}
+
+{% macro type_label(v) %}
+    {% set map = { cours: 'Cours', reunion: 'Réunion', loisir: 'Loisir', autre: 'Autre' } %}
+    {{- v ? map[v]|default(v) : '—' -}}
+{% endmacro %}
+
+{% macro type_icon(v) %}
+    {% if v == 'cours' %}📘{% elseif v == 'reunion' %}👥{% elseif v == 'loisir' %}🎮{% else %}📌{% endif %}
+{% endmacro %}
+
+{% macro event_badge_time(e) %}
+    {% set today = 'now'|date('Y-m-d') %}
+    {% if e.dateDebut %}
+        {% set d0 = e.dateDebut|date('Y-m-d') %}
+        {% set d1 = e.dateFin ? e.dateFin|date('Y-m-d') : d0 %}
+        {% if d0 <= today and d1 >= today %}
+            <span class="admin-badge admin-badge--ok">Aujourd’hui</span>
+        {% elseif d0 > today %}
+            <span class="admin-badge admin-badge--wait">À venir</span>
+        {% else %}
+            <span class="admin-badge admin-badge--no">Passé</span>
+        {% endif %}
+    {% else %}
+        <span class="admin-badge">—</span>
+    {% endif %}
+{% endmacro %}
+
+{% block title %}Événements — Admin{% endblock %}
+
+{% block body %}
+<div class="admin-topbar">
+    <h1 class="admin-page-title">Événements</h1>
+    <a href="{{ path('admin_evenement_new') }}" class="admin-btn admin-btn-primary">Ajouter un événement</a>
+</div>
+
+<div class="admin-toolbar">
+    <form class="admin-toolbar__search" method="get" action="{{ path('admin_evenement_index') }}" role="search">
+        {% if typeFiltre %}<input type="hidden" name="type" value="{{ typeFiltre }}">{% endif %}
+        {% if proprietaireId %}<input type="hidden" name="user" value="{{ proprietaireId }}">{% endif %}
+        {% if dateDebut %}<input type="hidden" name="date_debut" value="{{ dateDebut }}">{% endif %}
+        {% if dateFin %}<input type="hidden" name="date_fin" value="{{ dateFin }}">{% endif %}
+        <label class="visually-hidden" for="admin-ev-q">Recherche</label>
+        <input id="admin-ev-q" type="search" name="q" value="{{ searchQuery }}" placeholder="Recherche titre, lieu…">
+    </form>
+    {% set ev_q_params = { q: searchQuery, page: 1 } %}
+    {% if proprietaireId %}{% set ev_q_params = ev_q_params|merge({ user: proprietaireId }) %}{% endif %}
+    {% if dateDebut %}{% set ev_q_params = ev_q_params|merge({ date_debut: dateDebut }) %}{% endif %}
+    {% if dateFin %}{% set ev_q_params = ev_q_params|merge({ date_fin: dateFin }) %}{% endif %}
+    <div class="admin-pills">
+        <a class="admin-pill {{ typeFiltre == '' ? 'is-active' : '' }}" href="{{ path('admin_evenement_index', ev_q_params) }}">Tous types</a>
+        <a class="admin-pill {{ typeFiltre == 'cours' ? 'is-active' : '' }}" href="{{ path('admin_evenement_index', ev_q_params|merge({ type: 'cours' })) }}">Cours</a>
+        <a class="admin-pill {{ typeFiltre == 'reunion' ? 'is-active' : '' }}" href="{{ path('admin_evenement_index', ev_q_params|merge({ type: 'reunion' })) }}">Réunion</a>
+        <a class="admin-pill {{ typeFiltre == 'loisir' ? 'is-active' : '' }}" href="{{ path('admin_evenement_index', ev_q_params|merge({ type: 'loisir' })) }}">Loisir</a>
+        <a class="admin-pill {{ typeFiltre == 'autre' ? 'is-active' : '' }}" href="{{ path('admin_evenement_index', ev_q_params|merge({ type: 'autre' })) }}">Autre</a>
+    </div>
+</div>
+
+<form class="admin-card admin-toolbar" method="get" action="{{ path('admin_evenement_index') }}" style="margin-bottom:20px;">
+    <input type="hidden" name="q" value="{{ searchQuery }}">
+    {% if typeFiltre %}<input type="hidden" name="type" value="{{ typeFiltre }}">{% endif %}
+    <label>Utilisateur
+        <select class="admin-input" name="user">
+            <option value="">Tous</option>
+            {% for u in users %}
+                <option value="{{ u.userId }}" {{ proprietaireId == u.userId ? 'selected' }}>{{ u.userPrenom }} {{ u.userNom }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label>Date début ≥
+        <input class="admin-input" type="date" name="date_debut" value="{{ dateDebut }}">
+    </label>
+    <label>Date début ≤
+        <input class="admin-input" type="date" name="date_fin" value="{{ dateFin }}">
+    </label>
+    <button type="submit" class="admin-btn admin-btn-primary">Appliquer</button>
+</form>
+
+<div class="admin-cards-grid">
+    {% for e in evenements %}
+        {% set et = (e.eventType ?? '')|lower %}
+        <article class="admin-module-card admin-module-card--accent-ev">
+            <div class="admin-module-card__typebar {% if et == 'cours' %}admin-module-card__typebar--cours{% elseif et == 'reunion' %}admin-module-card__typebar--reunion{% elseif et == 'loisir' %}admin-module-card__typebar--loisir{% else %}admin-module-card__typebar--autre{% endif %}">
+                <span class="admin-module-card__typebar-main"><span aria-hidden="true">{{ _self.type_icon(et) }}</span> {{ _self.type_label(e.eventType) }}</span>
+                <span style="margin-left:auto;">{{ _self.event_badge_time(e) }}</span>
+            </div>
+            <h2 class="admin-module-card__title">{{ e.titre ?? 'Sans titre' }}</h2>
+            <div class="admin-module-card__body">
+                <p class="admin-module-card__meta">📅 {% if e.dateDebut %}{{ e.dateDebut|date('d/m/Y H:i') }}{% else %}—{% endif %}
+                    → {% if e.dateFin %}{{ e.dateFin|date('d/m/Y H:i') }}{% else %}—{% endif %}</p>
+                <p class="admin-module-card__meta">👤 {{ e.proprietaire ? (e.proprietaire.userPrenom ~ ' ' ~ e.proprietaire.userNom) : '—' }}</p>
+                <p class="admin-module-card__meta">📍
+                    {% if e.lieuType == 'en_ligne' %}En ligne
+                    {% elseif e.lieuAdresse %}{{ e.lieuAdresse }}
+                    {% elseif e.salle %}Salle : {{ e.salle.nom }} ({{ e.salle.capacite }} pers.)
+                    {% else %}{{ e.lieu ?? '—' }}{% endif %}
+                </p>
+                <p class="admin-module-card__meta">✅ {{ e.approuve ? 'Approuvé' : 'Non approuvé' }}{% if e.statutDemandeSalle %} · Demande salle : {{ e.statutDemandeSalle }}{% endif %}</p>
+            </div>
+            <div class="admin-module-card__footer">
+                <a href="{{ path('admin_evenement_show', { id: e.id }) }}" class="admin-btn admin-btn-ghost">Voir</a>
+                <a href="{{ path('admin_evenement_edit', { id: e.id }) }}" class="admin-btn admin-btn-ghost">Modifier</a>
+                <form class="inline-form" method="post" action="{{ path('admin_evenement_delete', { id: e.id }) }}" onsubmit="return confirm('Supprimer cet événement ?');">
+                    <input type="hidden" name="_token" value="{{ csrf_token('admin_delete_evenement' ~ e.id) }}">
+                    <button type="submit" class="admin-btn admin-btn-danger">Supprimer</button>
+                </form>
+            </div>
+        </article>
+    {% else %}
+        <p class="admin-empty-hint" style="grid-column: 1 / -1;">Aucun événement.</p>
+    {% endfor %}
+</div>
+
+{% if pages > 1 %}
+    <nav class="admin-pagination-round" aria-label="Pagination">
+        {% if page > 1 %}
+            <a href="{{ path('admin_evenement_index', app.request.query.all|merge({ page: page - 1 })) }}">‹</a>
+        {% endif %}
+        {% for p in 1..pages %}
+            {% if p == page %}
+                <span class="is-current" aria-current="page">{{ p }}</span>
+            {% else %}
+                <a href="{{ path('admin_evenement_index', app.request.query.all|merge({ page: p })) }}">{{ p }}</a>
+            {% endif %}
+        {% endfor %}
+        {% if page < pages %}
+            <a href="{{ path('admin_evenement_index', app.request.query.all|merge({ page: page + 1 })) }}">›</a>
+        {% endif %}
+    </nav>
+{% endif %}
+{% endblock %}

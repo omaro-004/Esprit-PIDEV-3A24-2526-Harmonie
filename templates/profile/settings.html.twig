@@ -1,0 +1,705 @@
+{% extends 'base.html.twig' %}
+{% block title %}Paramètres — Harmony{% endblock %}
+
+{% block stylesheets %}
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --purple: #6A5ACD; --purple-dark: #4B3B9E; --purple-soft: #8B7FD4;
+            --purple-pale: #EDE8FA; --purple-ghost: #F7F5FD;
+            --text: #1C1733; --text-mid: #4A4570; --text-muted: #9590B8;
+            --border: rgba(106,90,205,.12); --white: #FFFFFF;
+            --green: #10B981; --red: #EF4444; --orange: #F59E0B;
+            --font-head: 'Syne', sans-serif; --font-body: 'Inter', sans-serif;
+        }
+        html, body {
+            min-height: 100vh; font-family: var(--font-body);
+            background: var(--purple-ghost); color: var(--text);
+        }
+
+        /* ── TOPBAR ── */
+        .topbar { position: sticky; top: 0; z-index: 200; background: var(--white); border-bottom: 1px solid var(--border); height: 62px; display: flex; align-items: center; padding: 0 40px; gap: 8px; }
+        .topbar-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; margin-right: 32px; }
+        .logo-mark { width: 34px; height: 34px; border-radius: 10px; object-fit: contain; flex-shrink: 0; }
+        .logo-name { font-family: var(--font-head); font-size: 18px; font-weight: 700; color: var(--text); }
+        .nav-links { display: flex; align-items: center; gap: 2px; flex: 1; flex-wrap: nowrap; overflow-x: auto; }
+        .nav-link { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 9px; font-size: 13.5px; font-weight: 500; color: var(--text-mid); text-decoration: none; white-space: nowrap; transition: background .15s, color .15s; }
+        .nav-link:hover { background: var(--purple-pale); color: var(--purple); }
+        .topbar-right { display: flex; align-items: center; gap: 10px; margin-left: auto; flex-shrink: 0; }
+        .logout-btn { padding: 7px 16px; border-radius: 9px; border: 1.5px solid rgba(239,68,68,.2); background: transparent; color: #E05252; font-family: var(--font-body); font-size: 13px; font-weight: 500; cursor: pointer; text-decoration: none; transition: background .15s; white-space: nowrap; }
+        .logout-btn:hover { background: #FEF2F2; }
+        .avatar-topbar { width: 36px; height: 36px; border-radius: 50%; background: var(--purple); color: white; font-family: var(--font-head); font-weight: 700; font-size: 14px; display: grid; place-items: center; border: 2px solid var(--purple-pale); overflow: hidden; flex-shrink: 0; }
+        .avatar-topbar img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
+
+        /* ── PAGE LAYOUT ── */
+        .settings-page { max-width: 1000px; margin: 0 auto; padding: 48px 32px 80px; display: grid; grid-template-columns: 240px 1fr; gap: 28px; align-items: start; }
+
+        /* ── SIDEBAR ── */
+        .settings-sidebar { background: var(--white); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; position: sticky; top: 80px; }
+        .sidebar-user { padding: 24px 20px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+        .sidebar-avatar { width: 72px; height: 72px; border-radius: 50%; background: var(--purple); display: grid; place-items: center; font-family: var(--font-head); font-size: 28px; font-weight: 800; color: #fff; border: 3px solid var(--purple-pale); overflow: hidden; }
+        .sidebar-avatar img { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; }
+        .sidebar-name { font-family: var(--font-head); font-size: 15px; font-weight: 700; color: var(--text); }
+        .sidebar-email { font-size: 12px; color: var(--text-muted); }
+        .sidebar-nav { padding: 10px 12px 16px; }
+        .sidebar-section-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); padding: 10px 10px 6px; }
+        .sidebar-link { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 11px; font-size: 13.5px; font-weight: 500; color: var(--text-mid); text-decoration: none; margin-bottom: 2px; transition: background .15s, color .15s; }
+        .sidebar-link:hover { background: var(--purple-ghost); color: var(--purple); }
+        .sidebar-link.active { background: var(--purple-pale); color: var(--purple); font-weight: 600; }
+        .sidebar-link .sl-icon { width: 32px; height: 32px; border-radius: 9px; background: var(--purple-ghost); display: grid; place-items: center; font-size: 16px; flex-shrink: 0; }
+        .sidebar-link.active .sl-icon { background: rgba(106,90,205,.15); }
+        .sidebar-back { display: flex; align-items: center; gap: 8px; padding: 10px 22px 14px; font-size: 13px; font-weight: 500; color: var(--text-muted); text-decoration: none; transition: color .15s; border-top: 1px solid var(--border); margin-top: 4px; }
+        .sidebar-back:hover { color: var(--purple); }
+
+        /* ── MAIN CONTENT ── */
+        .settings-main { display: flex; flex-direction: column; gap: 0; }
+
+        /* ── SECTION CARD ── */
+        .settings-card { background: var(--white); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; animation: fadeUp .35s ease both; }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
+        .settings-card-head { padding: 24px 28px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 14px; }
+        .settings-card-icon { width: 44px; height: 44px; border-radius: 12px; background: var(--purple-pale); display: grid; place-items: center; font-size: 22px; flex-shrink: 0; }
+        .settings-card-title { font-family: var(--font-head); font-size: 17px; font-weight: 700; color: var(--text); }
+        .settings-card-sub { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
+        .settings-card-body { padding: 28px; }
+
+        /* ── AVATAR UPLOADER ── */
+        .avatar-uploader { display: flex; align-items: center; gap: 20px; background: var(--purple-ghost); border: 1.5px dashed rgba(106,90,205,.3); border-radius: 16px; padding: 20px; margin-bottom: 24px; }
+        .avatar-big { width: 84px; height: 84px; border-radius: 50%; background: var(--purple); display: grid; place-items: center; font-family: var(--font-head); font-size: 32px; font-weight: 800; color: #fff; border: 3px solid var(--white); overflow: hidden; flex-shrink: 0; box-shadow: 0 4px 16px rgba(106,90,205,.25); }
+        .avatar-big img { width: 84px; height: 84px; border-radius: 50%; object-fit: cover; }
+        .avatar-uploader-info { flex: 1; }
+        .avatar-uploader-info h4 { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+        .avatar-uploader-info p { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; }
+        .avatar-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn-upload-avatar { padding: 8px 16px; background: var(--purple); color: #fff; border: none; border-radius: 9px; font-family: var(--font-body); font-size: 12.5px; font-weight: 600; cursor: pointer; transition: background .15s; }
+        .btn-upload-avatar:hover { background: var(--purple-dark); }
+        .avatar-filename { font-size: 11px; color: var(--text-muted); font-style: italic; margin-top: 6px; }
+
+        /* ── FORM ── */
+        .form-section-title { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); margin: 20px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 6px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 12.5px; font-weight: 600; color: var(--text-mid); margin-bottom: 6px; }
+        .form-group input, .form-group select { width: 100%; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-family: var(--font-body); font-size: 14px; color: var(--text); background: var(--purple-ghost); outline: none; transition: border-color .15s, background .15s, box-shadow .15s; }
+        .form-group input:focus, .form-group select:focus { border-color: var(--purple); background: #fff; box-shadow: 0 0 0 3px rgba(106,90,205,.08); }
+        .form-error { color: var(--red); font-size: 11.5px; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+        .form-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+        /* ── SUBMIT FOOTER ── */
+        .form-footer { display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding-top: 20px; border-top: 1px solid var(--border); margin-top: 4px; }
+        .btn-save { padding: 11px 28px; background: var(--purple); color: #fff; border: none; border-radius: 11px; font-family: var(--font-body); font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 16px rgba(106,90,205,.3); transition: background .15s, transform .1s; }
+        .btn-save:hover { background: var(--purple-dark); transform: translateY(-1px); }
+        .btn-cancel-link { padding: 11px 20px; background: var(--purple-ghost); color: var(--text-mid); border: 1.5px solid var(--border); border-radius: 11px; font-family: var(--font-body); font-size: 14px; font-weight: 500; text-decoration: none; transition: border-color .15s, color .15s; }
+        .btn-cancel-link:hover { border-color: var(--purple-soft); color: var(--purple); }
+
+        /* ── SECURITY CARD ── */
+        .security-block { background: var(--purple-ghost); border: 1.5px solid var(--border); border-radius: 14px; padding: 20px 22px; margin-bottom: 20px; }
+        .security-block-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+        .security-block-title .sb-icon { font-size: 18px; }
+
+        /* ── Password strength ──────────────────────────── */
+        .pwd-strength { margin-top: 8px; }
+        .pwd-bars { display: flex; gap: 4px; margin-bottom: 4px; }
+        .pwd-bar { height: 4px; flex: 1; border-radius: 4px; background: #ddd; transition: background .3s; }
+        .strength-label { font-size: 12px; font-weight: 700; min-height: 18px; margin-bottom: 6px; transition: color .2s; display: flex; align-items: center; gap: 5px; }
+        .pwd-rules { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+        .pwd-rule { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 5px; transition: color .2s; }
+        .pwd-rule.ok { color: var(--green); }
+        .pwd-rule::before { content: '○'; font-size: 10px; }
+        .pwd-rule.ok::before { content: '✓'; }
+
+        /* ── FACE ID TOGGLE ── */
+        .toggle-switch { position: relative; display: inline-block; width: 52px; height: 28px; flex-shrink: 0; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #ccc; transition: .3s; border-radius: 28px; }
+        .toggle-slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background: white; transition: .3s; border-radius: 50%; }
+        input:checked + .toggle-slider { background: var(--purple); }
+        input:checked + .toggle-slider:before { transform: translateX(24px); }
+        input:disabled + .toggle-slider { opacity: .5; cursor: not-allowed; }
+
+        /* ── FLASH MESSAGES ── */
+        .flash { padding: 13px 18px; border-radius: 12px; font-size: 13.5px; font-weight: 500; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .flash-success { background: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7; }
+        .flash-error   { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 768px) {
+            .settings-page { grid-template-columns: 1fr; padding: 24px 16px 60px; gap: 16px; }
+            .settings-sidebar { position: static; }
+            .form-row { grid-template-columns: 1fr; }
+            .topbar { padding: 0 20px; }
+            .nav-links { display: none; }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+
+    <header class="topbar">
+        <a href="{{ path('homepage') }}" class="topbar-logo">
+            <img src="{{ asset('images/logo.png') }}" class="logo-mark" alt="Harmony">
+            <span class="logo-name">Harmony</span>
+        </a>
+        <nav class="nav-links">
+            <a href="{{ path('activites') }}"   class="nav-link"><span>🏋</span> Activités</a>
+            <a href="{{ path('forum') }}"       class="nav-link"><span>💬</span> Forum</a>
+            <a href="{{ path('taches') }}"      class="nav-link"><span>📚</span> Tâches</a>
+            <a href="{{ path('evenements') }}"  class="nav-link"><span>📅</span> Événements</a>
+            <a href="{{ path('nutrition') }}"   class="nav-link"><span>🥗</span> Nutrition</a>
+            <a href="{{ path('meditation') }}"  class="nav-link"><span>🧘</span> Méditation</a>
+            <a href="{{ path('journal') }}"     class="nav-link"><span>📔</span> Journal</a>
+        </nav>
+        <div class="topbar-right">
+            <a href="{{ path('app_logout') }}" class="logout-btn">🚪 Déconnexion</a>
+            <div class="avatar-topbar">
+                {% if user.userImagePath %}
+                    <img src="{{ asset(user.userImagePath) }}" alt="Avatar">
+                {% else %}
+                    {{ user.userPrenom|first|upper }}
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <div class="settings-page">
+
+        <aside class="settings-sidebar">
+            <div class="sidebar-user">
+                <div class="sidebar-avatar">
+                    {% if user.userImagePath %}
+                        <img src="{{ asset(user.userImagePath) }}" alt="Avatar">
+                    {% else %}
+                        {{ user.userPrenom|first|upper }}
+                    {% endif %}
+                </div>
+                <div>
+                    <div class="sidebar-name">{{ user.userPrenom }} {{ user.userNom }}</div>
+                    <div class="sidebar-email">{{ user.userEmail }}</div>
+                </div>
+            </div>
+
+            <div class="sidebar-nav">
+                <div class="sidebar-section-label">Paramètres</div>
+
+                <a href="{{ path('app_profile_settings') }}"
+                   class="sidebar-link {% if activeTab == 'profile' %}active{% endif %}">
+                    <span class="sl-icon">✏️</span>
+                    Modifier le profil
+                </a>
+
+                <a href="{{ path('app_profile_security') }}"
+                   class="sidebar-link {% if activeTab == 'security' %}active{% endif %}">
+                    <span class="sl-icon">🔒</span>
+                    Sécurité
+                </a>
+
+                <a href="{{ path('app_profile_2fa') }}"
+                   class="sidebar-link {% if activeTab == '2fa' %}active{% endif %}">
+                    <span class="sl-icon">🪪</span>
+                    Face ID (2FA)
+                </a>
+            </div>
+
+            <a href="{{ path('homepage') }}" class="sidebar-back">← Retour à l'accueil</a>
+        </aside>
+
+        <main class="settings-main">
+
+            {% if activeTab == 'profile' %}
+                {# ═══════════════════════════════ ONGLET : EDIT PROFILE ════════════════════ #}
+
+                {% for msg in app.flashes('success_profile') %}
+                    <div class="flash flash-success">✅ {{ msg }}</div>
+                {% endfor %}
+                {% for msg in app.flashes('error') %}
+                    <div class="flash flash-error">❌ {{ msg }}</div>
+                {% endfor %}
+
+                <div class="settings-card">
+                    <div class="settings-card-head">
+                        <div class="settings-card-icon">✏️</div>
+                        <div>
+                            <div class="settings-card-title">Modifier le profil</div>
+                            <div class="settings-card-sub">Mettez à jour vos informations personnelles</div>
+                        </div>
+                    </div>
+
+                    <div class="settings-card-body">
+                        {{ form_start(profileForm, {
+                            'action': path('app_profile_settings'),
+                            'method': 'POST',
+                            'attr': {'enctype': 'multipart/form-data', 'novalidate': 'novalidate', 'id': 'profileForm'}
+                        }) }}
+
+                        {# ── Avatar ── #}
+                        <div class="avatar-uploader">
+                            <div class="avatar-big" id="avatarPreview">
+                                {% if user.userImagePath %}
+                                    <img src="{{ asset(user.userImagePath) }}" alt="Avatar" id="avatarImg">
+                                {% else %}
+                                    <span id="avatarInitial">{{ user.userPrenom|first|upper }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="avatar-uploader-info">
+                                <h4>Photo de profil</h4>
+                                <p>JPG, PNG, WebP ou GIF — max 2 Mo</p>
+                                <div class="avatar-btns">
+                                    <button type="button" class="btn-upload-avatar" id="pickAvatarBtn">
+                                        📁 Changer la photo
+                                    </button>
+                                </div>
+                                <div class="avatar-filename" id="avatarFilename"></div>
+                            </div>
+                            <div style="display:none;" id="avatarWrapper">
+                                {{ form_widget(profileForm.avatarFile) }}
+                            </div>
+                        </div>
+                        {% if form_errors(profileForm.avatarFile) %}
+                            <div class="form-error" style="margin-bottom:14px;">{{ form_errors(profileForm.avatarFile) }}</div>
+                        {% endif %}
+
+                        {# ── Identité ── #}
+                        <div class="form-section-title">👤 Identité</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                {{ form_label(profileForm.userNom) }}
+                                {{ form_widget(profileForm.userNom) }}
+                                <div class="form-error">{{ form_errors(profileForm.userNom) }}</div>
+                            </div>
+                            <div class="form-group">
+                                {{ form_label(profileForm.userPrenom) }}
+                                {{ form_widget(profileForm.userPrenom) }}
+                                <div class="form-error">{{ form_errors(profileForm.userPrenom) }}</div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                {{ form_label(profileForm.userDateDeNaissance) }}
+                                {{ form_widget(profileForm.userDateDeNaissance, {'attr': {'type': 'date'}}) }}
+                                <div class="form-error">{{ form_errors(profileForm.userDateDeNaissance) }}</div>
+                            </div>
+                            <div class="form-group">
+                                {{ form_label(profileForm.userSexe) }}
+                                {{ form_widget(profileForm.userSexe) }}
+                            </div>
+                        </div>
+
+                        {# ── Physique ── #}
+                        <div class="form-section-title">💪 Données physiques</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                {{ form_label(profileForm.userPoids) }}
+                                {{ form_widget(profileForm.userPoids) }}
+                                <div class="form-hint">40 – 200 kg</div>
+                                <div class="form-error">{{ form_errors(profileForm.userPoids) }}</div>
+                            </div>
+                            <div class="form-group">
+                                {{ form_label(profileForm.userTaille) }}
+                                {{ form_widget(profileForm.userTaille) }}
+                                <div class="form-hint">100 – 210 cm</div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            {{ form_label(profileForm.userNiveauActivitePhysique) }}
+                            {{ form_widget(profileForm.userNiveauActivitePhysique) }}
+                        </div>
+
+                        {# ── Scolarité ── #}
+                        <div class="form-section-title">🎓 Scolarité</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                {{ form_label(profileForm.userNiveauScolaire) }}
+                                {{ form_widget(profileForm.userNiveauScolaire) }}
+                            </div>
+                            <div class="form-group">
+                                {{ form_label(profileForm.userEtablissementScolaire) }}
+                                {{ form_widget(profileForm.userEtablissementScolaire) }}
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-top:8px;">
+                            <label style="font-weight:600;font-size:13px;display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="#229ED9"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-1.97 9.289c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.09 13.367l-2.976-.924c-.647-.204-.66-.647.136-.958l11.57-4.461c.537-.194 1.006.131.742.224z"/></svg>
+                                Telegram Chat ID
+                            </label>
+                            {{ form_widget(profileForm.telegramChatId, {'attr': {'class': 'form-control', 'placeholder': 'Ex: 123456789'}}) }}
+                            <small style="color:#9590B8;font-size:12px;margin-top:4px;display:block;">
+                                Pour obtenir votre Chat ID : ouvrez <strong>@userinfobot</strong> sur Telegram et envoyez /start
+                            </small>
+                        </div>
+
+                        <div class="form-footer">
+                            <a href="{{ path('homepage') }}" class="btn-cancel-link">Annuler</a>
+                            <button type="submit" class="btn-save">💾 Sauvegarder</button>
+                        </div>
+
+                        {{ form_end(profileForm) }}
+                    </div>
+                </div>
+
+            {% elseif activeTab == 'security' %}
+                {# ═══════════════════════════════ ONGLET : SECURITY ════════════════════════ #}
+
+                {% for msg in app.flashes('success_security') %}
+                    <div class="flash flash-success">✅ {{ msg }}</div>
+                {% endfor %}
+                {% for msg in app.flashes('error_security') %}
+                    <div class="flash flash-error">❌ {{ msg }}</div>
+                {% endfor %}
+
+                {{ form_start(securityForm, {
+                    'action': path('app_profile_security'),
+                    'method': 'POST',
+                    'attr': {'novalidate': 'novalidate', 'id': 'securityForm'}
+                }) }}
+
+                {# ── Bloc : Changement d'email ── #}
+                <div class="settings-card" style="margin-bottom: 22px;">
+                    <div class="settings-card-head">
+                        <div class="settings-card-icon" style="background:#EFF6FF;">📧</div>
+                        <div>
+                            <div class="settings-card-title">Adresse email</div>
+                            <div class="settings-card-sub">Email actuel : <strong>{{ user.userEmail }}</strong></div>
+                        </div>
+                    </div>
+                    <div class="settings-card-body">
+                        <div class="form-group">
+                            {{ form_label(securityForm.newEmail) }}
+                            {{ form_widget(securityForm.newEmail, {'attr': {'placeholder': 'nouveau@email.com'}}) }}
+                            <div class="form-hint">Laissez vide pour conserver l'email actuel.</div>
+                            <div class="form-error">{{ form_errors(securityForm.newEmail) }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                {# ── Bloc : Changement de mot de passe ── #}
+                <div class="settings-card">
+                    <div class="settings-card-head">
+                        <div class="settings-card-icon" style="background:#FEF3E2;">🔑</div>
+                        <div>
+                            <div class="settings-card-title">Mot de passe</div>
+                            <div class="settings-card-sub">Renseignez votre mot de passe actuel pour modifier</div>
+                        </div>
+                    </div>
+                    <div class="settings-card-body">
+
+                        <div class="security-block">
+                            <div class="security-block-title">
+                                <span class="sb-icon">🔓</span> Mot de passe actuel
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                {{ form_label(securityForm.currentPassword) }}
+                                {{ form_widget(securityForm.currentPassword, {'attr': {'id': 'currentPwd', 'placeholder': '••••••••'}}) }}
+                                <div class="form-error">{{ form_errors(securityForm.currentPassword) }}</div>
+                            </div>
+                        </div>
+
+                        <div class="security-block" style="background:#F0FDF4;border-color:rgba(16,185,129,.2);">
+                            <div class="security-block-title">
+                                <span class="sb-icon">✨</span> Nouveau mot de passe
+                            </div>
+                            <div class="form-group">
+                                {{ form_label(securityForm.newPassword.first) }}
+                                {{ form_widget(securityForm.newPassword.first, {'attr': {'id': 'newPwd', 'placeholder': '••••••••'}}) }}
+
+                                {# ── Indicateur de force du nouveau mot de passe ── #}
+                                <div class="pwd-strength" id="pwdStrength">
+                                    <div class="pwd-bars">
+                                        <div class="pwd-bar" id="bar1"></div>
+                                        <div class="pwd-bar" id="bar2"></div>
+                                        <div class="pwd-bar" id="bar3"></div>
+                                        <div class="pwd-bar" id="bar4"></div>
+                                    </div>
+                                    <div class="strength-label" id="strengthLabel"></div>
+                                    <div class="pwd-rules">
+                                        <div class="pwd-rule" id="r-len">8 caractères min</div>
+                                        <div class="pwd-rule" id="r-maj">1 majuscule</div>
+                                        <div class="pwd-rule" id="r-num">1 chiffre</div>
+                                        <div class="pwd-rule" id="r-sym">1 symbole</div>
+                                    </div>
+                                </div>
+
+                                <div class="form-error">{{ form_errors(securityForm.newPassword.first) }}</div>
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                {{ form_label(securityForm.newPassword.second) }}
+                                {{ form_widget(securityForm.newPassword.second, {'attr': {'id': 'newPwd2', 'placeholder': '••••••••'}}) }}
+                                <div class="form-error" id="pwd2Error" style="display:none;">Les mots de passe ne correspondent pas.</div>
+                                <div class="form-error">{{ form_errors(securityForm.newPassword.second) }}</div>
+                            </div>
+                        </div>
+
+                        <div class="form-footer">
+                            <a href="{{ path('homepage') }}" class="btn-cancel-link">Annuler</a>
+                            <button type="submit" class="btn-save" style="background:#065F46;box-shadow:0 4px 16px rgba(6,95,70,.25);">
+                                🔒 Mettre à jour la sécurité
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+
+                {{ form_end(securityForm) }}
+
+            {% elseif activeTab == '2fa' %}
+                {# ═══════════════════ ONGLET : FACE ID 2FA ═══════════════════ #}
+                <div class="settings-card">
+                    <div class="settings-card-head">
+                        <div class="settings-card-icon" style="background:#F0FDF4;">🪪</div>
+                        <div>
+                            <div class="settings-card-title">Reconnaissance faciale (Face ID)</div>
+                            <div class="settings-card-sub">Sécurisez votre connexion avec votre visage</div>
+                        </div>
+                    </div>
+                    <div class="settings-card-body">
+                        {# Toggle On/Off #}
+                        <div style="background:var(--purple-ghost);border:1.5px solid var(--border);border-radius:14px;padding:20px 22px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;">
+                            <div>
+                                <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px;">
+                                    Vérification faciale à la connexion
+                                </div>
+                                <div style="font-size:12px;color:var(--text-muted);">
+                                    {% if user.faceImagePath %}
+                                        Une image faciale est enregistrée.
+                                    {% else %}
+                                        Aucune image faciale enregistrée. Capturez votre visage d'abord.
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {# Toggle Switch #}
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="faceIdToggle"
+                                       {% if user.faceIdEnabled %}checked{% endif %}
+                                    {% if not user.faceImagePath %}disabled{% endif %}>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        {# Capture / Recapture #}
+                        <div class="settings-card" style="margin-bottom:0;border:none;padding:0;">
+                            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px;">
+                                {{ user.faceImagePath ? '🔄 Mettre à jour l\'image faciale' : '📷 Enregistrer votre visage' }}
+                            </div>
+                            <div id="camSection2fa" style="display:none;">
+                                <div style="position:relative;background:#0f0f1a;border-radius:14px;overflow:hidden;margin-bottom:14px;aspect-ratio:4/3;">
+                                    <video id="video2fa" autoplay muted playsinline style="width:100%;height:100%;object-fit:cover;"></video>
+                                    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:160px;height:160px;border-radius:50%;border:3px solid rgba(106,90,205,.8);box-shadow:0 0 0 9999px rgba(0,0,0,.4);pointer-events:none;"></div>
+                                    <div id="camStatus2fa" style="position:absolute;bottom:10px;left:0;right:0;text-align:center;font-size:12px;font-weight:600;color:white;background:rgba(0,0,0,.5);padding:6px;">
+                                        Initialisation…
+                                    </div>
+                                </div>
+                                <div style="display:flex;gap:10px;">
+                                    <button id="btnCapture2fa" class="btn-save" style="flex:1;" disabled>📸 Capturer</button>
+                                    <button id="btnCancel2fa" class="btn-cancel-link" style="flex:1;cursor:pointer;border:none;">Annuler</button>
+                                </div>
+                            </div>
+
+                            <div id="facePreview2fa" style="display:{% if user.faceImagePath %}block{% else %}none{% endif %};margin-bottom:14px;text-align:center;">
+                                {% if user.faceImagePath %}
+                                    <img src="{{ asset(user.faceImagePath) }}" style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid var(--green);" alt="Face ID">
+                                    <p style="font-size:11px;color:var(--text-muted);margin-top:6px;">Image actuelle</p>
+                                {% endif %}
+                            </div>
+
+                            <button id="btnOpenCam2fa" class="btn-save" style="background:var(--purple-ghost);color:var(--purple);box-shadow:none;border:1.5px solid var(--border);">
+                                📷 {{ user.faceImagePath ? 'Recapturer le visage' : 'Capturer mon visage' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            {% endif %}
+        </main>
+    </div>
+
+    <script>
+        // ── Avatar preview ──────────────────────────────────────────────────────────
+        const avatarInput    = document.querySelector('#avatarWrapper input[type="file"]');
+        const avatarPreview  = document.getElementById('avatarPreview');
+        const avatarFilename = document.getElementById('avatarFilename');
+        const pickBtn        = document.getElementById('pickAvatarBtn');
+
+        if (pickBtn && avatarInput) {
+            pickBtn.addEventListener('click', () => avatarInput.click());
+            avatarInput.addEventListener('change', function () {
+                if (this.files && this.files[0]) {
+                    const file = this.files[0];
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        avatarPreview.innerHTML = `<img src="${e.target.result}" style="width:84px;height:84px;border-radius:50%;object-fit:cover;" alt="preview">`;
+                        avatarFilename.textContent = '📎 ' + file.name;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        // ...existing code...
+
+        // ── Password strength (onglet Sécurité) ─────────────────────────────────────
+        function initSecurityPasswordStrength() {
+            const form = document.getElementById('securityForm');
+            if (!form) return; // pas sur l'onglet sécurité
+
+            if (form.dataset.pwdInit === '1') return; // anti double init (turbo)
+            form.dataset.pwdInit = '1';
+
+            const newPwd  = form.querySelector('#newPwd, input[name$="[newPassword][first]"]');
+            const newPwd2 = form.querySelector('#newPwd2, input[name$="[newPassword][second]"]');
+
+            const bars = ['bar1', 'bar2', 'bar3', 'bar4']
+                .map(id => document.getElementById(id))
+                .filter(Boolean);
+
+            const labelEl = document.getElementById('strengthLabel');
+            const pwd2Err = document.getElementById('pwd2Error');
+
+            if (!newPwd || bars.length !== 4) return;
+
+            const rules = {
+                len: v => v.length >= 8,
+                maj: v => /[A-Z]/.test(v),
+                num: v => /\d/.test(v),
+                sym: v => /[^A-Za-z0-9]/.test(v),
+            };
+
+            function level(score, hasValue) {
+                if (!hasValue || score <= 0) return { text: '', color: '' };
+                if (score <= 2) return { text: '🔴 Faible', color: '#EF4444' };
+                if (score === 3) return { text: '🟠 Moyen', color: '#F59E0B' };
+                return { text: '🟢 Fort', color: '#10B981' };
+            }
+
+            function updateStrength() {
+                const v = newPwd.value || '';
+                const score = Object.values(rules).filter(fn => fn(v)).length;
+                const lv = level(score, v.length > 0);
+
+                bars.forEach((bar, i) => {
+                    bar.style.background = i < score ? (lv.color || '#ddd') : '#ddd';
+                });
+
+                if (labelEl) {
+                    labelEl.textContent = lv.text;
+                    labelEl.style.color = lv.color;
+                }
+
+                Object.entries(rules).forEach(([key, fn]) => {
+                    const ruleEl = document.getElementById('r-' + key);
+                    if (ruleEl) ruleEl.classList.toggle('ok', fn(v));
+                });
+
+                if (newPwd2 && pwd2Err) {
+                    pwd2Err.style.display =
+                        newPwd2.value && newPwd2.value !== newPwd.value ? 'flex' : 'none';
+                }
+            }
+
+            ['input', 'keyup', 'change', 'paste'].forEach(evt => {
+                newPwd.addEventListener(evt, updateStrength, { passive: true });
+            });
+
+            if (newPwd2) {
+                ['input', 'blur'].forEach(evt => newPwd2.addEventListener(evt, updateStrength));
+            }
+
+            updateStrength();
+            setTimeout(updateStrength, 50); // autofill navigateur
+        }
+
+        document.addEventListener('DOMContentLoaded', initSecurityPasswordStrength);
+        document.addEventListener('turbo:load', initSecurityPasswordStrength);
+
+// ...existing code...
+
+        // ── Toggle Face ID ────────────────────────────────────────────────────────────
+        const faceToggle = document.getElementById('faceIdToggle');
+        if (faceToggle) {
+            faceToggle.addEventListener('change', async function() {
+                const enabled = this.checked;
+                try {
+                    const r = await fetch('/profile/toggle-faceid', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ enabled }),
+                    });
+                    const data = await r.json();
+                    if (!data.success) {
+                        this.checked = !enabled;
+                        alert(data.error || 'Erreur');
+                    }
+                } catch (e) {
+                    this.checked = !enabled;
+                    alert('Erreur réseau');
+                }
+            });
+        }
+
+        // ── Webcam pour recapturer ────────────────────────────────────────────────────
+        let stream2fa = null;
+        const btnOpen   = document.getElementById('btnOpenCam2fa');
+        const btnCancel = document.getElementById('btnCancel2fa');
+        const btnCapt   = document.getElementById('btnCapture2fa');
+        const camSec    = document.getElementById('camSection2fa');
+        const video2fa  = document.getElementById('video2fa');
+        const camSt     = document.getElementById('camStatus2fa');
+
+        if (btnOpen) {
+            btnOpen.addEventListener('click', async () => {
+                camSec.style.display = 'block';
+                btnOpen.style.display = 'none';
+                try {
+                    stream2fa = await navigator.mediaDevices.getUserMedia({ video: true });
+                    video2fa.srcObject = stream2fa;
+                    video2fa.onloadedmetadata = () => {
+                        btnCapt.disabled   = false;
+                        camSt.textContent  = '✅ Prêt — positionnez votre visage';
+                    };
+                } catch (e) {
+                    camSt.textContent = '❌ Caméra inaccessible';
+                }
+            });
+
+            btnCancel.addEventListener('click', () => {
+                if (stream2fa) stream2fa.getTracks().forEach(t => t.stop());
+                camSec.style.display  = 'none';
+                btnOpen.style.display = 'block';
+            });
+
+            btnCapt.addEventListener('click', async () => {
+                const canvas  = document.createElement('canvas');
+                canvas.width  = video2fa.videoWidth  || 640;
+                canvas.height = video2fa.videoHeight || 480;
+                canvas.getContext('2d').drawImage(video2fa, 0, 0);
+                const b64 = canvas.toDataURL('image/png');
+
+                if (stream2fa) stream2fa.getTracks().forEach(t => t.stop());
+                camSec.style.display  = 'none';
+                btnOpen.style.display = 'block';
+                btnCapt.disabled      = true;
+
+                // Envoyer au serveur
+                try {
+                    const r    = await fetch('/profile/update-face', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ faceImage: b64 }),
+                    });
+                    const data = await r.json();
+                    if (data.success) {
+                        const prev = document.getElementById('facePreview2fa');
+                        prev.style.display = 'block';
+                        prev.innerHTML = `<img src="${b64}" style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid var(--green);" alt="Face ID"><p style="font-size:11px;color:var(--text-muted);margin-top:6px;">Image mise à jour ✅</p>`;
+                        if (faceToggle) faceToggle.disabled = false;
+                    } else {
+                        alert('Erreur : ' + (data.error || 'Inconnue'));
+                    }
+                } catch (e) {
+                    alert('Erreur réseau');
+                }
+            });
+        }
+    </script>
+
+{% endblock %}
