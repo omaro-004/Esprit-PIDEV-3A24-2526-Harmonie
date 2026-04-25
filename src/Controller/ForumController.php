@@ -171,7 +171,12 @@ class ForumController extends AbstractController
 
     private function getCurrentUserId(): int
     {
-        return $this->getUser()->getUserId();
+        // ❌ AVANT — getUserId() n'existe pas dans UserInterface
+        //return $this->getUser()->getUserId();
+        // ✅ APRÈS — cast vers ton entité User
+        /** @var \App\Entity\User $user */
+        $user = $this->getUser();
+        $user->getId()  ; // ou $user->getUserId() si c'est bien ton getter
     }
 
 
