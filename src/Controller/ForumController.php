@@ -176,7 +176,7 @@ class ForumController extends AbstractController
         // ✅ APRÈS — cast vers ton entité User
         /** @var \App\Entity\User $user */
         $user = $this->getUser();
-        $user->getId()  ; // ou $user->getUserId() si c'est bien ton getter
+        return $user->getId();
     }
 
 
@@ -593,6 +593,7 @@ public function editPost(
         }
         // ── Vérification gros mots ──
         $texteAVerifier = $post->getTitre() . ' ' . $post->getContenu();
+        $moderation = new \App\Service\ModerationService();
         if ($moderation->containsProfanity($texteAVerifier)) {
             $this->addFlash('error_moderation',
                 '🚫 Votre post contient des termes inappropriés. Merci de le reformuler.');

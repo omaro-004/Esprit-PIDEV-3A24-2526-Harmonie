@@ -6,4 +6,3 @@ parameters:
         - src/Service/SentimentService.php
         - src/Service/ModerationService.php
         - src/Service/TranslationService.php
-    memory_limit: 256M
