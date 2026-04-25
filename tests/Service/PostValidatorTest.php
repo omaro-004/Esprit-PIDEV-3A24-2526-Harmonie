@@ -30,5 +30,17 @@ class PostValidatorTest extends TestCase
         $post->setContenu('Je cherche des ressources pour débuter en Python.');
 
         $this->assertTrue($this->validator->validatePost($post));
+    }
+    // Test 2 : titre vide → doit lancer une exception
+    public function testPostTitreVide(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Le titre est obligatoire');
+
+        $post = new Post();
+        $post->setTitre('');
+        $post->setContenu('Contenu valide ici');
+
+        $this->validator->validatePost($post);
     } 
 }
