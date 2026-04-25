@@ -588,7 +588,7 @@ public function editPost(
                 );
                 $post->setImagePath($newFilename);
             } catch (FileException $e) {
-                // log si besoin
+                $moderation = null;// log si besoin
             }
         }
         // ── Vérification gros mots ──
