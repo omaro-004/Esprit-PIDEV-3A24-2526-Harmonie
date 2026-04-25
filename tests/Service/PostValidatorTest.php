@@ -43,4 +43,16 @@ class PostValidatorTest extends TestCase
 
         $this->validator->validatePost($post);
     } 
+    // Test 3 : titre trop court → doit lancer une exception
+    public function testPostTitreTropCourt(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Le titre doit contenir au moins 5 caractères');
+
+        $post = new Post();
+        $post->setTitre('AI');
+        $post->setContenu('Contenu valide ici');
+
+        $this->validator->validatePost($post);
+    }
 }
