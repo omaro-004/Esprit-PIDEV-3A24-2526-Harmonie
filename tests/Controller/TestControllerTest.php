@@ -2,13 +2,15 @@
 
 namespace App\Tests\Controller;
 
-use PHPUnit\Framework\TestCase;
+use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-class TestControllerTest extends TestCase
+final class TestControllerTest extends WebTestCase
 {
-    // Test placeholder — route /test non implémentée
-    public function testPlaceholder(): void
-    {
-        $this->assertTrue(true);
-    }
+     public function testIndex(): void
+     {
+         $client = static::createClient();
+         $client->request('GET', '/test');
+
+         self::assertResponseIsSuccessful();
+     }
 }
