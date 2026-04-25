@@ -40,9 +40,7 @@ class RegistrationController extends AbstractController
                 'prenom'        => $user->getUserPrenom(),
                 'email'         => $user->getUserEmail(),
                 'password'      => $hashedPassword,
-                'dateNaissance' => $user->getUserDateDeNaissance() instanceof \DateTimeInterface
-                    ? $user->getUserDateDeNaissance()->format('Y-m-d')
-                    : (string) $user->getUserDateDeNaissance(),
+                'dateNaissance' => $user->getUserDateDeNaissance(),
             ]);
 
             return $this->redirectToRoute('app_register_step2');
