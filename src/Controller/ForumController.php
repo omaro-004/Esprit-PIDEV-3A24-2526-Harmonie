@@ -335,10 +335,11 @@ public function posts(
     // On passe le QueryBuilder au paginator, pas les résultats
     // Le paginator s'occupe lui-même de LIMIT et OFFSET selon la page
     $qb = $em->createQueryBuilder()
-        ->select('p')
-        ->from(Post::class, 'p')
-        ->where('p.idCategorie = :idCat')
-        ->setParameter('idCat', $id);
+    ->select('p')
+    ->from(Post::class, 'p')
+    ->where('p.idCategorie = :idCat')
+    ->setParameter('idCat', $id)
+    ->orderBy('p.dateCreation', 'DESC');
 
 
     if ($search !== '') {
