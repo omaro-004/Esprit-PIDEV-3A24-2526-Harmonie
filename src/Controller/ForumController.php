@@ -176,7 +176,7 @@ class ForumController extends AbstractController
         // ✅ APRÈS — cast vers ton entité User
         /** @var \App\Entity\User $user */
         $user = $this->getUser();
-        return $user->getId();
+        return (int) $user->getId();
     }
 
 
@@ -557,7 +557,8 @@ public function editPost(
     int $id,
     Request $request,
     EntityManagerInterface $em,
-    SluggerInterface $slugger
+    SluggerInterface $slugger,
+    ModerationService $moderation
 ): Response {
     $post      = $em->getRepository(Post::class)->find($id);
     if (!$post) throw $this->createNotFoundException();
@@ -581,6 +582,7 @@ public function editPost(
             $newFilename      = $safeFilename . '-' . uniqid() . '.' . $imageFile->guessExtension();
 
 
+            // ✅ APRÈS — retire $moderation = null
             try {
                 $imageFile->move(
                     $this->getParameter('posts_images_directory'),
@@ -588,13 +590,12 @@ public function editPost(
                 );
                 $post->setImagePath($newFilename);
             } catch (FileException $e) {
-                $moderation = null;// log si besoin
+                // log si besoin
             }
         }
         // ── Vérification gros mots ──
         $texteAVerifier = $post->getTitre() . ' ' . $post->getContenu();
-        
-        $moderation = new \App\Service\ModerationService();
+        //$moderation = new \App\Service\ModerationService();
         if ($moderation->containsProfanity($texteAVerifier)) {
             $this->addFlash('error_moderation',
                 '🚫 Votre post contient des termes inappropriés. Merci de le reformuler.');
@@ -617,11 +618,6 @@ public function editPost(
         'categorie' => $categorie,
     ]);
 }
-
-
-   
-
-
     #[Route('/forum/post/{id}/delete', name: 'forum_post_delete', methods: ['POST'])]
     public function deletePost(int $id, EntityManagerInterface $em): Response
     {
