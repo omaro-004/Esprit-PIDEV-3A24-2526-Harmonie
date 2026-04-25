@@ -55,4 +55,16 @@ class PostValidatorTest extends TestCase
 
         $this->validator->validatePost($post);
     }
+    // Test 4 : contenu vide → doit lancer une exception
+    public function testPostContenuVide(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Le contenu est obligatoire');
+
+        $post = new Post();
+        $post->setTitre('Titre valide ici');
+        $post->setContenu('');
+
+        $this->validator->validatePost($post);
+    }
 }
