@@ -45,5 +45,21 @@ class PostValidator
 
         return true;
     }
+    // ── RÈGLES CATÉGORIE ─────────────────────────────
+
+    // Règle 6 : nom obligatoire
+    // Règle 7 : nom minimum 3 caractères
+    public function validateCategorie(Categorie $cat): bool
+    {
+        if (empty($cat->getNomCategorie())) {
+            throw new \InvalidArgumentException('Le nom de la catégorie est obligatoire');
+        }
+
+        if (strlen($cat->getNomCategorie()) < 3) {
+            throw new \InvalidArgumentException('Le nom doit contenir au moins 3 caractères');
+        }
+
+        return true;
+    }
     
 }
