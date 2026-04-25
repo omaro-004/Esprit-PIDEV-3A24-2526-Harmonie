@@ -29,5 +29,21 @@ class PostValidator
         return true;
     }
 
+    // ── RÈGLES COMMENTAIRE ───────────────────────────
+
+    // Règle 4 : contenu obligatoire
+    // Règle 5 : minimum 3 caractères
+    public function validateCommentaire(Commentaire $c): bool
+    {
+        if (empty($c->getContenu())) {
+            throw new \InvalidArgumentException('Le commentaire ne peut pas être vide');
+        }
+
+        if (strlen($c->getContenu()) < 3) {
+            throw new \InvalidArgumentException('Le commentaire doit contenir au moins 3 caractères');
+        }
+
+        return true;
+    }
     
 }
