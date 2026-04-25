@@ -226,7 +226,7 @@ class ForumController extends AbstractController
     #[Route('/forum', name: 'forum')]
     public function index(EntityManagerInterface $em): Response
     {
-        $categories = $em->getRepository(Categorie::class)->findAll();
+        $categories = $em->getRepository(Categorie::class)->findBy([], ['nomCategorie' => 'ASC'], 50);
         return $this->render('forum/index.html.twig', [
             'categories' => $categories,
         ]);
