@@ -19,5 +19,11 @@ class ModerationServiceTest extends TestCase
         }
         return false;
     }
+    // Test 11 : texte propre → pas de mot interdit
+    public function testTextePropreAccepte(): void
+    {
+        $texte = 'Bonjour, comment puis-je apprendre Python ?';
+        $this->assertFalse($this->contientMotInterdit($texte));
+    }
 
 }
