@@ -31,5 +31,10 @@ class ModerationServiceTest extends TestCase
         $texte = 'Ceci est du spam inutile';
         $this->assertTrue($this->contientMotInterdit($texte));
     }
-
+    // Test 13 : mot interdit en majuscules → détecté quand même
+    public function testMotInterditMajuscules(): void
+    {
+        $texte = 'Ceci est du SPAM inutile';
+        $this->assertTrue($this->contientMotInterdit($texte));
+    } 
 }
