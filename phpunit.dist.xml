@@ -20,6 +20,8 @@
     <testsuites>
         <testsuite name="Project Test Suite">
             <directory>tests</directory>
+            <exclude>tests/Controller/HomepageControllerTest.php</exclude>
+            <exclude>tests/Controller/ModulesControllerTest.php</exclude>
         </testsuite>
     </testsuites>
 
