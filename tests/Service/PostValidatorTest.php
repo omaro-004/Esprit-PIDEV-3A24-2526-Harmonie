@@ -113,4 +113,15 @@ class PostValidatorTest extends TestCase
 
         $this->assertTrue($this->validator->validateCategorie($cat));
     }
+    // Test 9 : nom catégorie vide
+    public function testCategorieNomVide(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Le nom de la catégorie est obligatoire');
+
+        $cat = new Categorie();
+        $cat->setNomCategorie('');
+
+        $this->validator->validateCategorie($cat);
+    }
 }
