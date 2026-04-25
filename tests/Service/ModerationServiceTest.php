@@ -25,5 +25,11 @@ class ModerationServiceTest extends TestCase
         $texte = 'Bonjour, comment puis-je apprendre Python ?';
         $this->assertFalse($this->contientMotInterdit($texte));
     }
+    // Test 12 : texte avec mot interdit → détecté
+    public function testTexteAvecMotInterdit(): void
+    {
+        $texte = 'Ceci est du spam inutile';
+        $this->assertTrue($this->contientMotInterdit($texte));
+    }
 
 }
