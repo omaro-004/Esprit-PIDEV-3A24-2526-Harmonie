@@ -124,4 +124,15 @@ class PostValidatorTest extends TestCase
 
         $this->validator->validateCategorie($cat);
     }
+    // Test 10 : nom catégorie trop court
+    public function testCategorieNomTropCourt(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Le nom doit contenir au moins 3 caractères');
+
+        $cat = new Categorie();
+        $cat->setNomCategorie('IA');
+
+        $this->validator->validateCategorie($cat);
+    }
 }
