@@ -67,4 +67,16 @@ class PostValidatorTest extends TestCase
 
         $this->validator->validatePost($post);
     }
+    // ═══════════════════════════════════
+    // TESTS COMMENTAIRE
+    // ═══════════════════════════════════
+
+    // Test 5 : commentaire valide
+    public function testCommentaireValide(): void
+    {
+        $c = new Commentaire();
+        $c->setContenu('Super explication, merci beaucoup !');
+
+        $this->assertTrue($this->validator->validateCommentaire($c));
+    }
 }
