@@ -593,6 +593,7 @@ public function editPost(
         }
         // ── Vérification gros mots ──
         $texteAVerifier = $post->getTitre() . ' ' . $post->getContenu();
+        
         $moderation = new \App\Service\ModerationService();
         if ($moderation->containsProfanity($texteAVerifier)) {
             $this->addFlash('error_moderation',
