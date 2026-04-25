@@ -90,4 +90,15 @@ class PostValidatorTest extends TestCase
 
         $this->validator->validateCommentaire($c);
     }
+    // Test 7 : commentaire trop court
+    public function testCommentaireTropCourt(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Le commentaire doit contenir au moins 3 caractères');
+
+        $c = new Commentaire();
+        $c->setContenu('OK');
+
+        $this->validator->validateCommentaire($c);
+    }
 }
