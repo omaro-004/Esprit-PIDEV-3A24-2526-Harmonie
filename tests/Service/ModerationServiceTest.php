@@ -37,4 +37,9 @@ class ModerationServiceTest extends TestCase
         $texte = 'Ceci est du SPAM inutile';
         $this->assertTrue($this->contientMotInterdit($texte));
     } 
+    // Test 14 : texte vide → propre
+    public function testTexteVide(): void
+    {
+        $this->assertFalse($this->contientMotInterdit(''));
+    }
 }
