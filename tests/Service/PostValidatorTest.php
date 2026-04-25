@@ -79,4 +79,15 @@ class PostValidatorTest extends TestCase
 
         $this->assertTrue($this->validator->validateCommentaire($c));
     }
+    // Test 6 : commentaire vide
+    public function testCommentaireVide(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Le commentaire ne peut pas être vide');
+
+        $c = new Commentaire();
+        $c->setContenu('');
+
+        $this->validator->validateCommentaire($c);
+    }
 }
