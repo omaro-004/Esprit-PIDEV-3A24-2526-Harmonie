@@ -11,8 +11,11 @@ use PHPUnit\Framework\TestCase;
 
 class PostValidatorTest extends TestCase
 {
-    public function testSomething(): void
+    private PostValidator $validator;
+
+    // setUp s'exécute avant chaque test
+    protected function setUp(): void
     {
-        $this->assertTrue(true);
+        $this->validator = new PostValidator();
     }
 }
