@@ -18,4 +18,17 @@ class PostValidatorTest extends TestCase
     {
         $this->validator = new PostValidator();
     }
+    // ═══════════════════════════════════
+    // TESTS POST
+    // ═══════════════════════════════════
+
+    // Test 1 : post avec titre et contenu valides → doit retourner true
+    public function testPostValide(): void
+    {
+        $post = new Post();
+        $post->setTitre('Comment apprendre Python en 2026 ?');
+        $post->setContenu('Je cherche des ressources pour débuter en Python.');
+
+        $this->assertTrue($this->validator->validatePost($post));
+    } 
 }
