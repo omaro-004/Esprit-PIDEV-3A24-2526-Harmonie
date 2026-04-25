@@ -101,4 +101,16 @@ class PostValidatorTest extends TestCase
 
         $this->validator->validateCommentaire($c);
     }
+    // ═══════════════════════════════════
+    // TESTS CATÉGORIE
+    // ═══════════════════════════════════
+
+    // Test 8 : catégorie valide
+    public function testCategorieValide(): void
+    {
+        $cat = new Categorie();
+        $cat->setNomCategorie('Intelligence Artificielle');
+
+        $this->assertTrue($this->validator->validateCategorie($cat));
+    }
 }
