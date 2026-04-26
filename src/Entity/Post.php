@@ -20,21 +20,21 @@ class Post
     min: 3, minMessage: "Le titre doit contenir au moins {{ limit }} caractères.",
     max: 150, maxMessage: "Le titre ne peut pas dépasser {{ limit }} caractères."
     )]
-    private ?string $titre = null;
+    private ?string $titre = '';
 
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank(message: "Le contenu est obligatoire.")]
     #[Assert\Length(min: 10, minMessage: "Le contenu doit contenir au moins {{ limit }} caractères.")]
-    private ?string $contenu = null;
+    private ?string $contenu = '';
 
     #[ORM\Column(name: "date_creation", type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $dateCreation = null;
+    private ?\DateTimeInterface $dateCreation;
 
     #[ORM\Column(name: "user_id", type: "integer")]
-    private ?int $userId = null;
+    private ?int $userId = 0;
 
     #[ORM\Column(name: "id_categorie", type: "integer")]
-    private ?int $idCategorie = null;
+    private ?int $idCategorie = 0;
 
     #[ORM\Column(name: "image_path", length: 255, nullable: true)]
     private ?string $imagePath = null;
@@ -45,7 +45,7 @@ class Post
     public function getContenu(): ?string { return $this->contenu; }
     public function setContenu(string $contenu): static { $this->contenu = $contenu; return $this; }
     public function getDateCreation(): ?\DateTimeInterface { return $this->dateCreation; }
-    public function setDateCreation(\DateTimeInterface $d): static { $this->dateCreation = $d; return $this; }
+    protected function setDateCreation(\DateTimeInterface $d): static { $this->dateCreation = $d; return $this; }
     public function getUserId(): ?int { return $this->userId; }
     public function setUserId(int $userId): static { $this->userId = $userId; return $this; }
     public function getIdCategorie(): ?int { return $this->idCategorie; }
