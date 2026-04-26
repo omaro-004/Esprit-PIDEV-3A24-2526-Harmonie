@@ -85,3 +85,7 @@ services:
     App\Service\SentimentService:
         arguments:
             $apiKey: '%env(GROQ_API_KEY)%'
+#--------------------suggest titre -----------------
+    App\Service\MistralService:
+        arguments:
+            $apiKey: '%env(MISTRAL_API_KEY)%'
