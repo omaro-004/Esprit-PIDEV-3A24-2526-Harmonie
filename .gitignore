@@ -19,3 +19,7 @@
 /assets/vendor/
 ###< symfony/asset-mapper ###
 /public/uploads/
+
+###> phpstan/phpstan ###
+phpstan.neon
+###< phpstan/phpstan ###

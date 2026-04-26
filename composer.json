@@ -57,14 +57,16 @@
         "twig/twig": "^3.0"
     },
     "require-dev": {
+        "ahmed-bhs/doctrine-doctor": "*",
+        "doctrine/doctrine-fixtures-bundle": "^4.3",
         "phpstan/extension-installer": "*",
-        "phpstan/phpstan": "*",
+        "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-symfony": "*",
-        "phpunit/phpunit": "^10.5",
+        "phpunit/phpunit": "^11.5",
         "symfony/browser-kit": "6.4.*",
         "symfony/css-selector": "6.4.*",
         "symfony/debug-bundle": "6.4.*",
-        "symfony/maker-bundle": "^1.50",
+        "symfony/maker-bundle": "^1.0",
         "symfony/stopwatch": "6.4.*",
         "symfony/web-profiler-bundle": "6.4.*"
     },
@@ -73,7 +75,8 @@
             "endroid/installer": true,
             "php-http/discovery": true,
             "symfony/flex": true,
-            "symfony/runtime": true
+            "symfony/runtime": true,
+            "phpstan/extension-installer": true
         },
         "bump-after-update": true,
         "sort-packages": true
@@ -120,15 +123,5 @@
             "require": "6.4.*",
             "docker": false
         }
-    },
-    "require-dev": {
-        "doctrine/doctrine-fixtures-bundle": "^4.3",
-        "phpunit/phpunit": "^11.5",
-        "symfony/browser-kit": "6.4.*",
-        "symfony/css-selector": "6.4.*",
-        "symfony/debug-bundle": "6.4.*",
-        "symfony/maker-bundle": "^1.0",
-        "symfony/stopwatch": "6.4.*",
-        "symfony/web-profiler-bundle": "6.4.*"
     }
 }
