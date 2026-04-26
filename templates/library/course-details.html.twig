@@ -547,6 +547,120 @@
             pointer-events: none;
         }
         .suggestions-sub-section { margin-bottom: 32px; }
+
+        /* ── AI BUTTONS (Summarize / Cheat Sheet) ────────────────────────── */
+        .btn-ai {
+            background: linear-gradient(135deg, #6a5acd 0%, #8b5cf6 100%);
+            color: #fff;
+            border-color: transparent;
+            gap: 5px;
+            font-size: 12.5px;
+            padding: 7px 13px;
+        }
+        .btn-ai:hover:not(:disabled) {
+            background: linear-gradient(135deg, #5a4abf 0%, #7c3aed 100%);
+            box-shadow: 0 2px 10px rgba(106,90,205,.35);
+        }
+        .btn-ai:disabled { opacity: .55; cursor: not-allowed; }
+        .btn-ai .ai-star { font-size: 13px; line-height: 1; }
+
+        /* ── AI RESULT MODAL ────────────────────────────────────────────── */
+        .ai-modal-backdrop {
+            position: fixed; inset: 0; z-index: 1000;
+            background: rgba(0,0,0,.55); backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity .18s ease;
+        }
+        .ai-modal-backdrop.open { opacity: 1; pointer-events: all; }
+
+        .ai-modal {
+            background: var(--color-surface, #fff);
+            border-radius: 16px;
+            box-shadow: 0 24px 64px rgba(0,0,0,.22);
+            width: min(92vw, 720px);
+            max-height: 82vh;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            transform: translateY(18px) scale(.97);
+            transition: transform .18s ease;
+        }
+        .ai-modal-backdrop.open .ai-modal { transform: translateY(0) scale(1); }
+
+        .ai-modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 18px 22px 14px;
+            border-bottom: 1px solid var(--color-border, #e5e7eb);
+            flex-shrink: 0;
+        }
+        .ai-modal-title {
+            font-size: 15px; font-weight: 700;
+            color: var(--color-text, #111);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .ai-modal-title .ai-badge {
+            font-size: 11px; font-weight: 600; letter-spacing: .03em;
+            padding: 2px 8px; border-radius: 99px;
+            background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+            color: #6a5acd;
+        }
+
+        .ai-modal-body {
+            flex: 1; overflow-y: auto;
+            padding: 22px 26px;
+            font-size: 13.5px; line-height: 1.75;
+            color: var(--color-text, #111);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .ai-modal-body.loading {
+            display: flex; align-items: center; justify-content: center;
+            flex-direction: column; gap: 14px;
+            color: var(--color-text-muted, #6b7280);
+            min-height: 160px;
+        }
+        .ai-spinner {
+            width: 28px; height: 28px;
+            border: 3px solid #e5e7eb;
+            border-top-color: #6a5acd;
+            border-radius: 50%;
+            animation: ai-spin .7s linear infinite;
+        }
+        @keyframes ai-spin { to { transform: rotate(360deg); } }
+
+        .ai-modal-footer {
+            display: flex; align-items: center; justify-content: flex-end;
+            gap: 8px; padding: 12px 20px;
+            border-top: 1px solid var(--color-border, #e5e7eb);
+            flex-shrink: 0;
+        }
+
+        /* ── AI MODAL MARKDOWN ──────────────────────────────────────────── */
+        .ai-modal-body { white-space: normal; }
+        .ai-modal-body h1, .ai-modal-body h2, .ai-modal-body h3 {
+            font-family: Syne, sans-serif;
+            font-weight: 700;
+            color: var(--color-text, #111);
+            margin: 1.1em 0 .4em;
+            line-height: 1.3;
+        }
+        .ai-modal-body h1 { font-size: 17px; }
+        .ai-modal-body h2 { font-size: 15px; border-bottom: 1px solid var(--color-border, #e5e7eb); padding-bottom: 4px; }
+        .ai-modal-body h3 { font-size: 13.5px; }
+        .ai-modal-body p  { margin: 0 0 .7em; line-height: 1.7; }
+        .ai-modal-body ul, .ai-modal-body ol { margin: 0 0 .7em 1.3em; padding: 0; }
+        .ai-modal-body li { margin-bottom: .3em; line-height: 1.6; }
+        .ai-modal-body strong { font-weight: 700; color: var(--color-text, #111); }
+        .ai-modal-body em    { font-style: italic; }
+        .ai-modal-body code  {
+            font-family: monospace; font-size: 12px;
+            background: var(--color-surface-subtle, #f3f4f6);
+            border: 1px solid var(--color-border, #e5e7eb);
+            border-radius: 4px; padding: 1px 5px;
+        }
+        .ai-modal-body hr {
+            border: none; border-top: 1px solid var(--color-border, #e5e7eb);
+            margin: 1em 0;
+        }
     </style>
 {% endblock %}
 
@@ -803,6 +917,14 @@
 
                 <div class="footer-spacer"></div>
 
+                {# ── AI buttons — injected/toggled by JS after ai-meta check ── #}
+                <button class="btn btn-ai" id="previewSummarizeBtn" type="button" style="display:none;" title="Generate an AI summary of this PDF">
+                    <span class="ai-star" aria-hidden="true">✦</span> Summarize
+                </button>
+                <button class="btn btn-ai" id="previewCheatSheetBtn" type="button" style="display:none;" title="Generate an AI cheat sheet from this PDF">
+                    <span class="ai-star" aria-hidden="true">✦</span> Cheat Sheet
+                </button>
+
                 <a id="previewDownloadLink" class="btn btn-secondary" download>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
@@ -1002,6 +1124,46 @@
                     </svg>
                     Submit Report
                 </button>
+            </div>
+        </div>
+    </div>
+
+
+    {# ── AI RESULT MODAL (Summarize / Cheat Sheet) ───────────────────── #}
+    <div class="ai-modal-backdrop" id="aiModal" role="dialog" aria-modal="true" aria-labelledby="aiModalTitle">
+        <div class="ai-modal">
+            <div class="ai-modal-header">
+                <span class="ai-modal-title" id="aiModalTitle">
+                    ✦ AI Result
+                    <span class="ai-badge" id="aiModalBadge">Summarize</span>
+                </span>
+                <button class="btn btn-icon btn-ghost" id="aiModalCloseBtn" type="button" aria-label="Close">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="ai-modal-body" id="aiModalBody"></div>
+            <div class="ai-modal-footer">
+                <button class="btn btn-secondary" id="aiModalCopyBtn" type="button" style="display:none;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                    </svg>
+                    Copy
+                </button>
+                <button class="btn btn-secondary" id="aiModalExportBtn" type="button" style="display:none;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    Export PDF
+                </button>
+                <button class="btn btn-primary" id="aiModalSaveBtn" type="button" style="display:none;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+                    </svg>
+                    Save as Note
+                </button>
+                <button class="btn btn-ghost" id="aiModalDismissBtn" type="button">Close</button>
             </div>
         </div>
     </div>
@@ -1791,6 +1953,241 @@
             function esc(str) {
                 return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
             }
+
+            // ── AI BUTTONS (Summarize / Cheat Sheet) ─────────────────────────
+            const sumBtn       = document.getElementById('previewSummarizeBtn');
+            const cheatBtn     = document.getElementById('previewCheatSheetBtn');
+            const aiModal      = document.getElementById('aiModal');
+            const aiModalBody  = document.getElementById('aiModalBody');
+            const aiModalBadge = document.getElementById('aiModalBadge');
+            const aiCopyBtn    = document.getElementById('aiModalCopyBtn');
+            const aiExportBtn  = document.getElementById('aiModalExportBtn');
+            const aiSaveBtn    = document.getElementById('aiModalSaveBtn');
+            const aiDismissBtn = document.getElementById('aiModalDismissBtn');
+            const aiCloseBtn   = document.getElementById('aiModalCloseBtn');
+
+            // Stored on the modal element itself so it's never lost across repaints
+            aiModal._resultText = '';
+            aiModal._busy       = false;
+
+            function openAiModal(label) {
+                aiModal._resultText      = '';
+                aiModalBadge.textContent = label;
+                aiModalBody.className    = 'ai-modal-body loading';
+                aiModalBody.innerHTML    = '<div class="ai-spinner"></div><span>Generating…</span>';
+                // Show Save only for owners AND only once results arrive (set in populateAiModal)
+                aiSaveBtn.style.display   = 'none';
+                aiCopyBtn.style.display   = 'none';
+                aiExportBtn.style.display = 'none';
+                aiModal.classList.add('open');
+            }
+
+            function markdownToHtml(md) {
+                // Escape HTML first so we don't accidentally inject tags
+                let html = md
+                    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                // Headings
+                html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+                html = html.replace(/^## (.+)$/gm,  '<h2>$1</h2>');
+                html = html.replace(/^# (.+)$/gm,   '<h1>$1</h1>');
+                // Bold / italic
+                html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+                html = html.replace(/\*(.+?)\*/g,     '<em>$1</em>');
+                // Inline code
+                html = html.replace(/`(.+?)`/g, '<code>$1</code>');
+                // Horizontal rule
+                html = html.replace(/^---+$/gm, '<hr>');
+                // Unordered lists (group consecutive bullet lines into <ul>)
+                html = html.replace(/((?:^[-*] .+\n?)+)/gm, match => {
+                    const items = match.trim().split('\n')
+                        .map(l => `<li>${l.replace(/^[-*] /, '')}</li>`).join('');
+                    return `<ul>${items}</ul>`;
+                });
+                // Paragraphs — wrap non-tag lines in <p>
+                html = html.split('\n').map(line => {
+                    if (!line.trim()) return '';
+                    if (/^<(h[123]|ul|ol|li|hr)/.test(line)) return line;
+                    return `<p>${line}</p>`;
+                }).join('');
+                return html;
+            }
+
+            function populateAiModal(text) {
+                aiModal._resultText   = text;
+                aiModalBody.className = 'ai-modal-body';
+                aiModalBody.innerHTML = markdownToHtml(text);
+                // Reveal action buttons now that there's actual content
+                aiCopyBtn.style.display   = '';
+                aiExportBtn.style.display = '';
+                aiSaveBtn.style.display   = IS_OWNER ? '' : 'none';
+            }
+
+            function closeAiModal() {
+                aiModal.classList.remove('open');
+                aiModal._resultText = '';
+                aiModal._busy       = false;
+            }
+
+            if (aiCloseBtn)   aiCloseBtn.addEventListener('click',   closeAiModal);
+            if (aiDismissBtn) aiDismissBtn.addEventListener('click',  closeAiModal);
+            if (aiModal)      aiModal.addEventListener('click', e => { if (e.target === aiModal) closeAiModal(); });
+
+            if (aiCopyBtn) {
+                aiCopyBtn.addEventListener('click', async () => {
+                    const text = aiModal._resultText;
+                    if (!text) { toast('Nothing to copy yet', 'error'); return; }
+                    try {
+                        await navigator.clipboard.writeText(text);
+                        toast('Copied to clipboard', 'success');
+                    } catch {
+                        // Fallback: select the body text so user can Ctrl+C
+                        const range = document.createRange();
+                        range.selectNodeContents(aiModalBody);
+                        const sel = window.getSelection();
+                        sel.removeAllRanges();
+                        sel.addRange(range);
+                        toast('Press Ctrl+C to copy the selected text', 'success');
+                    }
+                });
+            }
+
+            if (aiExportBtn) {
+                aiExportBtn.addEventListener('click', () => {
+                    const text = aiModal._resultText;
+                    if (!text) { toast('Nothing to export yet', 'error'); return; }
+                    const label = (aiModalBadge.textContent || 'ai-result').toLowerCase().replace(/\s+/g, '-');
+                    // Build a minimal printable HTML page and open it in a new tab for printing/saving as PDF
+                    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>${label}</title>
+<style>
+  body { font-family: Inter, Arial, sans-serif; font-size: 13px; line-height: 1.75;
+         color: #111; max-width: 780px; margin: 40px auto; padding: 0 32px; }
+  h1 { font-size: 22px; font-weight: 800; margin: 1.2em 0 .4em; }
+  h2 { font-size: 16px; font-weight: 700; border-bottom: 1px solid #e5e7eb;
+       padding-bottom: 4px; margin: 1.1em 0 .4em; }
+  h3 { font-size: 14px; font-weight: 700; margin: 1em 0 .3em; }
+  p  { margin: 0 0 .7em; }
+  ul { margin: 0 0 .7em 1.4em; padding: 0; }
+  li { margin-bottom: .3em; }
+  strong { font-weight: 700; }
+  em { font-style: italic; }
+  hr { border: none; border-top: 1px solid #e5e7eb; margin: 1em 0; }
+  code { font-family: monospace; font-size: 11px; background: #f3f4f6;
+         border: 1px solid #e5e7eb; border-radius: 3px; padding: 1px 4px; }
+</style></head><body>${markdownToHtml(text)}</body></html>`;
+                    const blob = new Blob([html], { type: 'text/html' });
+                    const url  = URL.createObjectURL(blob);
+                    const win  = window.open(url, '_blank');
+                    if (win) {
+                        win.addEventListener('load', () => { win.print(); URL.revokeObjectURL(url); });
+                    } else {
+                        // Popup blocked fallback: download the HTML
+                        const a = document.createElement('a');
+                        a.href = url; a.download = label + '.html'; a.click();
+                        setTimeout(() => URL.revokeObjectURL(url), 1000);
+                    }
+                });
+            }
+
+            if (aiSaveBtn) {
+                aiSaveBtn.addEventListener('click', async () => {
+                    const text = aiModal._resultText;
+                    if (!text) { toast('Nothing to save yet', 'error'); return; }
+
+                    const defaultName = aiModalBadge.textContent.toLowerCase().replace(/\s+/g, '-');
+                    const name = prompt('Save note as:', defaultName);
+                    if (!name || !name.trim()) return;
+
+                    aiSaveBtn.disabled = true;
+
+                    // Build paragraphs that preserve markdown structure
+                    const lines = text.split('\n');
+                    const paragraphs = lines.map(l => {
+                        if (/^### (.+)/.test(l)) return { text: l.replace(/^### /, ''), align: 'left', font: 'Inter', size: 16, bold: true };
+                        if (/^## (.+)/.test(l))  return { text: l.replace(/^## /, ''),  align: 'left', font: 'Inter', size: 18, bold: true };
+                        if (/^# (.+)/.test(l))   return { text: l.replace(/^# /, ''),   align: 'left', font: 'Inter', size: 22, bold: true };
+                        if (/^[-*] (.+)/.test(l)) return { text: '• ' + l.replace(/^[-*] /, ''), align: 'left', font: 'Inter', size: 14 };
+                        if (/^---+$/.test(l))     return { text: '─────────────────────', align: 'center', font: 'Inter', size: 14 };
+                        return { text: l, align: 'left', font: 'Inter', size: 14 };
+                    });
+                    const docContent = JSON.stringify({ paragraphs });
+                    const finalName  = name.trim().replace(/\.(rtfx|txt|md)$/i, '') + '.rtfx';
+
+                    const fd = new FormData();
+                    fd.append('name',    finalName);
+                    fd.append('content', docContent);
+
+                    try {
+                        const res  = await post(`/courses/${COURSE_ID}/note`, fd);
+                        const data = await res.json();
+                        if (res.ok) {
+                            addNoteCardToGrid(data.id, data.name);
+                            toast('Saved as note: ' + data.name, 'success');
+                            closeAiModal();
+                        } else {
+                            toast(data.message || 'Save failed', 'error');
+                        }
+                    } catch {
+                        toast('Network error — save failed', 'error');
+                    } finally {
+                        aiSaveBtn.disabled = false;
+                    }
+                });
+            }
+
+            async function triggerAi(endpoint, label) {
+                if (aiModal._busy) return;
+                aiModal._busy = true;
+                openAiModal(label);
+                try {
+                    const res = await fetch(
+                        `/courses/${COURSE_ID}/file/${previewFileId}/${endpoint}`,
+                        { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } }
+                    );
+                    const data = await res.json();
+                    if (!res.ok) {
+                        aiModalBody.className   = 'ai-modal-body';
+                        aiModalBody.textContent = '⚠ ' + (data.message || 'An error occurred. Please try again.');
+                        aiModal._busy = false;
+                        return;
+                    }
+                    populateAiModal(data.text || '');
+                } catch {
+                    aiModalBody.className   = 'ai-modal-body';
+                    aiModalBody.textContent = '⚠ Network error. Please try again.';
+                }
+                aiModal._busy = false;
+            }
+
+            if (sumBtn)   sumBtn.addEventListener('click',   () => triggerAi('summarize',   'Summarize'));
+            if (cheatBtn) cheatBtn.addEventListener('click', () => triggerAi('cheat-sheet', 'Cheat Sheet'));
+
+            // Extend openFilePreview to show/hide AI buttons based on ai-meta
+            const _origOpenFilePreview = openFilePreview;
+            openFilePreview = function(opts) {
+                _origOpenFilePreview(opts);
+
+                // Hide AI buttons immediately; show after meta fetch
+                if (sumBtn)   sumBtn.style.display   = 'none';
+                if (cheatBtn) cheatBtn.style.display  = 'none';
+
+                // Only bother fetching for files that could be PDFs
+                const mightBePdf = opts.mime === 'application/pdf'
+                    || (opts.name && opts.name.match(/\.pdf$/i));
+                if (!mightBePdf) return;
+
+                fetch(`/courses/${COURSE_ID}/file/${opts.id}/ai-meta`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                    .then(r => r.json())
+                    .then(meta => {
+                        if (!meta.isPdf) return;
+                        if (sumBtn)   sumBtn.style.display   = '';
+                        if (cheatBtn) cheatBtn.style.display = meta.canCheatSheet ? '' : 'none';
+                    })
+                    .catch(() => {});
+            };
+
 
         })();
     </script>

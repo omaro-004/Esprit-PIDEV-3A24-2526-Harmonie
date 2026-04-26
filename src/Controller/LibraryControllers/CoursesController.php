@@ -153,20 +153,23 @@ class CoursesController extends AbstractController
         // Handle cover image
         $coverPath = null;
         $coverFile = $request->files->get('coverImage');
+        $coversDir = $this->projectDir . '/public/covers';
+
+        if (!is_dir($coversDir)) {
+            mkdir($coversDir, 0777, true);
+        }
 
         if ($coverFile) {
             $ext      = $coverFile->getClientOriginalExtension() ?: 'jpg';
             $filename = 'cover_' . time() . '_' . uniqid() . '.' . $ext;
-            $coverFile->move('C:/wamp64/www/covers', $filename);
+            $coverFile->move($coversDir, $filename);
             $coverPath = $filename;
         } elseif ($autoGen) {
             $bytes = $this->imageGenerationService->generateCourseImage($title, $subjectStr);
 
             if ($bytes) {
-                $dir = 'C:/wamp64/www/covers';
-                if (!is_dir($dir)) mkdir($dir, 0777, true);
                 $filename = 'cover_gen_' . time() . '_' . uniqid() . '.png';
-                file_put_contents($dir . '/' . $filename, $bytes);
+                file_put_contents($coversDir . '/' . $filename, $bytes);
                 $coverPath = $filename;
             }
         }
@@ -179,7 +182,7 @@ class CoursesController extends AbstractController
         $courseId = (int) $this->db->lastInsertId();
 
         // Insert uploaded files — validate type before storing
-        $files    = $request->files->get('files') ?? [];
+        $files = $request->files->get('files') ?? [];
         if (!is_array($files)) $files = [$files];
 
         $rejected = [];
@@ -196,7 +199,7 @@ class CoursesController extends AbstractController
             $origName = $file->getClientOriginalName();
             $this->db->executeStatement(
                 'INSERT INTO coursefile (courseid, originalname, mimetype, sizebytes, filedata)
-                 VALUES (:courseId, :name, :mime, :size, :data)',
+             VALUES (:courseId, :name, :mime, :size, :data)',
                 ['courseId' => $courseId, 'name' => $origName, 'mime' => $mime, 'size' => strlen($data), 'data' => $data]
             );
         }

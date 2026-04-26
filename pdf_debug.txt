@@ -1,0 +1,26 @@
+Length: 10691
+Manipulation des curseurs
+Attributs des curseurs
+Utilisation simpliee des curseurs
+Curseurs parametres
+PL / SQL
+Les curseurs
+Ines BAKLOUTI
+ines.baklouti@esprit.tn
+Ecole Superieure Privee d'Ingenierie et de Technologies
+
+Manipulation des curseurs
+Attributs des curseurs
+Utilisation simpliee des curseurs
+Curseurs parametres
+Plan
+1Manipulation des curseurs
+Declaration
+Ouverture
+Execution
+Fermuture
+2Attributs des curseurs
+3Utilisation simpliee des curseurs
+4Curseurs parametres
+2/23
+

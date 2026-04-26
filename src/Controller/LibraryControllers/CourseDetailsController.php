@@ -2,7 +2,9 @@
 
 namespace App\Controller\LibraryControllers;
 
+use App\Service\LibraryServices\GeminiService;
 use App\Service\LibraryServices\SuggestionsService;
+use Smalot\PdfParser\Parser as PdfParser;
 use Dompdf\Dompdf;
 use Dompdf\Options as DompdfOptions;
 use Knp\Bundle\SnappyBundle\Snappy\Response\PdfResponse;
@@ -48,7 +50,8 @@ class CourseDetailsController extends AbstractController
     public function __construct(
         private Connection         $db,
         private SuggestionsService $suggestionsService,
-        private Pdf                $snappy
+        private Pdf                $snappy,
+        private GeminiService      $gemini
     ) {}
 
     private function getCurrentUserId(): ?int
@@ -296,7 +299,7 @@ class CourseDetailsController extends AbstractController
     // ── LOAD NOTE CONTENT ─────────────────────────────────────────────────────
     // Handles: .rtfx (native JSON), .txt, .md, and .docx/.doc (PhpWord)
     #[Route('/note/{fileId}/content', name: '_note_content', requirements: ['fileId' => '\d+'], methods: ['GET'])]
-    public function noteContent(int $id, int $fileId): JsonResponse
+    public function noteContent(int $id, int $fileId): ?JsonResponse
     {
         $row = $this->db->fetchAssociative(
             'SELECT originalname, mimetype, filedata FROM coursefile WHERE id = ? AND courseid = ?',
@@ -304,7 +307,14 @@ class CourseDetailsController extends AbstractController
         );
         if (!$row) return $this->json(['message' => 'Not found'], 404);
 
-        $data = is_resource($row['filedata']) ? stream_get_contents($row['filedata']) : $row['filedata'];
+        if (is_resource($row['filedata'])) {
+            rewind($row['filedata']);
+            $data = stream_get_contents($row['filedata']);
+        } else {
+            $data = $row['filedata'];
+        }
+
+        if (empty($data)) return null;
         $name = strtolower($row['originalname'] ?? '');
 
         // ── Native JSON format (.rtfx) ─────────────────────────────────────
@@ -596,6 +606,204 @@ class CourseDetailsController extends AbstractController
             'videos' => $this->suggestionsService->fetchVideos($query, 10),
         ]);
     }
+
+    // ── AI META ───────────────────────────────────────────────────────────────
+    // GET /courses/{id}/file/{fileId}/ai-meta
+    // Returns { isPdf, canCheatSheet } — used by the frontend to decide which
+    // AI buttons to show in the preview modal footer.
+    #[Route('/file/{fileId}/ai-meta', name: '_file_ai_meta', requirements: ['fileId' => '\d+'], methods: ['GET'])]
+    public function aiMeta(int $id, int $fileId): JsonResponse
+    {
+        $row = $this->db->fetchAssociative(
+            'SELECT originalname, mimetype, filedata FROM coursefile WHERE id = ? AND courseid = ?',
+            [$fileId, $id]
+        );
+        if (!$row) return $this->json(['message' => 'Not found'], 404);
+
+        $name  = strtolower($row['originalname'] ?? '');
+        $isPdf = str_ends_with($name, '.pdf') || $row['mimetype'] === 'application/pdf';
+
+        if (!$isPdf) {
+            return $this->json(['isPdf' => false, 'canCheatSheet' => false]);
+        }
+
+        if (is_resource($row['filedata'])) {
+            rewind($row['filedata']);
+            $data = stream_get_contents($row['filedata']);
+        } else {
+            $data = $row['filedata'];
+        }
+
+        $canCheatSheet = false;
+        try {
+            $parser   = new PdfParser();
+            $pdf      = $parser->parseContent($data);
+            $text     = $pdf->getText();
+            // Count only meaningful characters (non-whitespace printable)
+            $meaningful = preg_replace('/[\s\x00-\x1F\x7F]/u', '', $text ?? '');
+            $canCheatSheet = mb_strlen($meaningful) >= 200;
+        } catch (\Throwable) {
+            // If parsing fails we still confirm it's a PDF; cheat sheet is unavailable
+        }
+
+        return $this->json(['isPdf' => true, 'canCheatSheet' => $canCheatSheet]);
+    }
+
+    // ── AI SUMMARIZE ─────────────────────────────────────────────────────────
+    // POST /courses/{id}/file/{fileId}/summarize
+    #[Route('/file/{fileId}/summarize', name: '_file_summarize', requirements: ['fileId' => '\d+'], methods: ['POST'])]
+    public function summarize(int $id, int $fileId): JsonResponse
+    {
+        $result = $this->extractPdfText($id, $fileId);
+
+        if (isset($result['error'])) {
+            return match($result['error']) {
+                'not_found' => $this->json(['message' => 'File not found'], 404),
+                'not_pdf'   => $this->json(['message' => 'File is not a PDF'], 415),
+                'empty'     => $this->json(['message' => 'Could not extract text from this PDF. It may be image-based or password-protected.'], 422),
+                default     => $this->json(['message' => 'Unexpected error reading file'], 500),
+            };
+        }
+
+        $text = $result['text'];
+
+        $system = <<<SYS
+You are a concise academic assistant. Produce a clear, well-structured summary of the document the user provides.
+Rules:
+- Write in clear, fluent prose (no excessive bullet points unless the content is naturally list-like).
+- Capture the main thesis, key arguments, important facts, and any conclusions.
+- Keep the summary proportional: aim for roughly 15–25% of the original length, capped at ~600 words.
+- Do not add commentary, opinions, or text not supported by the document.
+- Start directly with the summary; do not include a preamble like "Here is a summary of…".
+SYS;
+
+        try {
+            $summary = $this->gemini->generate($system, $text);
+        } catch (\Throwable $e) {
+            return $this->json(['message' => 'AI service error: ' . $e->getMessage()], 502);
+        }
+
+        return $this->json(['text' => $summary]);
+    }
+
+    // ── AI CHEAT SHEET ────────────────────────────────────────────────────────
+    // POST /courses/{id}/file/{fileId}/cheat-sheet
+    #[Route('/file/{fileId}/cheat-sheet', name: '_file_cheat_sheet', requirements: ['fileId' => '\d+'], methods: ['POST'])]
+    public function cheatSheet(int $id, int $fileId): JsonResponse
+    {
+        $result = $this->extractPdfText($id, $fileId);
+
+        if (isset($result['error'])) {
+            return match($result['error']) {
+                'not_found' => $this->json(['message' => 'File not found'], 404),
+                'not_pdf'   => $this->json(['message' => 'File is not a PDF'], 415),
+                'empty'     => $this->json(['message' => 'Could not extract text from this PDF. It may be image-based or password-protected.'], 422),
+                default     => $this->json(['message' => 'Unexpected error reading file'], 500),
+            };
+        }
+
+        $text = $result['text'];
+
+        $system = <<<SYS
+You are an expert study-aid creator. Transform the document the user provides into a dense, exam-ready cheat sheet.
+Rules:
+- Use structured sections with clear headings (##).
+- Within each section use concise bullet points, short definitions, or key formulas — not prose paragraphs.
+- Prioritise: core concepts, definitions, key dates/numbers, formulas, comparisons, and anything likely to appear on an exam.
+- Strip all fluff; every line must earn its place.
+- Do not add information not present in the document.
+- Do not include a preamble — start immediately with the first section.
+SYS;
+
+        try {
+            $sheet = $this->gemini->generate($system, $text);
+        } catch (\Throwable $e) {
+            return $this->json(['message' => 'AI service error: ' . $e->getMessage()], 502);
+        }
+
+        return $this->json(['text' => $sheet]);
+    }
+
+    // ── PRIVATE: extract text from a PDF stored in coursefile ────────────────
+    // Max characters sent to Gemini — ~15 000 chars ≈ ~4 000 tokens, well within
+    // the free-tier per-request limit while covering most academic documents.
+    private const AI_TEXT_LIMIT = 15000;
+
+    /**
+     * Returns ['text' => string] on success, or ['error' => string] on failure.
+     * Error keys: 'not_found', 'not_pdf', 'empty'.
+     *
+     * FIX: previously returned ?string, conflating "file not found" and "not a PDF"
+     * into the same null — making it impossible to return a meaningful HTTP status.
+     * Now callers can map each error case to the correct response code.
+     *
+     * @return array{text: string}|array{error: string}
+     */
+    private function extractPdfText(int $courseId, int $fileId): array
+    {
+        $row = $this->db->fetchAssociative(
+            'SELECT originalname, mimetype, filedata FROM coursefile WHERE id = ? AND courseid = ?',
+            [$fileId, $courseId]
+        );
+        if (!$row) return ['error' => 'not_found'];
+
+        // FIX: rewind stream before reading — Doctrine may leave the pointer at EOF
+        if (is_resource($row['filedata'])) {
+            rewind($row['filedata']);
+            $data = stream_get_contents($row['filedata']);
+        } else {
+            $data = $row['filedata'];
+        }
+
+        // FIX: cast to string — some DB drivers return a resource handle or lazy
+        // object instead of raw bytes; (string) forces materialisation so that the
+        // %PDF header sniff below actually works.
+        $data = (string) $data;
+
+        if ($data === '') return ['error' => 'not_found'];
+
+        $name = strtolower($row['originalname'] ?? '');
+
+        // FIX: also sniff the binary %PDF header so files stored with a wrong
+        // MIME type or a renamed extension are still processed correctly.
+        $looksLikePdf = str_ends_with($name, '.pdf')
+            || $row['mimetype'] === 'application/pdf'
+            || str_starts_with($data, '%PDF');
+
+        // FIX: return a typed error instead of null so callers can distinguish
+        // "file not a PDF" (415) from "file not found" (404).
+        if (!$looksLikePdf) return ['error' => 'not_pdf'];
+
+        try {
+            $parser = new PdfParser();
+            $pdf    = $parser->parseContent($data);
+            $text   = $pdf->getText() ?: '';
+            file_put_contents('D:/web/pdf_debug.txt', 'Length: ' . strlen($text) . "\n" . substr($text, 0, 500));
+        } catch (\Throwable $e) {
+            file_put_contents('D:/web/pdf_debug.txt', 'ERROR: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return ['error' => 'empty'];
+        }
+
+        // Collapse excessive whitespace so we don't waste tokens on blank lines
+        $text = preg_replace('/[ \t]{2,}/', ' ', $text);
+        $text = preg_replace('/(\r?\n){3,}/', "\n\n", $text);
+        $text = trim($text);
+
+        if ($text === '') return ['error' => 'empty'];
+
+        // Hard cap — truncate cleanly at a word boundary
+        if (mb_strlen($text) > self::AI_TEXT_LIMIT) {
+            $text = mb_substr($text, 0, self::AI_TEXT_LIMIT);
+            $lastSpace = mb_strrpos($text, ' ');
+            if ($lastSpace !== false) {
+                $text = mb_substr($text, 0, $lastSpace);
+            }
+            $text .= "\n\n[Document truncated for AI processing]";
+        }
+
+        return ['text' => $text];
+    }
+
 
     // ── PRIVATE HELPERS ───────────────────────────────────────────────────────
 
