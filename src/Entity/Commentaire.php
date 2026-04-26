@@ -38,7 +38,7 @@ class Commentaire
 }
     
     public function getDateCommentaire(): ?\DateTimeInterface { return $this->dateCommentaire; }
-    protected function setDateCommentaire(\DateTimeInterface $d): static { $this->dateCommentaire = $d; return $this; }
+    public function setDateCommentaire(\DateTimeInterface $d): static { $this->dateCommentaire = $d; return $this; }
     public function getIdPost(): ?int { return $this->idPost; }
     public function setIdPost(int $idPost): static { $this->idPost = $idPost; return $this; }
     public function getUserId(): ?int { return $this->userId; }

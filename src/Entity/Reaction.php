@@ -15,16 +15,16 @@ class Reaction
     private ?int $idReaction = null;
 
     #[ORM\Column(name: "type_reaction", length: 50)]
-    private ?string $typeReaction = null;
+    private ?string $typeReaction = '';
 
     #[ORM\Column(name: "date_reaction", type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $dateReaction = null;
+    private ?\DateTimeInterface $dateReaction;
 
     #[ORM\Column(name: "id_post", type: "integer")]
-    private ?int $idPost = null;
+    private ?int $idPost = 0;
 
     #[ORM\Column(name: "user_id", type: "integer")]
-    private ?int $userId = null;
+    private ?int $userId = 0;
 
     public function getIdReaction(): ?int { return $this->idReaction; }
     public function getTypeReaction(): ?string { return $this->typeReaction; }
