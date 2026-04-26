@@ -469,7 +469,21 @@ html,body{font-family:var(--font-body);background:var(--surface);color:var(--ink
                     <div class="add-comment-right">
                         <textarea name="contenu" class="add-comment-input"
                             placeholder="Rejoindre la conversation…" rows="2"></textarea>
-                        <div class="add-comment-actions">
+                        {# ── BOUTON SUGGESTION MISTRAL ── #}
+                        <div class="add-comment-actions" style="display:flex;align-items:center;gap:8px;">
+                            <button type="button"
+                                    onclick="suggestReply({{ post.idPost }})"
+                                    id="suggest-btn-{{ post.idPost }}"
+                                    style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;
+                                        background:linear-gradient(135deg,rgba(14,165,233,.15),rgba(14,165,233,.25));
+                                        color:#0369a1;border:1.5px solid rgba(14,165,233,.4);
+                                        border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;
+                                        transition:all .2s;font-family:var(--font-body);"
+                                    title="Générer une réponse avec Mistral AI">
+                                <div style="width:6px;height:6px;background:currentColor;border-radius:50%;
+                                            animation:pulse-dot 1.5s ease-in-out infinite;"></div>
+                                🧠 Mistral — Suggérer une réponse
+                            </button>
                             <button type="submit" class="btn-send-comment">💬 Commenter</button>
                         </div>
                     </div>
