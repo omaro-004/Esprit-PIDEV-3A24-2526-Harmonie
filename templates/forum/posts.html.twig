@@ -745,6 +745,54 @@ async function analyzeSentiment(commentId, btn) {
         btn.disabled = false; btn.innerHTML = '😊 Sentiment IA';
     }
 }
+// ── SUGGESTION DE RÉPONSE MISTRAL AI ──────────────────
+async function suggestReply(postId) {
+    const btn      = document.getElementById('suggest-btn-' + postId);
+    const textarea = btn.closest('.add-comment-right').querySelector('textarea');
+
+    // État chargement
+    btn.innerHTML  = '⏳ Mistral génère...';
+    btn.disabled   = true;
+
+    try {
+        const res  = await fetch(`/forum/post/${postId}/suggest-reply`, {
+            method:  'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const data = await res.json();
+
+        if (data.error) {
+            btn.innerHTML = '❌ Erreur';
+            btn.disabled  = false;
+            setTimeout(() => {
+                btn.innerHTML = '<div style="width:6px;height:6px;background:currentColor;border-radius:50%;animation:pulse-dot 1.5s ease-in-out infinite;"></div> 🧠 Mistral — Suggérer une réponse';
+            }, 2000);
+            return;
+        }
+
+        // Injecte la suggestion dans le textarea
+        textarea.value = data.suggestion;
+        textarea.focus();
+
+        // Anime le bouton en succès
+        btn.innerHTML = '✅ Suggestion insérée !';
+        btn.style.background = 'linear-gradient(135deg,rgba(107,203,119,.15),rgba(107,203,119,.25))';
+        btn.style.color      = '#2d8c3e';
+        btn.style.borderColor = 'rgba(107,203,119,.4)';
+
+        setTimeout(() => {
+            btn.innerHTML    = '<div style="width:6px;height:6px;background:currentColor;border-radius:50%;animation:pulse-dot 1.5s ease-in-out infinite;"></div> 🧠 Mistral — Suggérer une réponse';
+            btn.style.background  = 'linear-gradient(135deg,rgba(14,165,233,.15),rgba(14,165,233,.25))';
+            btn.style.color       = '#0369a1';
+            btn.style.borderColor = 'rgba(14,165,233,.4)';
+            btn.disabled          = false;
+        }, 3000);
+
+    } catch(e) {
+        btn.innerHTML = '❌ Erreur réseau';
+        btn.disabled  = false;
+    }
+}
 
 
 </script>
