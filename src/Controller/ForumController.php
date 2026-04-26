@@ -25,6 +25,7 @@ use App\Service\ImageGen;
 // ── Résumer la discussion ──────────────────────────────
 use App\Service\SummaryService;
 use App\Repository\CommentaireRepository;
+use App\Service\MistralService;
 
 
 use App\Repository\PostRepository;
