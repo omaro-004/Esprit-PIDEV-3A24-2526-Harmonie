@@ -46,8 +46,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(
         name: 'user_sexe',
         type: Types::STRING,
-        nullable: true,
-        columnDefinition: "ENUM('HOMME','FEMME','AUTRE') DEFAULT NULL"
+        length: 20,
+        nullable: true
     )]
     private ?string $userSexe = null;
 
@@ -72,16 +72,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(
         name: 'user_niveau_activite_physique',
         type: Types::STRING,
-        nullable: true,
-        columnDefinition: "ENUM('SEDENTAIRE','LEGER','MODERE','INTENSE','TRES_INTENSE') DEFAULT NULL"
+        length: 20,
+        nullable: true
     )]
     private ?string $userNiveauActivitePhysique = null;
 
     #[ORM\Column(
         name: 'user_niveau_scolaire',
         type: Types::STRING,
-        nullable: true,
-        columnDefinition: "ENUM('PRIMAIRE','COLLEGE','LYCEE','LICENCE','MASTER','DOCTORAT','AUTRE') DEFAULT NULL"
+        length: 20,
+        nullable: true
     )]
     private ?string $userNiveauScolaire = null;
 
@@ -94,7 +94,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(
         name: 'type_utilisateur',
         type: Types::STRING,
-        columnDefinition: "ENUM('ETUDIANT','ADMIN') NOT NULL DEFAULT 'ETUDIANT'"
+        length: 20,
+        options: ['default' => 'ETUDIANT']
     )]
     private string $typeUtilisateur = 'ETUDIANT';
 
