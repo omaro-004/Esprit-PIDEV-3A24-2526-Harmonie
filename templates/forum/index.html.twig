@@ -460,72 +460,65 @@ html,body{font-family:var(--font-body);background:var(--surface);color:var(--ink
     </div>
 </header>
     {# ══════════════ HERO PHOTO PLEIN ÉCRAN ══════════════ #}
-    <div class="hero fade">
+    <div class="hero">
+    <img class="hero-bg-img"
+         src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1800&q=85&auto=format&fit=crop"
+         alt="Forum Communauté — Harmony"
+         loading="eager">
 
-        {# Image de fond — forum/communauté — Unsplash gratuit #}
-        <img class="hero-bg-img"
-            src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1800&q=85&auto=format&fit=crop"
-            alt="Forum Communauté — Harmony"
-            loading="eager">
+    <div class="hero-overlay"></div>
+    <div class="hero-noise"></div>
 
-        <div class="hero-overlay"></div>
-        <div class="hero-noise"></div>
-        <div class="hero-bottom-fade"></div>
+    {# ← FUMÉE BAS — transition fluide vers la page #}
+    <div class="hero-bottom-fade"></div>
 
-        {# Contenu : texte à gauche, stats + actions à droite #}
-        <div class="hero-content">
-
-            {# Gauche — titre et description #}
-            <div class="hero-left">
-                <div class="hero-badge">
-                    <span class="hero-badge-dot"></span>
-                    Forum & Communauté · Harmony
-                </div>
-                <h1 class="hero-title">
-                    💬 Forum &<br><em>Communauté</em>
-                </h1>
-                <p class="hero-sub">
-                    Pose tes questions, partage tes connaissances.<br>
-                    L'IA résume, traduit et analyse pour toi.
-                </p>
-                <div class="hero-actions-row">
-                    <button onclick="openImageModal()" class="btn-ai-hero">
-                        🎨 Générer une image IA
-                    </button>
-                    <a href="{{ path('forum_categorie_new') }}" class="btn-new-cat">
-                        ➕ Nouvelle catégorie
-                    </a>
-                </div>
+    <div class="hero-content">
+        <div class="hero-left">
+            <div class="hero-badge">
+                <span class="hero-badge-dot"></span>
+                Forum & Communauté · Harmony
             </div>
-
-            {# Droite — statistiques #}
-            <div class="hero-stats-row">
-                <div class="hstat gold">
-                    <span class="hstat-icon">🗂️</span>
-                    <span class="hstat-val">{{ categories|length }}</span>
-                    <span class="hstat-lbl">Catégories</span>
-                </div>
-                <div class="hstat teal">
-                    <span class="hstat-icon">📝</span>
-                    <span class="hstat-val">{{ nb_posts }}</span>
-                    <span class="hstat-lbl">Posts</span>
-                </div>
-                <div class="hstat rose">
-                    <span class="hstat-icon">💬</span>
-                    <span class="hstat-val">{{ nb_commentaires }}</span>
-                    <span class="hstat-lbl">Commentaires</span>
-                </div>
+            <h1 class="hero-title">
+                💬 Forum &<br><em>Communauté</em>
+            </h1>
+            <p class="hero-sub">
+                Pose tes questions, partage tes connaissances.<br>
+                L'IA résume, traduit et analyse pour toi.
+            </p>
+            <div class="hero-actions-row">
+                <button onclick="openImageModal()" class="btn-ai-hero">
+                    🎨 Générer une image IA
+                </button>
+                <a href="{{ path('forum_categorie_new') }}" class="btn-new-cat">
+                    ➕ Nouvelle catégorie
+                </a>
             </div>
-
         </div>
 
-        {# Indicateur de défilement #}
-        <div class="hero-scroll-hint">
-            <span>▼</span>
-            <span>Défiler</span>
+        <div class="hero-stats-row">
+            <div class="hstat gold">
+                <span class="hstat-icon">🗂️</span>
+                <span class="hstat-val">{{ categories|length }}</span>
+                <span class="hstat-lbl">Catégories</span>
+            </div>
+            <div class="hstat teal">
+                <span class="hstat-icon">📝</span>
+                <span class="hstat-val">{{ nb_posts }}</span>
+                <span class="hstat-lbl">Posts</span>
+            </div>
+            <div class="hstat rose">
+                <span class="hstat-icon">💬</span>
+                <span class="hstat-val">{{ nb_commentaires }}</span>
+                <span class="hstat-lbl">Commentaires</span>
+            </div>
         </div>
-
     </div>
+
+    <div class="hero-scroll-hint">
+        <span style="font-size:16px;">▼</span>
+        <span>Défiler</span>
+    </div>
+</div>
 
 
 <main class="page">
