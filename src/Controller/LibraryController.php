@@ -14,7 +14,6 @@ class LibraryController extends AbstractController
     #[Route('/library', name: 'library')]
     public function index(): Response
     {
-        // Only courses marked is_published = 1
         $courses = $this->db->fetchAllAssociative(
             "SELECT c.id, c.title, s.name AS subject_name, c.cover_image_path
              FROM courses c
@@ -30,7 +29,6 @@ class LibraryController extends AbstractController
             'coverImagePath' => $r['cover_image_path'],
         ], $courses);
 
-        // Get recommended courses based on user's course subjects
         $recommendedCourses = $this->getRecommendedCourses();
 
         return $this->render('library/library.html.twig', [
@@ -46,7 +44,6 @@ class LibraryController extends AbstractController
             return [];
         }
 
-        // Get user ID from email
         $userRow = $this->db->fetchAssociative(
             'SELECT user_id FROM `user` WHERE user_email = ?',
             [$user->getUserIdentifier()]
@@ -58,8 +55,6 @@ class LibraryController extends AbstractController
 
         $userId = (int) $userRow['user_id'];
 
-        // First, collect subject IDs from courses the user has saved.
-        // If none exist yet (new user), we fall back to showing the most popular courses overall.
         $savedSubjectIds = [];
         $savedSubjects = $this->db->fetchAllAssociative(
             "SELECT DISTINCT c.subjectid
@@ -73,9 +68,7 @@ class LibraryController extends AbstractController
             $savedSubjectIds[] = (int) $subject['subjectid'];
         }
 
-        // Build the main query: subject-matched if we have signals, otherwise top popular
         if (empty($savedSubjectIds)) {
-            // No save history — recommend the most popular published courses
             $recommendedCourses = $this->db->fetchAllAssociative(
                 "SELECT c.id, c.title, s.name AS subject_name, c.cover_image_path, c.saves
                  FROM courses c
@@ -85,7 +78,6 @@ class LibraryController extends AbstractController
                  LIMIT 10"
             );
         } else {
-            // Has save history — recommend by matching subjects, excluding already-saved
             $placeholders = str_repeat('?,', count($savedSubjectIds) - 1) . '?';
             $recommendedCourses = $this->db->fetchAllAssociative(
                 "SELECT c.id, c.title, s.name AS subject_name, c.cover_image_path, c.saves

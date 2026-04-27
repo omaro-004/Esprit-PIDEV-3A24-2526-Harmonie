@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/course-details.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         /* ── BACK BUTTON ───────────────────────────────────────────────── */
         .back-btn {
@@ -705,6 +706,21 @@
             border: none; border-top: 1px solid var(--color-border, #e5e7eb);
             margin: 1em 0;
         }
+
+        /* ── TOAST ────────────────────────────────────────────────── */
+        .toast-container { position: fixed; bottom: 28px; left: 28px; z-index: 600; display: flex; flex-direction: column; gap: 8px; }
+        .toast {
+            padding: 12px 18px; border-radius: var(--radius-md);
+            font-size: 13.5px; font-weight: 500; box-shadow: var(--shadow-md);
+            animation: toastIn .2s ease;
+            min-width: 200px;
+            max-width: 320px;
+        }
+        .toast-success { background: #ECFDF5; color: #166534; border: 1px solid #BBF7D0; }
+        .toast-error   { background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
+        .toast-progress { margin-top: 8px; height: 4px; background: rgba(0,0,0,0.1); border-radius: 2px; overflow: hidden; }
+        .toast-progress-bar { height: 100%; background: currentColor; transition: width 0.1s linear; }
+        @keyframes toastIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
     </style>
 {% endblock %}
 
@@ -827,8 +843,9 @@
                     </button>
 
                     {# Download ZIP button #}
-                    <a class="btn btn-secondary" id="downloadZipBtn"
+                    <a class="btn btn-secondary downloadZipBtn"
                        href="/courses/{{ course.id }}/download-zip"
+                       data-course-title="{{ course.title|e('html_attr') }}"
                        title="Download full course as ZIP"
                        aria-label="Download course as ZIP">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -879,8 +896,9 @@
                     </button>
 
                     {# Download ZIP button #}
-                    <a class="btn btn-secondary" id="downloadZipBtn"
+                    <a class="btn btn-secondary downloadZipBtn"
                        href="/courses/{{ course.id }}/download-zip"
+                       data-course-title="{{ course.title|e('html_attr') }}"
                        title="Download full course as ZIP"
                        aria-label="Download course as ZIP">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -1312,12 +1330,30 @@
             const IS_OWNER  = {{ (isOwner|default(false)) ? 'true' : 'false' }};
 
             // ── UTILITIES ────────────────────────────────────────────────────
-            function toast(msg, type) {
+            function toast(msg, type, options = {}) {
                 const t = document.createElement('div');
                 t.className = 'toast toast-' + (type || 'success');
-                t.textContent = msg;
+                const msgSpan = document.createElement('span');
+                msgSpan.textContent = msg;
+                t.appendChild(msgSpan);
                 document.getElementById('toastContainer').appendChild(t);
-                setTimeout(() => t.remove(), 3500);
+
+                if (options.progress) {
+                    const progressContainer = document.createElement('div');
+                    progressContainer.className = 'toast-progress';
+                    const progressBar = document.createElement('div');
+                    progressBar.className = 'toast-progress-bar';
+                    progressBar.style.width = '0%';
+                    progressContainer.appendChild(progressBar);
+                    t.appendChild(progressContainer);
+                    t._progressBar = progressBar;
+                    t._msgSpan = msgSpan;
+                }
+
+                if (options.duration !== 0) {
+                    setTimeout(() => t.remove(), options.duration || 3500);
+                }
+                return t;
             }
             async function post(url, body) {
                 if (!(body instanceof FormData) && body) {
@@ -1925,12 +1961,110 @@
             }
 
             // ── DOWNLOAD ZIP ─────────────────────────────────────────────────────────
-            const downloadZipBtn = document.getElementById('downloadZipBtn');
-            if (downloadZipBtn) {
-                downloadZipBtn.addEventListener('click', () => {
-                    toast('Preparing download, please wait…', 'success');
+            const downloadZipBtns = document.querySelectorAll('.downloadZipBtn');
+            downloadZipBtns.forEach(downloadZipBtn => {
+                downloadZipBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    const courseTitle = downloadZipBtn.dataset.courseTitle || 'course';
+
+                    const toastEl = toast('Preparing download…', 'success', { progress: true, duration: 0 });
+                    const progressBar = toastEl._progressBar;
+                    const msgSpan = toastEl._msgSpan;
+
+                    try {
+                        // Get file list first
+                        const filesRes = await fetch(`/courses/${COURSE_ID}/download-files`);
+                        if (!filesRes.ok) {
+                            toastEl.remove();
+                            toast('Failed to get file list', 'error');
+                            return;
+                        }
+
+                        const filesData = await filesRes.json();
+                        const files = filesData.files || [];
+                        const totalFiles = filesData.total || 0;
+
+                        if (totalFiles === 0) {
+                            toastEl.remove();
+                            toast('No files to download', 'error');
+                            return;
+                        }
+
+                        // Initialize JSZip
+                        const zip = new JSZip();
+                        const usedNames = new Set();
+
+                        // Download files one by one
+                        for (let i = 0; i < files.length; i++) {
+                            const file = files[i];
+                            const originalFileName = file.name;
+
+                            // Update progress message
+                            msgSpan.textContent = `Downloading ${originalFileName} (${i + 1}/${totalFiles})…`;
+
+                            // Download single file
+                            const fileRes = await fetch(`/courses/${COURSE_ID}/file/${file.id}/download-for-zip`);
+                            if (!fileRes.ok) {
+                                console.error(`Failed to download ${originalFileName}`);
+                                continue;
+                            }
+
+                            const fileBlob = await fileRes.blob();
+                            const fileArrayBuffer = await fileBlob.arrayBuffer();
+
+                            // Get filename from Content-Disposition header (includes .pdf for converted files)
+                            const contentDisposition = fileRes.headers.get('Content-Disposition');
+                            let zipName = originalFileName;
+                            if (contentDisposition) {
+                                const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                                if (match && match[1]) {
+                                    zipName = match[1].replace(/['"]/g, '');
+                                }
+                            }
+
+                            // Get unique filename
+                            let counter = 1;
+                            while (usedNames.has(zipName.toLowerCase())) {
+                                const ext = zipName.includes('.') ? '.' + zipName.split('.').pop() : '';
+                                const base = zipName.includes('.') ? zipName.slice(0, -ext.length) : zipName;
+                                zipName = `${base} (${counter})${ext}`;
+                                counter++;
+                            }
+                            usedNames.add(zipName.toLowerCase());
+
+                            // Add to zip
+                            zip.file(zipName, fileArrayBuffer);
+
+                            // Update progress bar
+                            const percent = ((i + 1) / totalFiles) * 100;
+                            if (progressBar) {
+                                progressBar.style.width = percent + '%';
+                            }
+                        }
+
+                        // Generate zip
+                        msgSpan.textContent = 'Creating zip file…';
+                        const zipBlob = await zip.generateAsync({ type: 'blob' });
+
+                        // Download
+                        const url = window.URL.createObjectURL(zipBlob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = courseTitle.replace(/[^a-zA-Z0-9_\-]/g, '_') + '.zip';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(url);
+
+                        if (progressBar) progressBar.style.width = '100%';
+                        msgSpan.textContent = 'Download complete!';
+                        setTimeout(() => toastEl.remove(), 2000);
+                    } catch (err) {
+                        toastEl.remove();
+                        toast('Download failed: ' + err.message, 'error');
+                    }
                 });
-            }
+            });
 
             // ── SHARE MODAL ──────────────────────────────────────────────────────────
             (function initShare() {

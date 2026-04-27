@@ -624,6 +624,108 @@ class CourseDetailsController extends AbstractController
         return $response;
     }
 
+    // ── GET FILE LIST FOR DOWNLOAD ───────────────────────────────────────────
+    // GET /courses/{id}/download-files
+    // Returns the list of files to be downloaded for progress tracking
+    #[Route('/download-files', name: '_download_files', methods: ['GET'])]
+    public function downloadFiles(int $id): JsonResponse
+    {
+        $files = $this->db->fetchAllAssociative(
+            'SELECT id, originalname, mimetype, sizebytes FROM coursefile WHERE courseid = ? ORDER BY id',
+            [$id]
+        );
+
+        return $this->json([
+            'files' => array_map(fn($f) => [
+                'id' => $f['id'],
+                'name' => $f['originalname'],
+                'size' => $f['sizebytes'],
+            ], $files),
+            'total' => count($files),
+        ]);
+    }
+
+    // ── DOWNLOAD SINGLE FILE FOR ZIP ───────────────────────────────────────────
+    // GET /courses/{id}/file/{fileId}/download-for-zip
+    // Downloads a single file converted to PDF if needed, for building zip on client
+    #[Route('/file/{fileId}/download-for-zip', name: '_file_download_for_zip', requirements: ['fileId' => '\d+'], methods: ['GET'])]
+    public function downloadFileForZip(int $id, int $fileId): Response
+    {
+        $row = $this->db->fetchAssociative(
+            'SELECT originalname, mimetype, filedata FROM coursefile WHERE id = ? AND courseid = ?',
+            [$fileId, $id]
+        );
+        if (!$row) throw $this->createNotFoundException('File not found.');
+
+        $data = is_resource($row['filedata']) ? stream_get_contents($row['filedata']) : $row['filedata'];
+        $name = strtolower($row['originalname'] ?? '');
+
+        // ── Convert notes / Word docs → PDF ───────────────────────────
+        $isNote = str_ends_with($name, '.rtfx')
+            || str_ends_with($name, '.txt')
+            || str_ends_with($name, '.md');
+        $isWord = str_ends_with($name, '.docx') || str_ends_with($name, '.doc');
+
+        if ($isNote || $isWord) {
+            $baseName = preg_replace('/\.(rtfx|txt|md|docx|doc)$/i', '', $row['originalname']);
+            $downloadName = $baseName . '.pdf';
+
+            try {
+                if ($isNote) {
+                    $doc = json_decode($data, true);
+                    if (!isset($doc['paragraphs'])) {
+                        $lines = explode("\n", str_replace(["\r\n", "\r"], "\n", $data));
+                        $doc   = ['paragraphs' => array_map(
+                            fn($l) => ['text' => $l, 'align' => 'left', 'font' => 'Inter', 'size' => 14],
+                            $lines
+                        )];
+                    }
+                    $html = $this->renderView('library/note-pdf.html.twig', [
+                        'title'      => $baseName,
+                        'paragraphs' => $doc['paragraphs'],
+                    ]);
+                } else {
+                    // Word -> HTML via PhpWord
+                    $html = $this->wordToHtml($data, $name);
+                }
+
+                $pdfBytes = $this->htmlToPdfBytes($html);
+                $response = new Response($pdfBytes);
+                $response->headers->set('Content-Type', 'application/pdf');
+                $response->headers->set(
+                    'Content-Disposition',
+                    $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $downloadName)
+                );
+                return $response;
+            } catch (\Throwable) {
+                // Conversion failed — return raw file
+            }
+        }
+
+        // Return original file
+        $mime = $row['mimetype'] ?: 'application/octet-stream';
+        $mimeMap = [
+            '.pdf'  => 'application/pdf',
+            '.docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            '.doc'  => 'application/msword',
+            '.pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            '.ppt'  => 'application/vnd.ms-powerpoint',
+            '.xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            '.xls'  => 'application/vnd.ms-excel',
+        ];
+        foreach ($mimeMap as $ext => $correctMime) {
+            if (str_ends_with($name, $ext)) { $mime = $correctMime; break; }
+        }
+
+        $response = new Response($data);
+        $response->headers->set('Content-Type', $mime);
+        $response->headers->set(
+            'Content-Disposition',
+            $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $row['originalname'])
+        );
+        return $response;
+    }
+
     // ── SAVE TO LIBRARY (toggle) ──────────────────────────────────────────────
     #[Route('/save-to-library', name: '_save_library', methods: ['POST'])]
     public function saveToLibrary(int $id): JsonResponse
