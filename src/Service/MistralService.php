@@ -25,13 +25,13 @@ class MistralService
         }
 
         $response = $this->httpClient->request('POST',
-            'https://api.mistral.ai/v1/chat/completions', [
+            'https://api.groq.com/openai/v1/chat/completions', [
             'headers' => [
                 'Content-Type'  => 'application/json',
                 'Authorization' => 'Bearer ' . $this->apiKey,
             ],
             'json' => [
-                'model' => 'mistral-small-latest',
+                'model' => 'llama-3.3-70b-versatile',
                 'messages' => [[
                     'role'    => 'user',
                     'content' => "Tu es un assistant forum bienveillant et expert. "

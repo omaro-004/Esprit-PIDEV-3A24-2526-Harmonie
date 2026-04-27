@@ -88,4 +88,4 @@ services:
 #--------------------suggest titre -----------------
     App\Service\MistralService:
         arguments:
-            $apiKey: '%env(MISTRAL_API_KEY)%'
+            $apiKey: '%env(GROQ_API_KEY)%'
