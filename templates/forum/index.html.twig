@@ -208,6 +208,23 @@ html,body{font-family:var(--font-body);background:var(--surface);color:var(--ink
     );
     z-index: 1;
 }
+/* ← FUMÉE EN BAS — */
+.hero-bottom-fade {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 260px;
+    background: linear-gradient(
+        to top,
+        #F4F3FF 0%,        /* même couleur que --surface de ta page */
+        rgba(244,243,255,.85) 30%,
+        rgba(244,243,255,.4) 60%,
+        transparent 100%
+    );
+    z-index: 3;
+    pointer-events: none;
+}
 
 .hero-noise {
     position: absolute;
