@@ -1,26 +1,16 @@
-Length: 10691
-Manipulation des curseurs
-Attributs des curseurs
-Utilisation simpliee des curseurs
-Curseurs parametres
-PL / SQL
-Les curseurs
-Ines BAKLOUTI
-ines.baklouti@esprit.tn
-Ecole Superieure Privee d'Ingenierie et de Technologies
-
-Manipulation des curseurs
-Attributs des curseurs
-Utilisation simpliee des curseurs
-Curseurs parametres
-Plan
-1Manipulation des curseurs
-Declaration
-Ouverture
-Execution
-Fermuture
-2Attributs des curseurs
-3Utilisation simpliee des curseurs
-4Curseurs parametres
-2/23
-
+Length: 6789
+Répartition des tâches 	Entetes
+Etudiant	poids	Taches
+ integration
++ 
+atelier doxygen
+A faire par chaque
+etudiant
+void init (Personne * p, int numperso)
+Lot 1
+1 init perso	void initPerso(Personne *p)
+1.5 afficher perso (img, score, vies)	void afficherPerso(Personne p, SDL_Surface * screen)
+1.5 déplacer perso avec accélération	void deplacerPerso (Personne *p)
+1.5 animer perso	void animerPerso (Personne* p)
+1 Saut	void saut (Personne* p) 
+1.5 ajout d'un 2eme joueur	ce n'est pas une fonction i

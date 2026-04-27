@@ -451,7 +451,11 @@ class CourseDetailsController extends AbstractController
         // Word docs: render as HTML for the preview modal
         if (str_ends_with($name, '.docx') || str_ends_with($name, '.doc')) {
             $html = $this->wordToHtml($data, $name);
-            return new Response($html, 200, ['Content-Type' => 'text/html; charset=UTF-8']);
+            return new Response($html, 200, [
+                'Content-Type' => 'text/html; charset=UTF-8',
+                'X-Frame-Options' => 'SAMEORIGIN',
+                'Content-Security-Policy' => "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';",
+            ]);
         }
 
         if (str_ends_with($name, '.pdf'))  $mime = 'application/pdf';
@@ -531,7 +535,7 @@ class CourseDetailsController extends AbstractController
     // ── DOWNLOAD COURSE AS ZIP ────────────────────────────────────────────────
     // GET /courses/{id}/download-zip
     // Fetches every file in the course, converts notes (.rtfx / .txt / .md)
-    // and Word docs (.docx / .doc) to PDF on the fly, then streams a .zip.
+    // to PDF on the fly, then streams a .zip.
     #[Route('/download-zip', name: '_download_zip', methods: ['GET'])]
     public function downloadZip(int $id): Response
     {
@@ -564,34 +568,28 @@ class CourseDetailsController extends AbstractController
             $origName = $file['originalname'] ?? 'file';
             $lower    = strtolower($origName);
 
-            // ── Convert notes / Word docs → PDF ───────────────────────────
+            // ── Convert notes → PDF ───────────────────────────────────────
             $isNote = str_ends_with($lower, '.rtfx')
                 || str_ends_with($lower, '.txt')
                 || str_ends_with($lower, '.md');
-            $isWord = str_ends_with($lower, '.docx') || str_ends_with($lower, '.doc');
 
-            if ($isNote || $isWord) {
-                $baseName = preg_replace('/\.(rtfx|txt|md|docx|doc)$/i', '', $origName);
+            if ($isNote) {
+                $baseName = preg_replace('/\.(rtfx|txt|md)$/i', '', $origName);
                 $zipName  = $this->uniqueZipName($usedNames, $baseName . '.pdf');
 
                 try {
-                    if ($isNote) {
-                        $doc = json_decode($data, true);
-                        if (!isset($doc['paragraphs'])) {
-                            $lines = explode("\n", str_replace(["\r\n", "\r"], "\n", $data));
-                            $doc   = ['paragraphs' => array_map(
-                                fn($l) => ['text' => $l, 'align' => 'left', 'font' => 'Inter', 'size' => 14],
-                                $lines
-                            )];
-                        }
-                        $html = $this->renderView('library/note-pdf.html.twig', [
-                            'title'      => $baseName,
-                            'paragraphs' => $doc['paragraphs'],
-                        ]);
-                    } else {
-                        // Word -> HTML via PhpWord
-                        $html = $this->wordToHtml($data, $lower);
+                    $doc = json_decode($data, true);
+                    if (!isset($doc['paragraphs'])) {
+                        $lines = explode("\n", str_replace(["\r\n", "\r"], "\n", $data));
+                        $doc   = ['paragraphs' => array_map(
+                            fn($l) => ['text' => $l, 'align' => 'left', 'font' => 'Inter', 'size' => 14],
+                            $lines
+                        )];
                     }
+                    $html = $this->renderView('library/note-pdf.html.twig', [
+                        'title'      => $baseName,
+                        'paragraphs' => $doc['paragraphs'],
+                    ]);
 
                     $pdfBytes = $this->htmlToPdfBytes($html);
                     $zip->addFromString($zipName, $pdfBytes);
@@ -601,7 +599,7 @@ class CourseDetailsController extends AbstractController
                     $zip->addFromString($rawName, $data);
                 }
             } else {
-                // All other files (PDF, images, spreadsheets, etc.) go in as-is
+                // All other files (PDF, Word docs, images, spreadsheets, etc.) go in as-is
                 $zipName = $this->uniqueZipName($usedNames, $origName);
                 $zip->addFromString($zipName, $data);
             }
@@ -647,7 +645,8 @@ class CourseDetailsController extends AbstractController
 
     // ── DOWNLOAD SINGLE FILE FOR ZIP ───────────────────────────────────────────
     // GET /courses/{id}/file/{fileId}/download-for-zip
-    // Downloads a single file converted to PDF if needed, for building zip on client
+    // Downloads a single file, converts notes (.rtfx / .txt / .md) to PDF if needed,
+    // for building zip on client
     #[Route('/file/{fileId}/download-for-zip', name: '_file_download_for_zip', requirements: ['fileId' => '\d+'], methods: ['GET'])]
     public function downloadFileForZip(int $id, int $fileId): Response
     {
@@ -660,34 +659,28 @@ class CourseDetailsController extends AbstractController
         $data = is_resource($row['filedata']) ? stream_get_contents($row['filedata']) : $row['filedata'];
         $name = strtolower($row['originalname'] ?? '');
 
-        // ── Convert notes / Word docs → PDF ───────────────────────────
+        // ── Convert notes → PDF ───────────────────────────────────────
         $isNote = str_ends_with($name, '.rtfx')
             || str_ends_with($name, '.txt')
             || str_ends_with($name, '.md');
-        $isWord = str_ends_with($name, '.docx') || str_ends_with($name, '.doc');
 
-        if ($isNote || $isWord) {
-            $baseName = preg_replace('/\.(rtfx|txt|md|docx|doc)$/i', '', $row['originalname']);
+        if ($isNote) {
+            $baseName = preg_replace('/\.(rtfx|txt|md)$/i', '', $row['originalname']);
             $downloadName = $baseName . '.pdf';
 
             try {
-                if ($isNote) {
-                    $doc = json_decode($data, true);
-                    if (!isset($doc['paragraphs'])) {
-                        $lines = explode("\n", str_replace(["\r\n", "\r"], "\n", $data));
-                        $doc   = ['paragraphs' => array_map(
-                            fn($l) => ['text' => $l, 'align' => 'left', 'font' => 'Inter', 'size' => 14],
-                            $lines
-                        )];
-                    }
-                    $html = $this->renderView('library/note-pdf.html.twig', [
-                        'title'      => $baseName,
-                        'paragraphs' => $doc['paragraphs'],
-                    ]);
-                } else {
-                    // Word -> HTML via PhpWord
-                    $html = $this->wordToHtml($data, $name);
+                $doc = json_decode($data, true);
+                if (!isset($doc['paragraphs'])) {
+                    $lines = explode("\n", str_replace(["\r\n", "\r"], "\n", $data));
+                    $doc   = ['paragraphs' => array_map(
+                        fn($l) => ['text' => $l, 'align' => 'left', 'font' => 'Inter', 'size' => 14],
+                        $lines
+                    )];
                 }
+                $html = $this->renderView('library/note-pdf.html.twig', [
+                    'title'      => $baseName,
+                    'paragraphs' => $doc['paragraphs'],
+                ]);
 
                 $pdfBytes = $this->htmlToPdfBytes($html);
                 $response = new Response($pdfBytes);
@@ -702,7 +695,7 @@ class CourseDetailsController extends AbstractController
             }
         }
 
-        // Return original file
+        // Return original file (including Word docs as-is)
         $mime = $row['mimetype'] ?: 'application/octet-stream';
         $mimeMap = [
             '.pdf'  => 'application/pdf',
@@ -834,14 +827,23 @@ class CourseDetailsController extends AbstractController
 
         $canCheatSheet = false;
         try {
-            $parser   = new PdfParser();
-            $pdf      = $parser->parseContent($data);
-            $text     = $pdf->getText();
-            // Count only meaningful characters (non-whitespace printable)
-            $meaningful = preg_replace('/[\s\x00-\x1F\x7F]/u', '', $text ?? '');
-            $canCheatSheet = mb_strlen($meaningful) >= 200;
+            $parser = new PdfParser();
+            $pdf    = $parser->parseContent($data);
+            $text   = trim($pdf->getText() ?? '');
+
+            if ($text !== '') {
+                $system = 'You are a strict yes/no classifier. '
+                    . 'Decide whether the following document is EDUCATIONAL or TECHNICAL content that would be useful to condense into a study cheat sheet. '
+                    . 'Reply with a single word only: yes or no. '
+                    . 'Say YES only if the document is: a course, lecture notes, a textbook chapter, an exam or exercise sheet, a scientific paper, a technical manual, or similar educational/technical material. '
+                    . 'Say NO if the document is: a CV or resume, a cover letter, a personal profile, a business report, an invoice, a contract, administrative paperwork, a narrative story, a blank template, a cover page, or any document whose primary purpose is not to teach or explain a subject. '
+                    . 'When in doubt, say no.';
+
+                $answer = strtolower(trim($this->gemini->generate($system, $text)));
+                $canCheatSheet = str_starts_with($answer, 'yes');
+            }
         } catch (\Throwable) {
-            // If parsing fails we still confirm it's a PDF; cheat sheet is unavailable
+            // If parsing or AI call fails, cheat sheet button stays hidden
         }
 
         return $this->json(['isPdf' => true, 'canCheatSheet' => $canCheatSheet]);
@@ -903,12 +905,18 @@ SYS;
         $text = $result['text'];
 
         $system = <<<SYS
-You are an expert study-aid creator. Transform the document the user provides into a dense, exam-ready cheat sheet.
-Rules:
-- Use structured sections with clear headings (##).
-- Within each section use concise bullet points, short definitions, or key formulas — not prose paragraphs.
-- Prioritise: core concepts, definitions, key dates/numbers, formulas, comparisons, and anything likely to appear on an exam.
-- Strip all fluff; every line must earn its place.
+You are an expert study-aid creator. Your job is to extract and condense the actual KNOWLEDGE from the document into a dense, exam-ready cheat sheet.
+
+CRITICAL RULES:
+- You are summarising KNOWLEDGE, not listing questions or tasks. Never restate what the document asks — instead extract and present the underlying concepts, methods, and facts needed to answer them.
+- If the document is an exam or exercise sheet: derive the cheat sheet from the subject matter it covers, not from the questions themselves. E.g. if a question asks to prove k=1/2, your cheat sheet should state the fact/method, not repeat the question.
+- Use ## headings for major topics and ### for subtopics.
+- Use concise bullet points, short definitions, and formulas — never prose paragraphs.
+- For formulas: write them clearly and label what each variable means.
+- For theorems or properties: state them directly (e.g. "Unbiased estimator: E(T) = θ").
+- For tables or reference data (e.g. Z-tables): summarise how to read/use them, and include the most critical values.
+- Prioritise: definitions, formulas, properties, worked results, key values, decision rules.
+- Strip all fluff — every line must be something a student would write on a reference card.
 - Do not add information not present in the document.
 - Do not include a preamble — start immediately with the first section.
 SYS;
@@ -1091,11 +1099,15 @@ SYS;
     {
         $paragraphs = [];
         try {
-            $ext = pathinfo($filename, PATHINFO_EXTENSION);
+            // Detect actual format by checking file signature
+            // .docx files are ZIP archives starting with "PK"
+            $isDocx = str_starts_with($blob, 'PK');
+
+            $ext = $isDocx ? 'docx' : pathinfo($filename, PATHINFO_EXTENSION);
             $tmp = tempnam(sys_get_temp_dir(), 'phpdocx_') . '.' . $ext;
             file_put_contents($tmp, $blob);
 
-            $type   = strtolower($ext) === 'docx' ? 'Word2007' : 'MsDoc';
+            $type   = $isDocx ? 'Word2007' : 'MsDoc';
             $reader = WordIOFactory::createReader($type);
             $doc    = $reader->load($tmp);
             @unlink($tmp);
@@ -1138,10 +1150,10 @@ SYS;
                 }
             }
         } catch (\Throwable) {
-            // PhpWord failed — fall back to raw printable text extraction
-            $paragraphs = $this->textToParagraphs(
-                trim(preg_replace('/[^\x20-\x7E\n\r\t]/', '', $blob))
-            );
+            // PhpWord failed — do NOT fall back to raw binary extraction as that
+            // dumps ZIP/XML garbage into the editor.  Return a sentinel paragraph
+            // that the frontend can detect to show a read-only error message.
+            return [['text' => '__DOCX_PARSE_ERROR__', 'align' => 'left', 'font' => 'Inter', 'size' => 14]];
         }
 
         return $paragraphs ?: [['text' => '', 'align' => 'left', 'font' => 'Inter', 'size' => 14]];
@@ -1150,40 +1162,114 @@ SYS;
     /**
      * Convert a .docx/.doc blob to a self-contained HTML string
      * for rendering inside the preview modal iframe.
+     *
+     * Strategy (in order):
+     *   1. LibreOffice headless  — best fidelity, correct encoding
+     *   2. PhpWord text extraction → plain-HTML rebuild  — safe fallback
      */
     private function wordToHtml(string $blob, string $filename): string
     {
-        try {
-            $ext    = pathinfo($filename, PATHINFO_EXTENSION);
-            $tmp    = tempnam(sys_get_temp_dir(), 'phpdocx_') . '.' . $ext;
-            file_put_contents($tmp, $blob);
+        $isDocx = str_starts_with($blob, 'PK');
+        $ext    = $isDocx ? 'docx' : strtolower(pathinfo($filename, PATHINFO_EXTENSION) ?: 'docx');
 
-            $type   = strtolower($ext) === 'docx' ? 'Word2007' : 'MsDoc';
-            $reader = WordIOFactory::createReader($type);
-            $doc    = $reader->load($tmp);
-            @unlink($tmp);
+        // ── 1. LibreOffice headless conversion ────────────────────────────────
+        $loPath = $this->findLibreOffice();
+        if ($loPath !== null) {
+            $tmpDir  = sys_get_temp_dir() . '/lo_' . bin2hex(random_bytes(8));
+            $tmpFile = $tmpDir . '/input.' . $ext;
+            @mkdir($tmpDir, 0700, true);
+            file_put_contents($tmpFile, $blob);
 
-            $tmpOut = tempnam(sys_get_temp_dir(), 'phpdocx_out_') . '.html';
-            $writer = WordIOFactory::createWriter($doc, 'HTML');
-            $writer->save($tmpOut);
+            $cmd = sprintf(
+                '%s --headless --convert-to html --outdir %s %s 2>/dev/null',
+                escapeshellarg($loPath),
+                escapeshellarg($tmpDir),
+                escapeshellarg($tmpFile)
+            );
+            exec($cmd, $output, $exitCode);
 
-            $html = file_get_contents($tmpOut);
-            @unlink($tmpOut);
+            $htmlFile = $tmpDir . '/input.html';
+            if ($exitCode === 0 && is_file($htmlFile)) {
+                $raw = file_get_contents($htmlFile);
 
-            return '<!DOCTYPE html><html><head><meta charset="UTF-8">
-                <style>
-                    body { font-family: Inter, Arial, sans-serif; font-size: 13px;
+                // Clean up temp files
+                @unlink($tmpFile);
+                @unlink($htmlFile);
+                @rmdir($tmpDir);
+
+                // LibreOffice outputs a full HTML document; normalise charset
+                // and inject our viewport styles so it renders cleanly in the iframe.
+                $raw = preg_replace(
+                    '/<meta[^>]+charset[^>]+>/i',
+                    '<meta charset="UTF-8">',
+                    $raw
+                );
+                // Force UTF-8 decode in case LO wrote Latin-1 bytes
+                if (!mb_check_encoding($raw, 'UTF-8')) {
+                    $raw = mb_convert_encoding($raw, 'UTF-8', 'Windows-1252');
+                }
+
+                // Inject reset styles into the existing <head>
+                $injectCss = '<style>
+                    body { font-family: Inter, Arial, sans-serif !important; font-size: 13px !important;
                            line-height: 1.7; color: #111; padding: 24px 32px; margin: 0; }
                     table { border-collapse: collapse; width: 100%; margin: 12px 0; }
                     td, th { border: 1px solid #e5e7eb; padding: 6px 10px; }
                     img { max-width: 100%; height: auto; }
                     p { margin: 0 0 6px; }
-                </style></head><body>' . $html . '</body></html>';
+                </style>';
+                $raw = preg_replace('/<\/head>/i', $injectCss . '</head>', $raw, 1);
 
-        } catch (\Throwable) {
-            return '<html><body style="font-family:sans-serif;padding:32px;color:#6b7280;">
-                        <p>Preview not available for this file. Please use the Download button.</p>
-                    </body></html>';
+                return $raw;
+            }
+
+            // Clean up on failure too
+            @unlink($tmpFile);
+            @rmdir($tmpDir);
         }
+
+        // ── 2. PhpWord text-extraction fallback ───────────────────────────────
+        // We intentionally do NOT use PhpWord's HTML writer here — it emits
+        // mis-encoded bytes that cause the scrambled-text bug.  Instead we
+        // extract plain paragraphs and rebuild a clean HTML page ourselves.
+        $paragraphs = $this->wordToParagraphs($blob, $filename);
+
+        $lines = '';
+        foreach ($paragraphs as $p) {
+            $text  = htmlspecialchars((string) ($p['text'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $align = in_array($p['align'] ?? '', ['center', 'right', 'justify'], true) ? $p['align'] : 'left';
+            $lines .= '<p style="text-align:' . $align . '">' . ($text !== '' ? $text : '&nbsp;') . "</p>\n";
+        }
+
+        return '<!DOCTYPE html><html><head><meta charset="UTF-8">
+            <style>
+                body { font-family: Inter, Arial, sans-serif; font-size: 13px;
+                       line-height: 1.7; color: #111; padding: 24px 32px; margin: 0; }
+                p { margin: 0 0 6px; }
+                table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+                td, th { border: 1px solid #e5e7eb; padding: 6px 10px; }
+            </style></head><body>' . $lines . '</body></html>';
+    }
+
+    /**
+     * Return the path to a LibreOffice / soffice executable, or null if none found.
+     */
+    private function findLibreOffice(): ?string
+    {
+        $candidates = [
+            '/usr/bin/libreoffice',
+            '/usr/bin/soffice',
+            '/usr/local/bin/libreoffice',
+            '/usr/local/bin/soffice',
+            '/Applications/LibreOffice.app/Contents/MacOS/soffice', // macOS dev
+        ];
+
+        foreach ($candidates as $path) {
+            if (is_executable($path)) return $path;
+        }
+
+        // Last-resort: ask the shell (suppressed to avoid noise if missing)
+        $which = trim((string) shell_exec('which libreoffice 2>/dev/null || which soffice 2>/dev/null'));
+        return ($which !== '' && is_executable($which)) ? $which : null;
     }
 }

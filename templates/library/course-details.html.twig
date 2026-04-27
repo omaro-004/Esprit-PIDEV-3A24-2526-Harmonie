@@ -1119,6 +1119,12 @@
                         </svg>
                         Export PDF
                     </a>
+                    <a id="noteDownloadOrigBtn" class="btn btn-secondary" style="display:none;" title="Download original file">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Download
+                    </a>
                 </div>
                 <div class="note-footer-right">
                     {% if isOwner|default(false) %}
@@ -1690,7 +1696,8 @@
             const noteCloseBtn   = document.getElementById('noteCloseBtn');
             const noteRenameBtn  = document.getElementById('noteRenameBtn');
             const noteDeleteBtn  = document.getElementById('noteDeleteBtn');
-            const noteDownloadPdfBtn = document.getElementById('noteDownloadPdfBtn');
+            const noteDownloadPdfBtn  = document.getElementById('noteDownloadPdfBtn');
+            const noteDownloadOrigBtn = document.getElementById('noteDownloadOrigBtn');
 
             let noteFileId = null;
             let noteDirty  = false;
@@ -1736,15 +1743,47 @@
                 noteArea.innerHTML = '<p><br></p>';
                 noteDirty = false;
 
+                const isWord = /\.(docx?)$/i.test(name);
                 if (noteDownloadPdfBtn) {
-                    noteDownloadPdfBtn.href = exportUrl;
-                    noteDownloadPdfBtn.download = name.replace(/\.(rtfx|txt|md)$/i, '') + '.pdf';
-                    noteDownloadPdfBtn.style.display = '';
+                    if (isWord) {
+                        noteDownloadPdfBtn.style.display = 'none';
+                    } else {
+                        noteDownloadPdfBtn.href = exportUrl;
+                        noteDownloadPdfBtn.download = name.replace(/\.(rtfx|txt|md)$/i, '') + '.pdf';
+                        noteDownloadPdfBtn.style.display = '';
+                    }
+                }
+                if (noteDownloadOrigBtn) {
+                    if (isWord) {
+                        noteDownloadOrigBtn.href = downloadUrl;
+                        noteDownloadOrigBtn.download = name;
+                        noteDownloadOrigBtn.style.display = '';
+                    } else {
+                        noteDownloadOrigBtn.style.display = 'none';
+                    }
                 }
 
                 fetch(contentUrl).then(r => r.json()).then(doc => {
-                    if (doc.paragraphs) noteArea.innerHTML = paragraphsToHtml(doc.paragraphs);
-                    else noteArea.innerHTML = '<p><br></p>';
+                    if (doc.paragraphs) {
+                        // Detect the sentinel set when PhpWord can't parse a .docx/.doc
+                        const isParseError = doc.paragraphs.length === 1
+                            && doc.paragraphs[0].text === '__DOCX_PARSE_ERROR__';
+                        if (isParseError) {
+                            noteArea.contentEditable = 'false';
+                            noteArea.innerHTML = `<p style="color:#6b7280;font-style:italic;">
+                                This Word document could not be parsed for editing.<br>
+                                Use the <strong>Download</strong> button to open it in Microsoft Word or LibreOffice.
+                            </p>`;
+                            // Disable editing controls
+                            [saveBtn, saveAsNewBtn, noteBoldBtn, noteItalicBtn, noteUnderBtn,
+                                noteFontSel, noteSizeInp, noteFindBtn].forEach(el => { if (el) el.disabled = true; });
+                            noteAlignBtns.forEach(btn => btn.disabled = true);
+                        } else {
+                            noteArea.innerHTML = paragraphsToHtml(doc.paragraphs);
+                        }
+                    } else {
+                        noteArea.innerHTML = '<p><br></p>';
+                    }
                 }).catch(() => { noteArea.innerHTML = '<p><br></p>'; });
 
                 noteModal.classList.add('open');
@@ -1754,6 +1793,14 @@
                 noteModal.classList.remove('open');
                 noteFileId = null; noteDirty = false;
                 clearFindHighlights();
+                // Re-enable any controls that may have been disabled for a read-only docx
+                noteArea.contentEditable = 'true';
+                [saveBtn, saveAsNewBtn, noteBoldBtn, noteItalicBtn, noteUnderBtn,
+                    noteFontSel, noteSizeInp, noteFindBtn].forEach(el => { if (el) el.disabled = false; });
+                noteAlignBtns.forEach(btn => btn.disabled = false);
+                // Reset footer download buttons
+                if (noteDownloadPdfBtn)  noteDownloadPdfBtn.style.display  = 'none';
+                if (noteDownloadOrigBtn) noteDownloadOrigBtn.style.display = 'none';
             }
 
             function clearFindHighlights() {
