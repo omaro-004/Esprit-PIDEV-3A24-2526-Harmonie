@@ -174,16 +174,17 @@ html,body{font-family:var(--font-body);background:var(--surface);color:var(--ink
 @keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
 .fade{animation:fadeUp .4s ease both;}
 
-/* ── HERO PHOTO PLEIN ÉCRAN (style activités) ── */
+/* ── HERO PLEIN ÉCRAN — comme activités ── */
 .hero {
     position: relative;
     width: 100%;
-    min-height: 520px;
+    min-height: 100vh;      /* plein écran comme activités */
     display: flex;
     align-items: flex-end;
     overflow: hidden;
-    border-radius: 24px;
-    margin-bottom: 32px;
+    /* SUPPRIMER border-radius et margin-bottom */
+    border-radius: 0;
+    margin-bottom: 0;
 }
 
 .hero-bg-img {
@@ -221,8 +222,8 @@ html,body{font-family:var(--font-body);background:var(--surface);color:var(--ink
     bottom: 0;
     left: 0;
     right: 0;
-    height: 120px;
-    background: linear-gradient(to top, rgba(13,13,20,.6), transparent);
+    height: 180px;
+    background: linear-gradient(to top, rgba(13,13,20,.7), transparent);
     z-index: 2;
 }
 
@@ -230,118 +231,18 @@ html,body{font-family:var(--font-body);background:var(--surface);color:var(--ink
     position: relative;
     z-index: 3;
     width: 100%;
-    padding: 44px 48px;
+    max-width: 1180px;      /* aligné avec .page */
+    margin: 0 auto;
+    padding: 0 32px 60px;   /* padding bottom pour espace bas */
     display: grid;
     grid-template-columns: 1fr auto;
     align-items: flex-end;
-    gap: 24px;
+    gap: 32px;
 }
-
-.hero-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(255,255,255,.12);
-    border: 1px solid rgba(255,255,255,.2);
-    border-radius: 20px;
-    padding: 5px 14px;
-    font-size: 11px;
-    font-weight: 600;
-    color: rgba(255,255,255,.9);
-    letter-spacing: .5px;
-    text-transform: uppercase;
-    margin-bottom: 14px;
-}
-
-.hero-badge-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: #6BCB77;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50%       { opacity: .6; transform: scale(1.3); }
-}
-
-.hero-title {
-    font-family: var(--font-head);
-    font-size: 42px;
-    font-weight: 700;
-    color: white;
-    line-height: 1.1;
-    margin-bottom: 12px;
-}
-
-.hero-title em {
-    font-style: normal;
-    background: linear-gradient(135deg, #FFD93D, #FF6B6B);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.hero-sub {
-    color: rgba(255,255,255,.65);
-    font-size: 14px;
-    line-height: 1.6;
-    max-width: 420px;
-    margin-bottom: 24px;
-}
-
-.hero-actions-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.hero-stats-row {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-}
-
-.hstat {
-    background: rgba(255,255,255,.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,.15);
-    border-radius: 16px;
-    padding: 16px 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    min-width: 90px;
-}
-
-.hstat-icon { font-size: 22px; }
-
-.hstat-val {
-    font-family: var(--font-head);
-    font-size: 22px;
-    font-weight: 700;
-    color: white;
-    line-height: 1;
-}
-
-.hstat-lbl {
-    font-size: 10px;
-    font-weight: 600;
-    color: rgba(255,255,255,.6);
-    text-transform: uppercase;
-    letter-spacing: .5px;
-}
-
-.hstat.gold  { border-color: rgba(255,217,61,.3);  }
-.hstat.teal  { border-color: rgba(107,203,119,.3); }
-.hstat.rose  { border-color: rgba(255,107,107,.3); }
 
 .hero-scroll-hint {
     position: absolute;
-    bottom: 20px;
+    bottom: 24px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 4;
@@ -359,7 +260,7 @@ html,body{font-family:var(--font-body);background:var(--surface);color:var(--ink
 
 @keyframes bounce {
     0%, 100% { transform: translateX(-50%) translateY(0); }
-    50%       { transform: translateX(-50%) translateY(-6px); }
+    50%       { transform: translateX(-50%) translateY(-8px); }
 }
 </style>
 {% endblock %}
@@ -386,79 +287,79 @@ html,body{font-family:var(--font-body);background:var(--surface);color:var(--ink
         <div class="avatar">{{ app.user ? app.user.getUserPrenom()|first|upper : 'U' }}</div>
     </div>
 </header>
+    {# ══════════════ HERO PHOTO PLEIN ÉCRAN ══════════════ #}
+    <div class="hero fade">
+
+        {# Image de fond — forum/communauté — Unsplash gratuit #}
+        <img class="hero-bg-img"
+            src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1800&q=85&auto=format&fit=crop"
+            alt="Forum Communauté — Harmony"
+            loading="eager">
+
+        <div class="hero-overlay"></div>
+        <div class="hero-noise"></div>
+        <div class="hero-bottom-fade"></div>
+
+        {# Contenu : texte à gauche, stats + actions à droite #}
+        <div class="hero-content">
+
+            {# Gauche — titre et description #}
+            <div class="hero-left">
+                <div class="hero-badge">
+                    <span class="hero-badge-dot"></span>
+                    Forum & Communauté · Harmony
+                </div>
+                <h1 class="hero-title">
+                    💬 Forum &<br><em>Communauté</em>
+                </h1>
+                <p class="hero-sub">
+                    Pose tes questions, partage tes connaissances.<br>
+                    L'IA résume, traduit et analyse pour toi.
+                </p>
+                <div class="hero-actions-row">
+                    <button onclick="openImageModal()" class="btn-ai-hero">
+                        🎨 Générer une image IA
+                    </button>
+                    <a href="{{ path('forum_categorie_new') }}" class="btn-new-cat">
+                        ➕ Nouvelle catégorie
+                    </a>
+                </div>
+            </div>
+
+            {# Droite — statistiques #}
+            <div class="hero-stats-row">
+                <div class="hstat gold">
+                    <span class="hstat-icon">🗂️</span>
+                    <span class="hstat-val">{{ categories|length }}</span>
+                    <span class="hstat-lbl">Catégories</span>
+                </div>
+                <div class="hstat teal">
+                    <span class="hstat-icon">📝</span>
+                    <span class="hstat-val">{{ nb_posts }}</span>
+                    <span class="hstat-lbl">Posts</span>
+                </div>
+                <div class="hstat rose">
+                    <span class="hstat-icon">💬</span>
+                    <span class="hstat-val">{{ nb_commentaires }}</span>
+                    <span class="hstat-lbl">Commentaires</span>
+                </div>
+            </div>
+
+        </div>
+
+        {# Indicateur de défilement #}
+        <div class="hero-scroll-hint">
+            <span>▼</span>
+            <span>Défiler</span>
+        </div>
+
+    </div>
 
 
 <main class="page">
 
 
-    {# ══════════════ HERO PHOTO PLEIN ÉCRAN ══════════════ #}
-<div class="hero fade">
-
-    {# Image de fond — forum/communauté — Unsplash gratuit #}
-    <img class="hero-bg-img"
-         src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1800&q=85&auto=format&fit=crop"
-         alt="Forum Communauté — Harmony"
-         loading="eager">
-
-    <div class="hero-overlay"></div>
-    <div class="hero-noise"></div>
-    <div class="hero-bottom-fade"></div>
-
-    {# Contenu : texte à gauche, stats + actions à droite #}
-    <div class="hero-content">
-
-        {# Gauche — titre et description #}
-        <div class="hero-left">
-            <div class="hero-badge">
-                <span class="hero-badge-dot"></span>
-                Forum & Communauté · Harmony
-            </div>
-            <h1 class="hero-title">
-                💬 Forum &<br><em>Communauté</em>
-            </h1>
-            <p class="hero-sub">
-                Pose tes questions, partage tes connaissances.<br>
-                L'IA résume, traduit et analyse pour toi.
-            </p>
-            <div class="hero-actions-row">
-                <button onclick="openImageModal()" class="btn-ai-hero">
-                    🎨 Générer une image IA
-                </button>
-                <a href="{{ path('forum_categorie_new') }}" class="btn-new-cat">
-                    ➕ Nouvelle catégorie
-                </a>
-            </div>
-        </div>
-
-        {# Droite — statistiques #}
-        <div class="hero-stats-row">
-            <div class="hstat gold">
-                <span class="hstat-icon">🗂️</span>
-                <span class="hstat-val">{{ categories|length }}</span>
-                <span class="hstat-lbl">Catégories</span>
-            </div>
-            <div class="hstat teal">
-                <span class="hstat-icon">📝</span>
-                <span class="hstat-val">{{ nb_posts }}</span>
-                <span class="hstat-lbl">Posts</span>
-            </div>
-            <div class="hstat rose">
-                <span class="hstat-icon">💬</span>
-                <span class="hstat-val">{{ nb_commentaires }}</span>
-                <span class="hstat-lbl">Commentaires</span>
-            </div>
-        </div>
-
-    </div>
-
-    {# Indicateur de défilement #}
-    <div class="hero-scroll-hint">
-        <span>▼</span>
-        <span>Défiler</span>
-    </div>
-
-</div>
-
+   
 
    
 
