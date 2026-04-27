@@ -634,6 +634,50 @@
             flex-shrink: 0;
         }
 
+        /* ── SHARE MODAL ────────────────────────────────────────────────── */
+        .share-modal-backdrop {
+            position: fixed; inset: 0; z-index: 700;
+            background: rgba(0,0,0,.55); backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity .18s ease;
+        }
+        .share-modal-backdrop.open { opacity: 1; pointer-events: all; }
+        .share-modal {
+            background: var(--color-surface, #fff);
+            border-radius: 18px;
+            box-shadow: 0 24px 64px rgba(0,0,0,.22);
+            width: min(92vw, 420px);
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            transform: translateY(20px) scale(.97);
+            transition: transform .18s ease;
+        }
+        .share-modal-backdrop.open .share-modal { transform: translateY(0) scale(1); }
+        .share-modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 20px 22px 0;
+        }
+        .share-modal-header h2 {
+            font-size: 16px; font-weight: 700;
+            color: var(--color-text, #111); margin: 0;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .share-modal-body { padding: 18px 22px 22px; display: flex; flex-direction: column; gap: 18px; }
+        .share-link-row { display: flex; gap: 8px; }
+        .share-link-input {
+            flex: 1; border: 1.5px solid var(--color-border, #e5e7eb);
+            border-radius: 10px; padding: 9px 12px;
+            font-size: 13px; font-family: inherit;
+            color: var(--color-text, #111);
+            background: var(--color-surface-subtle, #f9fafb);
+            outline: none; min-width: 0;
+        }
+        .share-qr-wrap {
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+        }
+        .share-qr-wrap canvas { border-radius: 10px; border: 1px solid var(--color-border, #e5e7eb); }
+        .share-qr-label { font-size: 12px; color: var(--color-text-muted, #6b7280); }
+
         /* ── AI MODAL MARKDOWN ──────────────────────────────────────────── */
         .ai-modal-body { white-space: normal; }
         .ai-modal-body h1, .ai-modal-body h2, .ai-modal-body h3 {
@@ -742,35 +786,60 @@
                 {% if isOwner|default(false) %}
                     <div class="owner-actions">
 
-                        {# Publish toggle #}
-                        <div class="publish-row">
-                            <label for="publishToggle">Publish</label>
-                            <label class="toggle-switch" title="Publish to Library">
-                                <input type="checkbox" id="publishToggle" {{ course.is_published ? 'checked' }}>
-                                <span class="toggle-track"></span>
-                                <span class="toggle-thumb"></span>
-                            </label>
-                        </div>
-
-                        <div class="btn-divider"></div>
-
-                        {# Create note #}
-                        <button class="btn btn-secondary" id="createNoteBtn" type="button">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/>
-                            </svg>
-                            New note
-                        </button>
-
-                        {# Add files #}
-                        <button class="btn btn-primary" id="addFilesBtn" type="button">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
-                                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                            </svg>
-                            Add files
-                        </button>
-
+                    {# Publish toggle #}
+                    <div class="publish-row">
+                        <label for="publishToggle">Publish</label>
+                        <label class="toggle-switch" title="Publish to Library">
+                            <input type="checkbox" id="publishToggle" {{ course.is_published ? 'checked' }}>
+                            <span class="toggle-track"></span>
+                            <span class="toggle-thumb"></span>
+                        </label>
                     </div>
+
+                    <div class="btn-divider"></div>
+
+                    {# Create note #}
+                    <button class="btn btn-secondary" id="createNoteBtn" type="button">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                        </svg>
+                        New note
+                    </button>
+
+                    {# Add files #}
+                    <button class="btn btn-primary" id="addFilesBtn" type="button">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+                            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        Add files
+                    </button>
+
+                    <div class="btn-divider"></div>
+
+                    {# Share button #}
+                    <button class="btn btn-secondary" id="shareBtn" type="button">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                        </svg>
+                        Share
+                    </button>
+
+                    {# Download ZIP button #}
+                    <a class="btn btn-secondary" id="downloadZipBtn"
+                       href="/courses/{{ course.id }}/download-zip"
+                       title="Download full course as ZIP"
+                       aria-label="Download course as ZIP">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Download
+                    </a>
+
+                    </div>{# end .owner-actions #}
                 {% else %}
                     {# Save to Library toggle #}
                     <button class="btn btn-save-library {{ (isSaved|default(false)) ? 'saved' : '' }}"
@@ -798,6 +867,29 @@
                         </svg>
                         Report
                     </button>
+
+                    {# Share button #}
+                    <button class="btn btn-secondary" id="shareBtn" type="button">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                        </svg>
+                        Share
+                    </button>
+
+                    {# Download ZIP button #}
+                    <a class="btn btn-secondary" id="downloadZipBtn"
+                       href="/courses/{{ course.id }}/download-zip"
+                       title="Download full course as ZIP"
+                       aria-label="Download course as ZIP">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Download
+                    </a>
                 {% endif %}
             </div>
         </div>
@@ -1164,6 +1256,40 @@
                     Save as Note
                 </button>
                 <button class="btn btn-ghost" id="aiModalDismissBtn" type="button">Close</button>
+            </div>
+        </div>
+    </div>
+
+    {# ── SHARE MODAL ──────────────────────────────────────────────── #}
+    <div class="share-modal-backdrop" id="shareModal" role="dialog" aria-modal="true" aria-labelledby="shareModalTitle">
+        <div class="share-modal">
+            <div class="share-modal-header">
+                <h2 id="shareModalTitle">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                    </svg>
+                    Share Course
+                </h2>
+                <button class="btn btn-icon btn-ghost" id="shareModalCloseBtn" type="button" aria-label="Close">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="share-modal-body">
+                <div>
+                    <p style="font-size:13px;color:var(--color-text-muted);margin:0 0 10px;">Copy the link below to share this course:</p>
+                    <div class="share-link-row">
+                        <input class="share-link-input" id="shareLinkInput" type="text" readonly>
+                        <button class="btn btn-primary" id="shareCopyBtn" type="button">Copy</button>
+                    </div>
+                </div>
+                <div class="share-qr-wrap">
+                    <span class="share-qr-label">Or scan the QR code</span>
+                    <canvas id="shareQrCanvas"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -1798,12 +1924,83 @@
                 if (el._cb) { el.removeEventListener('click', el._cb); el._cb = null; }
             }
 
+            // ── DOWNLOAD ZIP ─────────────────────────────────────────────────────────
+            const downloadZipBtn = document.getElementById('downloadZipBtn');
+            if (downloadZipBtn) {
+                downloadZipBtn.addEventListener('click', () => {
+                    toast('Preparing download, please wait…', 'success');
+                });
+            }
+
+            // ── SHARE MODAL ──────────────────────────────────────────────────────────
+            (function initShare() {
+                const shareBtn       = document.getElementById('shareBtn');
+                const shareModal     = document.getElementById('shareModal');
+                const shareCloseBtn  = document.getElementById('shareModalCloseBtn');
+                const shareLinkInput = document.getElementById('shareLinkInput');
+                const shareCopyBtn   = document.getElementById('shareCopyBtn');
+                const shareQrCanvas  = document.getElementById('shareQrCanvas');
+
+                if (!shareBtn || !shareModal) return;
+
+                function openShareModal() {
+                    const url = window.location.href;
+                    shareLinkInput.value = url;
+                    shareModal.classList.add('open');
+
+                    if (!window._qrLoaded) {
+                        const s = document.createElement('script');
+                        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+                        s.onload = () => { window._qrLoaded = true; renderQr(url); };
+                        document.head.appendChild(s);
+                    } else {
+                        renderQr(url);
+                    }
+                }
+
+                function renderQr(url) {
+                    const ctx = shareQrCanvas.getContext('2d');
+                    ctx.clearRect(0, 0, shareQrCanvas.width, shareQrCanvas.height);
+                    const tmp = document.createElement('div');
+                    new QRCode(tmp, { text: url, width: 160, height: 160, correctLevel: QRCode.CorrectLevel.M });
+                    const generated = tmp.querySelector('canvas');
+                    if (generated) {
+                        shareQrCanvas.width  = generated.width;
+                        shareQrCanvas.height = generated.height;
+                        shareQrCanvas.getContext('2d').drawImage(generated, 0, 0);
+                    }
+                }
+
+                function closeShareModal() { shareModal.classList.remove('open'); }
+
+                shareBtn.addEventListener('click', openShareModal);
+                shareCloseBtn.addEventListener('click', closeShareModal);
+                shareModal.addEventListener('click', e => { if (e.target === shareModal) closeShareModal(); });
+
+                shareCopyBtn.addEventListener('click', async () => {
+                    try {
+                        await navigator.clipboard.writeText(shareLinkInput.value);
+                        shareCopyBtn.textContent = 'Copied!';
+                        setTimeout(() => shareCopyBtn.textContent = 'Copy', 2000);
+                    } catch {
+                        shareLinkInput.select();
+                        document.execCommand('copy');
+                        shareCopyBtn.textContent = 'Copied!';
+                        setTimeout(() => shareCopyBtn.textContent = 'Copy', 2000);
+                    }
+                });
+
+                // Expose closeShareModal for the global Escape handler
+                window._closeShareModal = closeShareModal;
+            })();
+
             // ── GLOBAL ESCAPE ────────────────────────────────────────────────
             document.addEventListener('keydown', e => {
                 if (e.key !== 'Escape') return;
                 closeModal('confirmModal');
                 closeModal2('previewModal');
                 closeReportModal();
+                if (window._closeShareModal) window._closeShareModal();
                 if (noteModal.classList.contains('open')) {
                     if (noteDirty && !confirm('Unsaved changes — close anyway?')) return;
                     closeNoteModal();

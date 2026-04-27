@@ -528,6 +528,102 @@ class CourseDetailsController extends AbstractController
         return $this->json(['ok' => true]);
     }
 
+    // ── DOWNLOAD COURSE AS ZIP ────────────────────────────────────────────────
+    // GET /courses/{id}/download-zip
+    // Fetches every file in the course, converts notes (.rtfx / .txt / .md)
+    // and Word docs (.docx / .doc) to PDF on the fly, then streams a .zip.
+    #[Route('/download-zip', name: '_download_zip', methods: ['GET'])]
+    public function downloadZip(int $id): Response
+    {
+        $course = $this->db->fetchAssociative(
+            'SELECT title FROM courses WHERE id = ?',
+            [$id]
+        );
+        if (!$course) throw $this->createNotFoundException('Course not found.');
+
+        $files = $this->db->fetchAllAssociative(
+            'SELECT id, originalname, mimetype, filedata FROM coursefile WHERE courseid = ? ORDER BY id',
+            [$id]
+        );
+
+        // Build zip in a temp file
+        $tmpZip = tempnam(sys_get_temp_dir(), 'course_zip_') . '.zip';
+        $zip    = new \ZipArchive();
+        if ($zip->open($tmpZip, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            return new Response('Could not create zip archive.', 500);
+        }
+
+        $usedNames = [];
+
+        foreach ($files as $file) {
+            $data = is_resource($file['filedata'])
+                ? stream_get_contents($file['filedata'])
+                : $file['filedata'];
+            $data = (string) $data;
+
+            $origName = $file['originalname'] ?? 'file';
+            $lower    = strtolower($origName);
+
+            // ── Convert notes / Word docs → PDF ───────────────────────────
+            $isNote = str_ends_with($lower, '.rtfx')
+                || str_ends_with($lower, '.txt')
+                || str_ends_with($lower, '.md');
+            $isWord = str_ends_with($lower, '.docx') || str_ends_with($lower, '.doc');
+
+            if ($isNote || $isWord) {
+                $baseName = preg_replace('/\.(rtfx|txt|md|docx|doc)$/i', '', $origName);
+                $zipName  = $this->uniqueZipName($usedNames, $baseName . '.pdf');
+
+                try {
+                    if ($isNote) {
+                        $doc = json_decode($data, true);
+                        if (!isset($doc['paragraphs'])) {
+                            $lines = explode("\n", str_replace(["\r\n", "\r"], "\n", $data));
+                            $doc   = ['paragraphs' => array_map(
+                                fn($l) => ['text' => $l, 'align' => 'left', 'font' => 'Inter', 'size' => 14],
+                                $lines
+                            )];
+                        }
+                        $html = $this->renderView('library/note-pdf.html.twig', [
+                            'title'      => $baseName,
+                            'paragraphs' => $doc['paragraphs'],
+                        ]);
+                    } else {
+                        // Word -> HTML via PhpWord
+                        $html = $this->wordToHtml($data, $lower);
+                    }
+
+                    $pdfBytes = $this->htmlToPdfBytes($html);
+                    $zip->addFromString($zipName, $pdfBytes);
+                } catch (\Throwable) {
+                    // Conversion failed — include raw file instead
+                    $rawName = $this->uniqueZipName($usedNames, $origName);
+                    $zip->addFromString($rawName, $data);
+                }
+            } else {
+                // All other files (PDF, images, spreadsheets, etc.) go in as-is
+                $zipName = $this->uniqueZipName($usedNames, $origName);
+                $zip->addFromString($zipName, $data);
+            }
+        }
+
+        $zip->close();
+
+        $zipBytes  = file_get_contents($tmpZip);
+        @unlink($tmpZip);
+
+        $safeTitle = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $course['title']);
+        $downloadName = $safeTitle . '.zip';
+
+        $response = new Response($zipBytes);
+        $response->headers->set('Content-Type', 'application/zip');
+        $response->headers->set(
+            'Content-Disposition',
+            $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $downloadName)
+        );
+        return $response;
+    }
+
     // ── SAVE TO LIBRARY (toggle) ──────────────────────────────────────────────
     #[Route('/save-to-library', name: '_save_library', methods: ['POST'])]
     public function saveToLibrary(int $id): JsonResponse
@@ -806,6 +902,69 @@ SYS;
 
 
     // ── PRIVATE HELPERS ───────────────────────────────────────────────────────
+
+    /**
+     * Convert an HTML string to PDF bytes using Snappy (wkhtmltopdf) with
+     * Dompdf as a fallback — mirrors the logic in exportNotePdf().
+     */
+    private function htmlToPdfBytes(string $html): string
+    {
+        try {
+            $pdfContent = $this->snappy->getOutputFromHtml($html, [
+                'encoding'         => 'UTF-8',
+                'print-media-type' => true,
+                'margin-top'       => 10,
+                'margin-bottom'    => 12,
+                'margin-left'      => 10,
+                'margin-right'     => 10,
+            ]);
+            if (is_string($pdfContent) && str_starts_with($pdfContent, '%PDF')) {
+                return $pdfContent;
+            }
+        } catch (\Throwable) {
+            // fall through to Dompdf
+        }
+
+        $options = new DompdfOptions();
+        $options->set('defaultFont', 'DejaVu Sans');
+        $options->setIsRemoteEnabled(true);
+
+        $dompdf = new Dompdf($options);
+        $dompdf->loadHtml($html, 'UTF-8');
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        return (string) $dompdf->output();
+    }
+
+    /**
+     * Return a filename that does not clash with already-used zip entry names.
+     * Appends " (1)", " (2)", … before the extension when a conflict exists.
+     *
+     * @param array<string,true> $used  Pass-by-reference map of already-used names.
+     */
+    private function uniqueZipName(array &$used, string $desired): string
+    {
+        $desired = ltrim($desired, '/\\');
+
+        if (!isset($used[$desired])) {
+            $used[$desired] = true;
+            return $desired;
+        }
+
+        $dot  = strrpos($desired, '.');
+        $base = $dot !== false ? substr($desired, 0, $dot) : $desired;
+        $ext  = $dot !== false ? substr($desired, $dot)    : '';
+
+        $counter = 1;
+        do {
+            $candidate = sprintf('%s (%d)%s', $base, $counter, $ext);
+            $counter++;
+        } while (isset($used[$candidate]));
+
+        $used[$candidate] = true;
+        return $candidate;
+    }
 
     /**
      * Convert a plain text string to our internal paragraph JSON format.
