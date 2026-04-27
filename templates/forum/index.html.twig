@@ -422,27 +422,73 @@ html,body{font-family:var(--font-body);background:var(--surface);color:var(--ink
 <main class="page">
 
 
-    {# ── HERO ── #}
-    <div class="hero fade">
-        <div>
-            <div class="hero-eyebrow">✨ Propulsé par l'IA</div>
-            <h1>Forum &<br>Communauté</h1>
-            <p>Pose tes questions, partage tes connaissances.<br>L'IA résume, traduit et analyse pour toi.</p>
-            <div class="hero-stats">
-                <div class="stat-pill">{{ categories|length }} <span>catégories</span></div>
-                <div class="stat-pill">🤖 <span>Groq LLaMA 3.3</span></div>
-                <div class="stat-pill">⚡ <span>Temps réel</span></div>
+    {# ══════════════ HERO PHOTO PLEIN ÉCRAN ══════════════ #}
+<div class="hero fade">
+
+    {# Image de fond — forum/communauté — Unsplash gratuit #}
+    <img class="hero-bg-img"
+         src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1800&q=85&auto=format&fit=crop"
+         alt="Forum Communauté — Harmony"
+         loading="eager">
+
+    <div class="hero-overlay"></div>
+    <div class="hero-noise"></div>
+    <div class="hero-bottom-fade"></div>
+
+    {# Contenu : texte à gauche, stats + actions à droite #}
+    <div class="hero-content">
+
+        {# Gauche — titre et description #}
+        <div class="hero-left">
+            <div class="hero-badge">
+                <span class="hero-badge-dot"></span>
+                Forum & Communauté · Harmony
+            </div>
+            <h1 class="hero-title">
+                💬 Forum &<br><em>Communauté</em>
+            </h1>
+            <p class="hero-sub">
+                Pose tes questions, partage tes connaissances.<br>
+                L'IA résume, traduit et analyse pour toi.
+            </p>
+            <div class="hero-actions-row">
+                <button onclick="openImageModal()" class="btn-ai-hero">
+                    🎨 Générer une image IA
+                </button>
+                <a href="{{ path('forum_categorie_new') }}" class="btn-new-cat">
+                    ➕ Nouvelle catégorie
+                </a>
             </div>
         </div>
-        <div class="hero-actions">
-            <button onclick="openImageModal()" class="btn-ai-hero">
-                🎨 Générer une image IA
-            </button>
-            <a href="{{ path('forum_categorie_new') }}" class="btn-new-cat">
-                ➕ Nouvelle catégorie
-            </a>
+
+        {# Droite — statistiques #}
+        <div class="hero-stats-row">
+            <div class="hstat gold">
+                <span class="hstat-icon">🗂️</span>
+                <span class="hstat-val">{{ categories|length }}</span>
+                <span class="hstat-lbl">Catégories</span>
+            </div>
+            <div class="hstat teal">
+                <span class="hstat-icon">📝</span>
+                <span class="hstat-val" id="statPosts">—</span>
+                <span class="hstat-lbl">Posts</span>
+            </div>
+            <div class="hstat rose">
+                <span class="hstat-icon">💬</span>
+                <span class="hstat-val" id="statComments">—</span>
+                <span class="hstat-lbl">Commentaires</span>
+            </div>
         </div>
+
     </div>
+
+    {# Indicateur de défilement #}
+    <div class="hero-scroll-hint">
+        <span>▼</span>
+        <span>Défiler</span>
+    </div>
+
+</div>
 
 
    
