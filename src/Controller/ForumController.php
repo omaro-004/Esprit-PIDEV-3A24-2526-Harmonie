@@ -257,11 +257,17 @@ public function suggestReply(
 
 
     #[Route('/forum', name: 'forum')]
-    public function index(EntityManagerInterface $em): Response
-    {
-        $categories = $em->getRepository(Categorie::class)->findBy([], ['nomCategorie' => 'ASC'], 50);
+    public function index(
+        EntityManagerInterface $em,
+        \App\Repository\PostRepository $postRepo,
+        \App\Repository\CommentaireRepository $comRepo
+    ): Response {
+        $categories = $em->getRepository(Categorie::class)->findAll();
+
         return $this->render('forum/index.html.twig', [
-            'categories' => $categories,
+            'categories'    => $categories,
+            'nb_posts'      => $postRepo->count([]),
+            'nb_commentaires' => $comRepo->count([]),
         ]);
     }
 
