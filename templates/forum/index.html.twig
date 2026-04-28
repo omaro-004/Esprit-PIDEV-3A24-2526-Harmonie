@@ -432,7 +432,180 @@ html,body{font-family:var(--font-body);background:var(--surface);color:var(--ink
 .hstat.gold  { border-color: rgba(255,217,61,.4);  }
 .hstat.teal  { border-color: rgba(107,203,119,.4); }
 .hstat.rose  { border-color: rgba(255,107,107,.4); }
+/* ── LAYOUT PRINCIPAL ── */
+.forum-layout {
+    display: grid;
+    grid-template-columns: 1fr 260px;
+    gap: 24px;
+    align-items: start;
+}
 
+/* ── SIDEBAR DROITE ── */
+.forum-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: sticky;
+    top: 80px;
+}
+
+/* Carte IA */
+.side-card-ai {
+    background: #1a0a3e;
+    border-radius: 16px;
+    padding: 22px;
+    border: 1px solid rgba(108,71,255,.3);
+    position: relative;
+    overflow: hidden;
+}
+.side-card-ai::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: rgba(108,71,255,.2);
+    pointer-events: none;
+}
+.ai-sidebar-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(108,71,255,.3);
+    border: 1px solid rgba(108,71,255,.4);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #c4b5fd;
+    margin-bottom: 12px;
+    width: fit-content;
+}
+.ai-sidebar-title {
+    font-family: var(--font-head);
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 6px;
+    line-height: 1.3;
+}
+.ai-sidebar-sub {
+    font-size: 12px;
+    color: rgba(255,255,255,.5);
+    line-height: 1.6;
+    margin-bottom: 14px;
+}
+.ai-examples-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+.ai-example-chip {
+    font-size: 11px;
+    color: rgba(255,255,255,.45);
+    padding: 6px 10px;
+    background: rgba(255,255,255,.06);
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,.08);
+    cursor: pointer;
+    transition: background .15s;
+}
+.ai-example-chip:hover {
+    background: rgba(255,255,255,.12);
+    color: rgba(255,255,255,.8);
+}
+.btn-ai-sidebar {
+    width: 100%;
+    padding: 11px;
+    background: linear-gradient(135deg, #6C47FF, #4B2FCC);
+    color: white;
+    border: none;
+    border-radius: 11px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-body);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: opacity .15s;
+}
+.btn-ai-sidebar:hover { opacity: .88; }
+
+/* Carte Ajouter catégorie */
+.side-card-add {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 22px;
+    border: 1.5px solid var(--border);
+}
+.add-card-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 11px;
+    background: var(--v3);
+    display: grid;
+    place-items: center;
+    font-size: 20px;
+    margin-bottom: 14px;
+}
+.add-card-title {
+    font-family: var(--font-head);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 6px;
+}
+.add-card-sub {
+    font-size: 12px;
+    color: var(--ink-muted);
+    line-height: 1.6;
+    margin-bottom: 14px;
+}
+.add-tips-list {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-bottom: 16px;
+}
+.add-tip-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--ink-mid);
+}
+.add-tip-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--v);
+    flex-shrink: 0;
+}
+.btn-add-sidebar {
+    width: 100%;
+    padding: 11px;
+    background: var(--v3);
+    color: var(--v);
+    border: 1.5px solid rgba(108,71,255,.2);
+    border-radius: 11px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: var(--font-body);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: all .15s;
+}
+.btn-add-sidebar:hover {
+    background: var(--v);
+    color: white;
+}
 
 </style>
 {% endblock %}
@@ -529,38 +702,107 @@ html,body{font-family:var(--font-body);background:var(--surface);color:var(--ink
    
 
 
-    {# ── GRILLE CATÉGORIES ── #}
-    <div class="section-header fade" style="animation-delay:.15s;">
-        <div class="section-title">📂 Catégories</div>
-        <div class="section-count">{{ categories|length }} espaces de discussion</div>
-    </div>
+    {# ── LAYOUT PRINCIPAL ── #}
+    <div class="forum-layout">
 
+        {# ── GAUCHE : CATÉGORIES ── #}
+        <div>
+            <div class="section-header fade" style="animation-delay:.15s;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div class="section-title">📂 Catégories</div>
+                    <span style="font-size:12px;color:var(--ink-muted);background:var(--v3);
+                                padding:3px 10px;border-radius:20px;font-weight:600;">
+                        {{ categories|length }} espaces
+                    </span>
+                </div>
+            </div>
 
-    <div class="cat-grid">
-        {% for cat in categories %}
-        <div class="cat-card fade" style="animation-delay:{{ loop.index * 0.05 }}s;">
-            <div class="cat-card-accent"></div>
-            <a href="{{ path('forum_posts', {id: cat.idCategorie}) }}" class="cat-card-body">
-                <div class="cat-icon-wrap">💬</div>
-                <div class="cat-name">{{ cat.nomCategorie }}</div>
-                {% if cat.description %}
-                    <div class="cat-desc">{{ cat.description }}</div>
-                {% endif %}
-                <div class="cat-meta">Voir les posts →</div>
-            </a>
-            <div class="cat-card-footer">
-                <a href="{{ path('forum_categorie_edit', {id: cat.idCategorie}) }}" class="btn-edit">✏️ Modifier</a>
-                <form method="POST" action="{{ path('forum_categorie_delete', {id: cat.idCategorie}) }}"
-                      onsubmit="return confirm('Supprimer cette catégorie ?');" style="display:inline;">
-                    <button type="submit" class="btn-delete">🗑 Supprimer</button>
-                </form>
+            <div class="cat-grid">
+                {% for cat in categories %}
+                <div class="cat-card fade" style="animation-delay:{{ loop.index * 0.05 }}s;">
+                    <div class="cat-card-accent"></div>
+                    <a href="{{ path('forum_posts', {id: cat.idCategorie}) }}" class="cat-card-body">
+                        <div class="cat-icon-wrap">💬</div>
+                        <div class="cat-name">{{ cat.nomCategorie }}</div>
+                        {% if cat.description %}
+                            <div class="cat-desc">{{ cat.description }}</div>
+                        {% endif %}
+                        <div class="cat-meta">Voir les posts →</div>
+                    </a>
+                    <div class="cat-card-footer">
+                        <a href="{{ path('forum_categorie_edit', {id: cat.idCategorie}) }}" class="btn-edit">✏️ Modifier</a>
+                        <form method="POST"
+                            action="{{ path('forum_categorie_delete', {id: cat.idCategorie}) }}"
+                            class="delete-form" style="display:inline;">
+                            <button type="button" class="btn-delete"
+                                onclick="openModal(this, 'Supprimer la catégorie ?', 'Tous les posts associés seront supprimés.')">
+                                🗑 Supprimer
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% else %}
+                <p style="color:var(--ink-muted);grid-column:1/-1;text-align:center;padding:40px;">
+                    Aucune catégorie — commence par en créer une !
+                </p>
+                {% endfor %}
             </div>
         </div>
-        {% else %}
-        <p style="color:var(--ink-muted);grid-column:1/-1;text-align:center;padding:40px;">
-            Aucune catégorie — commence par en créer une !
-        </p>
-        {% endfor %}
+
+        {# ── DROITE : SIDEBAR ── #}
+        <div class="forum-sidebar">
+
+            {# Carte Génération Image IA #}
+            <div class="side-card-ai">
+                <div class="ai-sidebar-badge">✨ Propulsé par l'IA</div>
+                <div class="ai-sidebar-title">Génère une image avec l'IA</div>
+                <div class="ai-sidebar-sub">
+                    Décris ce que tu veux voir et l'IA crée ton image en quelques secondes.
+                </div>
+                <div class="ai-examples-list">
+                    <div class="ai-example-chip" onclick="setPrompt('A peaceful zen garden at sunset')">
+                        🌸 "A zen garden at sunset"
+                    </div>
+                    <div class="ai-example-chip" onclick="setPrompt('Neural network visualization, colorful')">
+                        🧬 "Neural network visualization"
+                    </div>
+                    <div class="ai-example-chip" onclick="setPrompt('Mountain landscape with purple sky')">
+                        🏔️ "Mountain landscape, purple sky"
+                    </div>
+                </div>
+                <button onclick="openImageModal()" class="btn-ai-sidebar">
+                    🎨 Générer une image
+                </button>
+            </div>
+
+            {# Carte Nouvelle Catégorie #}
+            <div class="side-card-add">
+                <div class="add-card-icon">🗂️</div>
+                <div class="add-card-title">Nouvelle catégorie</div>
+                <div class="add-card-sub">
+                    Organise le forum en créant un espace dédié à un sujet qui t'intéresse.
+                </div>
+                <div class="add-tips-list">
+                    <div class="add-tip-item">
+                        <span class="add-tip-dot"></span>
+                        Choisis un nom clair et court
+                    </div>
+                    <div class="add-tip-item">
+                        <span class="add-tip-dot"></span>
+                        Ajoute une description utile
+                    </div>
+                    <div class="add-tip-item">
+                        <span class="add-tip-dot"></span>
+                        Invite la communauté à poster
+                    </div>
+                </div>
+                <a href="{{ path('forum_categorie_new') }}" class="btn-add-sidebar">
+                    ➕ Créer une catégorie
+                </a>
+            </div>
+
+        </div>
+
     </div>
 
 
