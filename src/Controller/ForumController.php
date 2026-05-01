@@ -78,7 +78,7 @@ public function suggestReply(
             }
 
 
-            $result = $sentimentService->analyze($commentaire->getContenu());
+            $result = $sentimentService->analyze($commentaire->getContenu() ?? '');
 
 
             return new JsonResponse($result);
