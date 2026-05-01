@@ -438,7 +438,8 @@ public function posts(
     if (!empty($allUserIds)) {
         $users = $em->createQueryBuilder()
             ->select('u')->from(\App\Entity\User::class, 'u')
-            ->where('u.userId IN (:ids)')->setParameter('ids', $allUserIds)
+            ->where('u.userId IN (:ids)')
+            ->setParameter('ids', $allUserIds, \Doctrine\DBAL\ArrayParameterType::INTEGER)
             ->getQuery()->getResult();
         foreach ($users as $u) {
             $usersMap[$u->getUserId()] = $u->getUserPrenom() . ' ' . $u->getUserNom();
