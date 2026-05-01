@@ -406,7 +406,8 @@ public function posts(
 
     // Tri par likes (après pagination — uniquement sur la page courante)
     if ($tri === 'likes') {
-        $postsArray = $posts;
+
+        $postsArray = iterator_to_array($posts);
         usort($postsArray, fn($a, $b) =>
             ($likesMap[$b->getIdPost()] ?? 0) <=> ($likesMap[$a->getIdPost()] ?? 0)
         );
