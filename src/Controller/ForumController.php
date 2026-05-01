@@ -32,38 +32,85 @@ use App\Repository\PostRepository;
 use App\Service\SentimentService;
 class ForumController extends AbstractController
 {
-    // ── Suggestion de réponse via Mistral AI ──────────────
-#[Route('/forum/post/{id}/suggest-reply', name: 'suggest_reply', methods: ['POST'])]
-public function suggestReply(
-    int $id,
-    PostRepository $postRepo,
-    CommentaireRepository $commentaireRepo,
-    MistralService $mistralService
-): JsonResponse {
-    try {
+    // Vérification automatique du post
+    #[Route('/forum/post/{id}/factcheck', name: 'forum_fact_check', methods: ['POST'])]
+    public function factCheck(
+        int $id,
+        PostRepository $postRepo,
+        FactCheckService $factCheck
+    ): JsonResponse {
         $post = $postRepo->find($id);
-        if (!$post) {
-            return new JsonResponse(['error' => 'Post introuvable'], 404);
-        }
+        if (!$post) return new JsonResponse(['error' => 'Post introuvable'], 404);
 
-        $commentaires = $commentaireRepo->findBy(
-            ['idPost' => $id],
-            ['dateCommentaire' => 'DESC'],
-            5  // derniers 5 commentaires
+        $result = $factCheck->checkPost(
+            $post->getTitre(),
+            $post->getContenu()
         );
 
-        $suggestion = $mistralService->suggestReply(
-            $post->getTitre() ?? '',
-            $post->getContenu() ?? '',
+        return new JsonResponse($result);
+    }
+
+    // Chat contextuel sur le post
+    #[Route('/forum/post/{id}/factcheck-chat', name: 'forum_fact_check_chat', methods: ['POST'])]
+    public function factCheckChat(
+        int $id,
+        Request $request,
+        PostRepository $postRepo,
+        CommentaireRepository $commentaireRepo,
+        FactCheckService $factCheck
+    ): JsonResponse {
+        $post = $postRepo->find($id);
+        if (!$post) return new JsonResponse(['error' => 'Post introuvable'], 404);
+
+        $question = (string) $request->request->get('question', '');
+        if (empty(trim($question))) {
+            return new JsonResponse(['error' => 'Question vide'], 400);
+        }
+
+        $commentaires = $commentaireRepo->findBy(['idPost' => $id], ['dateCommentaire' => 'DESC'], 5);
+
+        $response = $factCheck->chatAboutPost(
+            $post->getTitre(),
+            $post->getContenu(),
+            $question,
             $commentaires
         );
 
-        return new JsonResponse(['suggestion' => $suggestion]);
-
-    } catch (\Exception $e) {
-        return new JsonResponse(['error' => $e->getMessage()], 500);
+        return new JsonResponse(['response' => $response]);
     }
-}
+
+        // ── Suggestion de réponse via Mistral AI ──────────────
+    #[Route('/forum/post/{id}/suggest-reply', name: 'suggest_reply', methods: ['POST'])]
+    public function suggestReply(
+        int $id,
+        PostRepository $postRepo,
+        CommentaireRepository $commentaireRepo,
+        MistralService $mistralService
+    ): JsonResponse {
+        try {
+            $post = $postRepo->find($id);
+            if (!$post) {
+                return new JsonResponse(['error' => 'Post introuvable'], 404);
+            }
+
+            $commentaires = $commentaireRepo->findBy(
+                ['idPost' => $id],
+                ['dateCommentaire' => 'DESC'],
+                5  // derniers 5 commentaires
+            );
+
+            $suggestion = $mistralService->suggestReply(
+                $post->getTitre() ?? '',
+                $post->getContenu() ?? '',
+                $commentaires
+            );
+
+            return new JsonResponse(['suggestion' => $suggestion]);
+
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
     // ── analyse du sentiment comment ──────────────────────────────
     #[Route('/forum/comment/{id}/sentiment', name: 'comment_sentiment', methods: ['POST'])]
     public function analyzeSentiment(
