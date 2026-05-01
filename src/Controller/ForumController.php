@@ -476,7 +476,7 @@ public function posts(
         // Ces variables ne sont plus nécessaires — KnpPaginator les gère
         // 'page'       => supprimé
         // 'totalPages' => supprimé
-        // 'total'      => supprimé
+        // 'total'      => $total,
     ]);
 }
     // ════════════════════════════════════════════════

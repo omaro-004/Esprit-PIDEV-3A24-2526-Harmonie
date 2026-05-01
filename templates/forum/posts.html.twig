@@ -338,7 +338,7 @@ html,body{font-family:var(--font-body);background:var(--purple-ghost);color:var(
         {% endif %}
         <div class="cat-hero-stats">
             <div class="cat-stat">
-                <div class="cat-stat-val">{{ total }}</div>
+                <div class="cat-stat-val">{{ posts|length }}</div>
                 <div class="cat-stat-lbl">Posts</div>
             </div>
             <div class="cat-stat">
@@ -874,7 +874,3 @@ function resetImageModal(){document.getElementById('imageResult').style.display=
 })();
 </script>
 {% endblock %}
-
-
-//---------------------------------------------------------------------------------------------------------------------
-
