@@ -80,12 +80,15 @@ services:
         arguments:
             $apiKey: '%env(GROQ_API_KEY)%'
 
-
-    # ----------------------sentiment -------------------------------------------
+# ----------------------sentiment -------------------------------------------
     App\Service\SentimentService:
         arguments:
             $apiKey: '%env(GROQ_API_KEY)%'
 #--------------------suggest titre -----------------
     App\Service\MistralService:
+        arguments:
+            $apiKey: '%env(GROQ_API_KEY)%'
+#--------------------FactCheckService -----------------
+    App\Service\FactCheckService:
         arguments:
             $apiKey: '%env(GROQ_API_KEY)%'
