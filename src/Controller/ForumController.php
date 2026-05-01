@@ -672,7 +672,7 @@ public function editPost(
     if (!$post) throw $this->createNotFoundException();
 
 
-    $contenu = trim($request->request->get('contenu', ''));
+    $contenu = trim((string) $request->request->get('contenu', ''));
     // ── Validation longueur ──
     if (strlen($contenu) < 3) {
         // Flash avec l'ID du post pour afficher l'erreur sur le bon post
