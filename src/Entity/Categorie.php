@@ -20,14 +20,14 @@ class Categorie
     min: 3, minMessage: "Le nom doit contenir au moins {{ limit }} caractères.",
     max: 100, maxMessage: "Le nom ne peut pas dépasser {{ limit }} caractères."
     )]
-    private ?string $nomCategorie = '';
+    private string $nomCategorie = '';
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Assert\Length(max: 500, maxMessage: "La description ne peut pas dépasser {{ limit }} caractères.")]
     private ?string $description = null;
 
     #[ORM\Column(name: "date_creation", type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $dateCreation;
+    private \DateTimeInterface $dateCreation;
 
     public function getIdCategorie(): ?int { return $this->idCategorie; }
 
@@ -37,6 +37,6 @@ class Categorie
     public function getDescription(): ?string { return $this->description; }
     public function setDescription(?string $v): static { $this->description = $v; return $this; }
 
-    public function getDateCreation(): ?\DateTimeInterface { return $this->dateCreation; }
-    public function setDateCreation(\DateTimeInterface $v): static { $this->dateCreation = $v; return $this; }
+    public function getDateCreation(): \DateTimeInterface { return $this->dateCreation; }
+    protected function setDateCreation(\DateTimeInterface $v): static { $this->dateCreation = $v; return $this; }
 }
