@@ -53,8 +53,8 @@ public function suggestReply(
         );
 
         $suggestion = $mistralService->suggestReply(
-            $post->getTitre(),
-            $post->getContenu(),
+            $post->getTitre() ?? '',
+            $post->getContenu() ?? '',
             $commentaires
         );
 
