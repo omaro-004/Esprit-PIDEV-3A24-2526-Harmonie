@@ -1,6 +1,5 @@
 parameters:
     level: 8
-    memory_limit: 512M
     paths:
         - src/Controller/ForumController.php
         - src/Service/SummaryService.php

@@ -328,24 +328,6 @@ public function editCategorie(int $id, Request $request, EntityManagerInterface 
         if ($cat) { $em->remove($cat); $em->flush(); }
         return $this->redirectToRoute('forum');
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     // ════════════════════════════════════════════════
     //  POSTS — avec recherche, tri, pagination
     // ════════════════════════════════════════════════
