@@ -709,6 +709,7 @@ public function editPost(
 }
 
 
+
     #[Route('/forum/comment/{id}/edit', name: 'forum_comment_edit', methods: ['GET','POST'])]
 public function editComment(int $id, Request $request, EntityManagerInterface $em): Response
 {
