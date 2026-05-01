@@ -262,7 +262,7 @@ public function suggestReply(
         \App\Repository\PostRepository $postRepo,
         \App\Repository\CommentaireRepository $comRepo
     ): Response {
-        $categories = $em->getRepository(Categorie::class)->findAll();
+        $categories = $em->getRepository(Categorie::class)->findBy([], ['dateCreation' => 'ASC'], 50);
 
         return $this->render('forum/index.html.twig', [
             'categories'    => $categories,
