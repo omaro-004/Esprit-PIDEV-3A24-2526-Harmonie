@@ -145,8 +145,8 @@ public function suggestReply(
         Request $request,
         ImageGen $imageGenerator
     ): JsonResponse {
-        $prompt = trim($request->request->get('prompt', ''));
-        $style  = trim($request->request->get('style', ''));
+        $prompt = trim((string) $request->request->get('prompt', ''));
+        $style  = trim((string) $request->request->get('style', ''));
 
 
         if (empty($prompt)) {
