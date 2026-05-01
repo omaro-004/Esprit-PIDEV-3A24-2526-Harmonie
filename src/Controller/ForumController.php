@@ -348,8 +348,8 @@ public function posts(
 
 
     // ── Paramètres GET ──
-    $search = trim($request->query->get('search', ''));
-    $tri    = $request->query->get('tri', 'date_desc');
+    $search = trim((string) $request->query->get('search', ''));
+    $tri    = (string) $request->query->get('tri', 'date_desc');
 
 
     // ── Construction de la requête Doctrine (QueryBuilder) ──
