@@ -305,8 +305,6 @@ html,body{font-family:var(--font-body);background:var(--purple-ghost);color:var(
 </style>
 
 {% endblock %}
-
-
 {% block body %}
 <header class="topbar">
     <a href="{{ path('homepage') }}" class="topbar-logo">
@@ -323,302 +321,562 @@ html,body{font-family:var(--font-body);background:var(--purple-ghost);color:var(
         <a href="{{ path('library') }}"    class="nav-link">📖 Library</a>
     </nav>
     <div class="topbar-right">
-        <button class="logout-btn">🚪 Déconnexion</button>
-        <div class="avatar">{{ app.user ? app.user.getUserPrenom()|first|upper : 'U' }}</div>
+        <a href="{{ path('app_logout') }}" class="logout-btn">🚪 Déconnexion</a>
+        <div class="avatar">{{ app.user ? app.user.userPrenom|first|upper : 'U' }}</div>
     </div>
 </header>
 
+{# ── CAT HERO PLEINE LARGEUR ── #}
+<div class="cat-hero">
+    <div class="cat-hero-left">
+        <div class="cat-hero-badge">
+            📂 Forum › {{ categorie.nomCategorie }}
+        </div>
+        <h1 class="cat-hero-title">{{ categorie.nomCategorie }}</h1>
+        {% if categorie.description %}
+            <div class="cat-hero-desc">{{ categorie.description }}</div>
+        {% endif %}
+        <div class="cat-hero-stats">
+            <div class="cat-stat">
+                <div class="cat-stat-val">{{ total }}</div>
+                <div class="cat-stat-lbl">Posts</div>
+            </div>
+            <div class="cat-stat">
+                <div class="cat-stat-val">
+                    {% set totalCom = 0 %}
+                    {% for pid, coms in commentairesMap %}
+                        {% set totalCom = totalCom + coms|length %}
+                    {% endfor %}
+                    {{ totalCom }}
+                </div>
+                <div class="cat-stat-lbl">Commentaires</div>
+            </div>
+            <div class="cat-stat">
+                <div class="cat-stat-val">
+                    {% set totalLikes = 0 %}
+                    {% for pid, nb in likesMap %}
+                        {% set totalLikes = totalLikes + nb %}
+                    {% endfor %}
+                    {{ totalLikes }}
+                </div>
+                <div class="cat-stat-lbl">Likes</div>
+            </div>
+        </div>
+    </div>
+    <div class="cat-hero-right">
+        <a href="{{ path('forum_post_new', {idCat: categorie.idCategorie}) }}"
+           class="btn-hero-primary">
+            ✏️ Rédiger un post
+        </a>
+        <a href="{{ path('forum') }}" class="btn-hero-secondary">
+            ← Retour aux catégories
+        </a>
+    </div>
+</div>
 
-<main class="page">
+{# ── CONTENU PRINCIPAL ── #}
+<div class="page-wrapper">
 
-
+    {# Breadcrumb #}
     <div class="breadcrumb fade">
         <a href="{{ path('forum') }}">💬 Forum</a>
         <span>›</span>
         <span>{{ categorie.nomCategorie }}</span>
     </div>
 
+    {# ── LAYOUT 2 COLONNES ── #}
+    <div class="main-layout">
 
-    <div class="cat-header fade">
+        {# ── GAUCHE : POSTS ── #}
         <div>
-            <h1>{{ categorie.nomCategorie }}</h1>
-            {% if categorie.description %}<p>{{ categorie.description }}</p>{% endif %}
-        </div>
-        <a href="{{ path('forum_post_new', {idCat: categorie.idCategorie}) }}" class="btn-new-post">
-            ✏️ Nouveau post
-        </a>
-    </div>
-
-
-   
-
-
-    {# ── TOOLBAR ── #}
-    <form method="GET" action="{{ path('forum_posts', {id: categorie.idCategorie}) }}">
-        <div class="toolbar fade" style="animation-delay:.1s;">
-            <div class="search-wrap">
-                <span class="search-icon">🔍</span>
-                <input type="text" name="search" class="search-input"
-                       placeholder="Rechercher dans les posts..."
-                       value="{{ search }}">
-            </div>
-            <button type="submit" class="search-btn">Rechercher</button>
-            <div class="tri-group">
-                <a href="{{ path('forum_posts', {id: categorie.idCategorie, tri: 'date_desc', search: search}) }}"
-                   class="btn-tri {{ tri == 'date_desc' ? 'active' }}">🕐 Récent</a>
-                <a href="{{ path('forum_posts', {id: categorie.idCategorie, tri: 'date_asc', search: search}) }}"
-                   class="btn-tri {{ tri == 'date_asc' ? 'active' }}">🕐 Ancien</a>
-                <a href="{{ path('forum_posts', {id: categorie.idCategorie, tri: 'likes', search: search}) }}"
-                   class="btn-tri {{ tri == 'likes' ? 'active' }}">🔥 Populaire</a>
-            </div>
-        </div>
-    </form>
-
-
-    <div class="results-info">
-        {% if search %}
-            <strong style="color:var(--v);">{{ pagination.getTotalItemCount() }}</strong> résultat(s) pour "<strong>{{ search }}</strong>"
-        {% else %}
-            <strong style="color:var(--v);">{{ pagination.getTotalItemCount() }}</strong> post(s) au total
-        {% endif %}
-    </div>
-
-
-    {# ── LISTE POSTS ── #}
-    <div class="posts-list">
-    {% for post in posts %}
-        {% set postComments = commentairesMap[post.idPost] ?? [] %}
-        {% set liked = likedByMe[post.idPost] ?? false %}
-        {% set nbLikes = likesMap[post.idPost] ?? 0 %}
-
-
-        <div class="post-card fade" style="animation-delay:{{ loop.index * 0.06 }}s;">
-
-
-            <div class="post-author-row">
-                <div class="post-author-left">
-                    <div class="post-avatar">{{ (usersMap[post.userId] ?? 'U')|first|upper }}</div>
-                    <div>
-                        <div class="post-author-name">{{ usersMap[post.userId] ?? 'Utilisateur #' ~ post.userId }}</div>
-                        <div class="post-author-date">{{ post.dateCreation ? post.dateCreation|date('d/m/Y à H:i') : '' }}</div>
+            {# Toolbar recherche + tri #}
+            <form method="GET" action="{{ path('forum_posts', {id: categorie.idCategorie}) }}">
+                <div class="toolbar fade">
+                    <div class="search-wrap">
+                        <input type="text" name="search" class="search-input"
+                               placeholder="Rechercher dans les posts..."
+                               value="{{ search }}">
+                        <button type="submit" class="search-btn">Rechercher</button>
+                    </div>
+                    <div class="tri-group">
+                        <a href="{{ path('forum_posts', {id: categorie.idCategorie, tri: 'date_desc', search: search}) }}"
+                           class="btn-tri {{ tri == 'date_desc' ? 'active' }}">🕐 Récent</a>
+                        <a href="{{ path('forum_posts', {id: categorie.idCategorie, tri: 'date_asc', search: search}) }}"
+                           class="btn-tri {{ tri == 'date_asc' ? 'active' }}">📅 Ancien</a>
+                        <a href="{{ path('forum_posts', {id: categorie.idCategorie, tri: 'likes', search: search}) }}"
+                           class="btn-tri {{ tri == 'likes' ? 'active' }}">🔥 Populaire</a>
                     </div>
                 </div>
-                <div class="post-actions-top">
-                    <a href="{{ path('forum_post_edit', {id: post.idPost}) }}" class="btn-edit-sm">✏️ Modifier</a>
-                    <form method="POST" action="{{ path('forum_post_delete', {id: post.idPost}) }}"
-                          onsubmit="return confirm('Supprimer ce post ?');" style="display:inline;">
-                        <button type="submit" class="btn-del-sm">🗑</button>
-                    </form>
-                </div>
-            </div>
+            </form>
 
-
-            <div class="post-body">
-                <div class="post-title" id="titre-{{ post.idPost }}">{{ post.titre }}</div>
-                <div class="post-excerpt" id="contenu-{{ post.idPost }}">{{ post.contenu }}</div>
-
-
-                {% if post.imagePath %}
-                <div style="margin-top:12px;">
-                    <img src="{{ asset('uploads/posts/' ~ post.imagePath) }}" alt="Image du post"
-                         style="max-width:100%;max-height:280px;border-radius:12px;object-fit:cover;
-                                border:1px solid var(--border);">
-                </div>
-                {% endif %}
-
-
-                <div class="lang-badge" id="lang-badge-{{ post.idPost }}">
-                    <span class="lang-badge-pill">🌍 Traduit en <span id="lang-name-{{ post.idPost }}"></span></span>
-                    <button onclick="resetTranslation({{ post.idPost }}, '{{ post.titre|e('js') }}', '{{ post.contenu|e('js') }}')"
-                            style="font-size:11px;background:none;border:none;color:var(--ink-muted);
-                            cursor:pointer;text-decoration:underline;margin-left:6px;">Voir original</button>
-                </div>
-            </div>
-
-
-            {# ── FOOTER AVEC BOUTONS IA TAPE-À-L'ŒIL ── #}
-            <div class="post-footer">
-
-
-                {# Like #}
-                <button type="button" class="btn-like {{ liked ? 'liked' }}"
-                    data-post-id="{{ post.idPost }}" onclick="toggleLike(this)">
-                    {{ liked ? '❤️' : '🤍' }} <span class="like-count">{{ nbLikes }}</span>
-                </button>
-
-
-                {# Commentaires #}
-                <button type="button" class="btn-comment-toggle"
-                    onclick="toggleComments('comments-{{ post.idPost }}', this)">
-                    💬 {{ postComments|length }} commentaire(s)
-                </button>
-
-
-                {# ─── TRADUCTION — BOUTON IA JAUNE ─── #}
-                <div class="translate-dropdown" id="translate-wrap-{{ post.idPost }}">
-                    <button type="button" class="btn-ia-translate"
-                        onclick="toggleTranslateMenu({{ post.idPost }})"
-                        id="translate-btn-{{ post.idPost }}">
-                        <div class="ia-badge-dot"></div>
-                        🌍 Traduire
-                    </button>
-                    <div class="lang-menu" id="translate-menu-{{ post.idPost }}">
-                        <div style="font-size:10px;color:var(--ink-muted);padding:4px 8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">Langue</div>
-                        {% set langs = {'en':'🇬🇧 Anglais','ar':'🇸🇦 Arabe','es':'🇪🇸 Espagnol','de':'🇩🇪 Allemand','it':'🇮🇹 Italien'} %}
-                        {% for code, label in langs %}
-                        <button class="lang-btn" onclick="translatePost({{ post.idPost }}, '{{ code }}', '{{ label }}')">{{ label }}</button>
-                        {% endfor %}
-                    </div>
-                </div>
-
-
-                {# ─── RÉSUMÉ IA — BOUTON VERT ─── #}
-                {% if postComments|length > 0 %}
-                <button class="btn-ia-summary" onclick="resumeDiscussion({{ post.idPost }})">
-                    <div class="ia-badge-dot"></div>
-                    🤖 Résumé IA
-                </button>
-                {% endif %}
-
-
-            </div>
-
-
-            {# ── SECTION COMMENTAIRES ── #}
-            <div class="comments-section" id="comments-{{ post.idPost }}">
-
-
-                <form method="POST" action="{{ path('forum_comment_new', {idPost: post.idPost}) }}"
-                      class="add-comment-form" onsubmit="return validateComment(this)">
-                    <div class="add-comment-avatar">{{ app.user ? app.user.getUserPrenom()|first|upper : 'U' }}</div>
-                    <div class="add-comment-right">
-                        <textarea name="contenu" class="add-comment-input"
-                            placeholder="Rejoindre la conversation…" rows="2"></textarea>
-                        {# ── BOUTON SUGGESTION MISTRAL ── #}
-                        <div class="add-comment-actions" style="display:flex;align-items:center;gap:8px;">
-                            <button type="button"
-                                    onclick="suggestReply({{ post.idPost }})"
-                                    id="suggest-btn-{{ post.idPost }}"
-                                    style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;
-                                        background:linear-gradient(135deg,rgba(14,165,233,.15),rgba(14,165,233,.25));
-                                        color:#0369a1;border:1.5px solid rgba(14,165,233,.4);
-                                        border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;
-                                        transition:all .2s;font-family:var(--font-body);"
-                                    title="Générer une réponse avec Mistral AI">
-                                <div style="width:6px;height:6px;background:currentColor;border-radius:50%;
-                                            animation:pulse-dot 1.5s ease-in-out infinite;"></div>
-                                🧠 Mistral — Suggérer une réponse
-                            </button>
-                            <button type="submit" class="btn-send-comment">💬 Commenter</button>
-                        </div>
-                    </div>
-                </form>
-
-
-                <div class="comments-divider"></div>
-
-
-                {% if postComments is empty %}
-                    <div class="no-comments">Aucun commentaire — sois le premier ! 👋</div>
+            <div class="results-info">
+                {% if search %}
+                    <strong>{{ pagination.getTotalItemCount() }}</strong> résultat(s) pour "<strong>{{ search }}</strong>"
                 {% else %}
-                    {% for c in postComments %}
-                    <div class="comment-row">
-                        <div class="comment-thread-line"></div>
-                        <div class="comment-main">
-                            <div class="comment-header">
-                                <div class="comment-avatar">{{ (usersMap[c.userId] ?? 'U')|first|upper }}</div>
-                                <span class="comment-author">{{ usersMap[c.userId] ?? 'Utilisateur #' ~ c.userId }}</span>
-                                <span class="comment-date">• {{ c.dateCommentaire ? c.dateCommentaire|date('d/m/Y à H:i') : '' }}</span>
+                    <strong>{{ pagination.getTotalItemCount() }}</strong> post(s) au total
+                {% endif %}
+            </div>
+
+            {# ── LISTE DES POSTS ── #}
+            <div class="posts-list">
+                {% for post in posts %}
+                {% set postComments = commentairesMap[post.idPost] ?? [] %}
+                {% set liked = likedByMe[post.idPost] ?? false %}
+                {% set nbLikes = likesMap[post.idPost] ?? 0 %}
+
+                <div class="post-card fade">
+                    <div class="post-card-inner">
+
+                        {# Auteur + actions #}
+                        <div class="post-header">
+                            <div class="post-author-left">
+                                <div class="post-avatar">
+                                    {{ (usersMap[post.userId] ?? 'U')|first|upper }}
+                                </div>
+                                <div>
+                                    <div class="post-author-name">
+                                        {{ usersMap[post.userId] ?? 'Utilisateur #' ~ post.userId }}
+                                    </div>
+                                    <div class="post-author-date">
+                                        {{ post.dateCreation ? post.dateCreation|date('d/m/Y à H:i') : '' }}
+                                    </div>
+                                </div>
                             </div>
-                            <div class="comment-body">{{ c.contenu }}</div>
-
-
-                            {# ─── ACTIONS : SENTIMENT VISIBLE + CRUD ─── #}
-                            <div class="comment-actions">
-                                <button class="btn-sentiment"
-                                        onclick="analyzeSentiment({{ c.idCommentaire }}, this)"
-                                        id="sentiment-btn-{{ c.idCommentaire }}"
-                                        title="Analyser le sentiment avec l'IA">
-                                    <div class="ia-badge-dot"></div>
-                                    😊 Sentiment IA
-                                </button>
-                                <span id="sentiment-result-{{ c.idCommentaire }}"></span>
-                                <a href="{{ path('forum_comment_edit', {id: c.idCommentaire}) }}" class="btn-comment-edit">✏️ Modifier</a>
-                                <form method="POST" action="{{ path('forum_comment_delete', {id: c.idCommentaire}) }}"
-                                      onsubmit="return confirm('Supprimer ?');" style="display:inline;">
-                                    <button type="submit" class="btn-comment-delete">🗑</button>
+                            <div class="post-actions-top">
+                                <a href="{{ path('forum_post_edit', {id: post.idPost}) }}"
+                                   class="btn-edit-sm">✏️ Modifier</a>
+                                <form method="POST"
+                                      action="{{ path('forum_post_delete', {id: post.idPost}) }}"
+                                      class="delete-form" style="display:inline;">
+                                    <button type="button" class="btn-del-sm"
+                                        onclick="openModal(this, 'Supprimer ce post ?', 'Le post et ses commentaires seront supprimés.')">
+                                        🗑
+                                    </button>
                                 </form>
                             </div>
                         </div>
-                    </div>
-                    {% endfor %}
 
+                        {# Titre + contenu #}
+                        <div class="post-title" id="titre-{{ post.idPost }}">{{ post.titre }}</div>
+                        <div class="post-excerpt" id="contenu-{{ post.idPost }}">{{ post.contenu }}</div>
 
-                    {# MODALE RÉSUMÉ dynamique #}
-                    <div class="resume-modal" id="resumeModal-{{ post.idPost }}"
-                         onclick="if(event.target===this) closeResumeModal({{ post.idPost }})">
-                        <div class="resume-modal-box">
-                            <div class="resume-modal-header">
-                                <div style="display:flex;align-items:center;gap:10px;">
-                                    <div style="width:36px;height:36px;background:rgba(255,255,255,.2);
-                                        border-radius:10px;display:grid;place-items:center;font-size:18px;">🤖</div>
-                                    <div>
-                                        <div style="font-family:'Clash Display',sans-serif;font-size:15px;font-weight:600;">Résumé IA de la discussion</div>
-                                        <div style="font-size:11px;opacity:.7;">Powered by Groq · LLaMA 3.3</div>
-                                    </div>
-                                </div>
-                                <button onclick="closeResumeModal({{ post.idPost }})"
-                                    style="background:rgba(255,255,255,.2);border:none;color:white;
-                                    border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:15px;">✕</button>
-                            </div>
-                            <div class="resume-modal-body" id="resumeContent-{{ post.idPost }}"></div>
-                            <div class="resume-modal-footer">
-                                <button onclick="closeResumeModal({{ post.idPost }})"
-                                    style="padding:8px 20px;border-radius:20px;border:none;
-                                    background:var(--v3);color:var(--v);font-weight:600;cursor:pointer;">
-                                    Fermer
+                        {# Image #}
+                        {% if post.imagePath %}
+                            <img src="{{ asset('uploads/posts/' ~ post.imagePath) }}"
+                                 alt="Image du post" class="post-image">
+                        {% endif %}
+
+                        {# Badge traduction #}
+                        <div id="lang-badge-{{ post.idPost }}" style="display:none;margin-bottom:10px;">
+                            <span style="font-size:11px;background:var(--purple-pale);color:var(--purple);
+                                         padding:3px 10px;border-radius:20px;font-weight:600;">
+                                🌍 Traduit en <span id="lang-name-{{ post.idPost }}"></span>
+                            </span>
+                            <button onclick="resetTranslation({{ post.idPost }}, '{{ post.titre|e('js') }}', '{{ post.contenu|e('js') }}')"
+                                    style="font-size:11px;background:none;border:none;
+                                           color:var(--text-muted);cursor:pointer;
+                                           text-decoration:underline;margin-left:6px;">
+                                Voir original
+                            </button>
+                        </div>
+
+                        {# Footer actions #}
+                        <div class="post-footer">
+                            <button type="button"
+                                class="pill pill-like {{ liked ? 'active' }}"
+                                data-post-id="{{ post.idPost }}"
+                                onclick="toggleLike(this)">
+                                {{ liked ? '❤️' : '🤍' }}
+                                <span class="like-count">{{ nbLikes }}</span>
+                            </button>
+
+                            <button type="button"
+                                class="pill pill-com"
+                                onclick="toggleComments('comments-{{ post.idPost }}', this)">
+                                💬 {{ postComments|length }} commentaire(s)
+                            </button>
+
+                            <div style="position:relative;display:inline-block;"
+                                 id="translate-wrap-{{ post.idPost }}">
+                                <button type="button" class="pill pill-trad"
+                                    onclick="toggleTranslateMenu({{ post.idPost }})">
+                                    🌍 Traduire
                                 </button>
+                                <div id="translate-menu-{{ post.idPost }}"
+                                     style="display:none;position:absolute;bottom:calc(100% + 8px);
+                                            left:0;background:white;border:1px solid var(--border);
+                                            border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.1);
+                                            padding:8px;z-index:100;min-width:160px;">
+                                    {% for code, label in {'en':'🇬🇧 Anglais','ar':'🇸🇦 Arabe','es':'🇪🇸 Espagnol','de':'🇩🇪 Allemand'} %}
+                                    <button onclick="translatePost({{ post.idPost }}, '{{ code }}', '{{ label }}')"
+                                            style="display:block;width:100%;text-align:left;
+                                                   padding:7px 10px;border:none;background:none;
+                                                   border-radius:8px;font-size:13px;color:var(--text);
+                                                   cursor:pointer;font-family:var(--font-body);"
+                                            onmouseover="this.style.background='var(--purple-pale)'"
+                                            onmouseout="this.style.background='none'">
+                                        {{ label }}
+                                    </button>
+                                    {% endfor %}
+                                </div>
                             </div>
+
+                            <span class="pill pill-ia">🤖 Résumé IA</span>
                         </div>
                     </div>
-                {% endif %}
+
+                    {# Section commentaires #}
+                    <div class="comments-section" id="comments-{{ post.idPost }}"
+                         style="display:none;padding:0 24px 20px;border-top:1px solid var(--purple-ghost);">
+                        <form method="POST"
+                              action="{{ path('forum_comment_new', {idPost: post.idPost}) }}"
+                              style="display:flex;gap:10px;align-items:flex-start;padding:16px 0 12px;"
+                              onsubmit="return validateComment(this)">
+                            <div style="width:32px;height:32px;border-radius:50%;background:var(--purple-soft);
+                                        color:white;font-size:12px;font-weight:700;display:grid;
+                                        place-items:center;flex-shrink:0;margin-top:2px;">
+                                {{ app.user ? app.user.userPrenom|first|upper : 'U' }}
+                            </div>
+                            <div style="flex:1;display:flex;flex-direction:column;gap:8px;">
+                                <textarea name="contenu"
+                                          style="width:100%;padding:10px 14px;border:1.5px solid var(--border);
+                                                 border-radius:10px;font-family:var(--font-body);font-size:13.5px;
+                                                 color:var(--text);background:var(--purple-ghost);outline:none;
+                                                 resize:none;min-height:60px;"
+                                          placeholder="Rejoindre la conversation..."></textarea>
+                                <div style="display:flex;justify-content:flex-end;">
+                                    <button type="submit"
+                                            style="padding:7px 16px;background:var(--purple);color:white;
+                                                   border:none;border-radius:8px;font-size:12px;
+                                                   font-weight:600;cursor:pointer;">
+                                        💬 Commenter
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                        {% if postComments is empty %}
+                            <div style="font-size:13px;color:var(--text-muted);
+                                        text-align:center;padding:16px 0;font-style:italic;">
+                                Aucun commentaire — sois le premier ! 👋
+                            </div>
+                        {% else %}
+                            {% for c in postComments %}
+                            <div style="display:flex;gap:10px;padding:10px 0;
+                                        border-bottom:1px solid var(--purple-ghost);">
+                                <div style="width:26px;height:26px;border-radius:50%;
+                                            background:var(--purple-soft);color:white;
+                                            font-size:10px;font-weight:700;display:grid;
+                                            place-items:center;flex-shrink:0;">
+                                    {{ (usersMap[c.userId] ?? 'U')|first|upper }}
+                                </div>
+                                <div style="flex:1;">
+                                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+                                        <span style="font-size:12px;font-weight:700;color:var(--text);">
+                                            {{ usersMap[c.userId] ?? 'Utilisateur #' ~ c.userId }}
+                                        </span>
+                                        <span style="font-size:11px;color:var(--text-muted);">
+                                            • {{ c.dateCommentaire ? c.dateCommentaire|date('d/m/Y à H:i') : '' }}
+                                        </span>
+                                    </div>
+                                    <div style="font-size:13.5px;color:var(--text-mid);line-height:1.65;margin-bottom:6px;">
+                                        {{ c.contenu }}
+                                    </div>
+                                    <div style="display:flex;gap:8px;">
+                                        <a href="{{ path('forum_comment_edit', {id: c.idCommentaire}) }}"
+                                           style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px;
+                                                  background:var(--purple-pale);color:var(--purple);border:none;
+                                                  border-radius:6px;font-size:11px;font-weight:600;text-decoration:none;">
+                                            ✏️ Modifier
+                                        </a>
+                                        <form method="POST"
+                                              action="{{ path('forum_comment_delete', {id: c.idCommentaire}) }}"
+                                              class="delete-form" style="display:inline;">
+                                            <button type="button"
+                                                onclick="openModal(this, 'Supprimer ce commentaire ?', 'Cette action est irréversible.')"
+                                                style="display:inline-flex;align-items:center;padding:3px 9px;
+                                                       background:#FEF2F2;color:#E05252;border:none;
+                                                       border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">
+                                                🗑
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div style="text-align:center;padding:60px 20px;color:var(--text-muted);">
+                    <div style="font-size:48px;">{{ search ? '🔍' : '💬' }}</div>
+                    <p style="margin-top:12px;">
+                        {{ search ? 'Aucun post trouvé pour "' ~ search ~ '"' : 'Aucun post dans cette catégorie.' }}
+                    </p>
+                    <a href="{{ path('forum_post_new', {idCat: categorie.idCategorie}) }}"
+                       style="display:inline-flex;align-items:center;gap:7px;margin-top:16px;
+                              padding:11px 20px;background:var(--purple);color:white;
+                              border-radius:11px;font-size:13px;font-weight:600;text-decoration:none;">
+                        ✏️ Rédiger le premier post
+                    </a>
+                </div>
+                {% endfor %}
             </div>
 
+            {# Pagination KnpPaginator #}
+            {{ knp_pagination_render(pagination) }}
+        </div>
+
+        {# ── DROITE : SIDEBAR ── #}
+        <div class="forum-sidebar">
+
+            {# Carte Nouveau Post #}
+            <div class="side-card-post">
+                <div class="side-badge">✍️ Contribuer</div>
+                <div class="side-title">Tu as quelque chose à partager ?</div>
+                <div class="side-sub">
+                    Pose une question ou partage une astuce avec la communauté de ce forum.
+                </div>
+                <div class="side-tips">
+                    <div class="side-tip">💡 Sois précis dans le titre</div>
+                    <div class="side-tip">📎 Tu peux ajouter une image</div>
+                    <div class="side-tip">🔍 Vérifie si le sujet existe déjà</div>
+                </div>
+                <a href="{{ path('forum_post_new', {idCat: categorie.idCategorie}) }}"
+                   class="btn-side-primary is-link">
+                    ✏️ Rédiger un nouveau post
+                </a>
+            </div>
+
+            {# Carte Génération Image IA #}
+            <div class="side-card-ai">
+                <div class="ai-icon-wrap">🎨</div>
+                <div class="ai-card-title">Génère une image IA</div>
+                <div class="ai-card-sub">
+                    Illustre ton post avec une image créée par l'intelligence artificielle en quelques secondes.
+                </div>
+                <button onclick="openImageModal()" class="btn-side-secondary">
+                    🎨 Générer une image
+                </button>
+            </div>
 
         </div>
-    {% else %}
-        <div class="empty-state fade">
-            <div style="font-size:48px;">{{ search ? '🔍' : '💬' }}</div>
-            <p>{{ search ? 'Aucun post trouvé pour "' ~ search ~ '"' : 'Aucun post dans cette catégorie.' }}</p>
-        </div>
-    {% endfor %}
     </div>
+</div>
 
+{# ── MODALE CONFIRMATION SUPPRESSION ── #}
+<div id="confirmModal" style="display:none;position:fixed;inset:0;z-index:1000;
+    background:rgba(28,23,51,.45);backdrop-filter:blur(4px);
+    align-items:center;justify-content:center;">
+    <div style="background:white;border-radius:20px;padding:36px 40px;
+                max-width:400px;width:90%;box-shadow:0 20px 60px rgba(106,90,205,.2);">
+        <div style="font-size:32px;text-align:center;margin-bottom:12px;">🗑️</div>
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;
+                    color:#1C1733;text-align:center;margin-bottom:8px;" id="modalTitle">
+            Supprimer ?
+        </div>
+        <div style="font-size:14px;color:#9590B8;text-align:center;margin-bottom:28px;"
+             id="modalMessage">Cette action est irréversible.</div>
+        <div style="display:flex;gap:12px;">
+            <button onclick="closeModal()"
+                style="flex:1;padding:11px;border-radius:10px;
+                       border:1.5px solid rgba(106,90,205,.2);
+                       background:white;color:#4A4570;font-size:14px;
+                       font-weight:600;cursor:pointer;">
+                Annuler
+            </button>
+            <button id="modalConfirmBtn"
+                style="flex:1;padding:11px;border-radius:10px;border:none;
+                       background:linear-gradient(135deg,#E05252,#c0392b);
+                       color:white;font-size:14px;font-weight:600;cursor:pointer;">
+                🗑 Supprimer
+            </button>
+        </div>
+    </div>
+</div>
 
-    {{ knp_pagination_render(pagination) }}
-
-
-    {# ── MODALE CONFIRMATION ── #}
-    <div id="confirmModal" class="modal-overlay">
-        <div class="modal-box">
-            <div style="font-size:32px;text-align:center;margin-bottom:12px;">🗑️</div>
-            <div style="font-family:'Clash Display',sans-serif;font-size:18px;font-weight:600;
-                color:var(--ink);text-align:center;margin-bottom:8px;" id="modalTitle">Supprimer ?</div>
-            <div style="font-size:13px;color:var(--ink-muted);text-align:center;margin-bottom:24px;" id="modalMessage">Cette action est irréversible.</div>
+{# ── MODALE IMAGE IA ── #}
+<div id="imageModal" style="display:none;position:fixed;inset:0;z-index:1000;
+    background:rgba(13,13,20,.7);backdrop-filter:blur(10px);
+    align-items:center;justify-content:center;">
+    <div style="background:white;border-radius:24px;padding:36px;max-width:520px;
+                width:90%;box-shadow:0 24px 60px rgba(106,90,205,.25);
+                max-height:90vh;overflow-y:auto;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+            <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#1C1733;">
+                🎨 Génération d'image IA
+            </div>
+            <button onclick="closeImageModal()"
+                    style="width:30px;height:30px;border-radius:50%;border:none;
+                           background:var(--purple-pale);color:var(--purple);cursor:pointer;">✕</button>
+        </div>
+        <textarea id="imagePrompt" rows="3" placeholder="Décris ton image en anglais..."
+                  style="width:100%;padding:11px 14px;border:1.5px solid var(--border);
+                         border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;
+                         color:#1C1733;outline:none;resize:vertical;box-sizing:border-box;
+                         margin-bottom:14px;"></textarea>
+        <button onclick="generateImage()" id="generateBtn"
+                style="width:100%;padding:12px;background:linear-gradient(135deg,#6C47FF,#4B2FCC);
+                       color:white;border:none;border-radius:11px;font-size:14px;font-weight:700;
+                       cursor:pointer;margin-bottom:12px;">🎨 Générer l'image</button>
+        <div id="imageLoading" style="display:none;text-align:center;padding:20px;">
+            <div style="font-size:32px;animation:spin 2s linear infinite;display:inline-block;">⚙️</div>
+            <div style="font-size:13px;color:var(--purple);margin-top:8px;">Génération en cours...</div>
+        </div>
+        <div id="imageError" style="display:none;background:#FEF2F2;border-radius:10px;
+             padding:12px;color:#E05252;font-size:13px;margin-bottom:12px;"></div>
+        <div id="imageResult" style="display:none;">
+            <img id="generatedImg" src="" style="width:100%;border-radius:12px;margin-bottom:12px;">
             <div style="display:flex;gap:10px;">
-                <button onclick="closeModal()" style="flex:1;padding:10px;border-radius:10px;
-                    border:1.5px solid var(--border);background:white;color:var(--ink-mid);
-                    font-size:13px;font-weight:600;cursor:pointer;">Annuler</button>
-                <button id="modalConfirmBtn" style="flex:1;padding:10px;border-radius:10px;border:none;
-                    background:linear-gradient(135deg,var(--accent),#c0392b);color:white;
-                    font-size:13px;font-weight:600;cursor:pointer;">🗑 Supprimer</button>
+                <a id="downloadBtn" href="#" download="harmony-ia.png"
+                   style="flex:1;padding:10px;background:var(--purple-pale);color:var(--purple);
+                          border-radius:10px;font-size:13px;font-weight:600;text-align:center;text-decoration:none;">
+                    💾 Télécharger
+                </a>
+                <button onclick="resetImageModal()"
+                        style="flex:1;padding:10px;background:#F7F5FD;color:#4A4570;
+                               border:1px solid var(--border);border-radius:10px;
+                               font-size:13px;font-weight:600;cursor:pointer;">
+                    🔄 Nouvelle
+                </button>
             </div>
         </div>
     </div>
+</div>
+
+<style>@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}</style>
+
+<script>
+// ── LIKE AJAX ──
+async function toggleLike(btn) {
+    const postId = btn.dataset.postId;
+    try {
+        const res  = await fetch(`/forum/post/${postId}/like`, {method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','Content-Type':'application/x-www-form-urlencoded'},body:'_token='});
+        const data = await res.json();
+        if (data.liked) { btn.classList.add('active'); btn.innerHTML = '❤️ <span class="like-count">'+data.count+'</span>'; }
+        else { btn.classList.remove('active'); btn.innerHTML = '🤍 <span class="like-count">'+data.count+'</span>'; }
+    } catch(e) { console.error(e); }
+}
+
+// ── TOGGLE COMMENTAIRES ──
+function toggleComments(id, btn) {
+    const s = document.getElementById(id);
+    const isOpen = s.style.display === 'block';
+    s.style.display = isOpen ? 'none' : 'block';
+}
+
+// ── VALIDATION COMMENTAIRE ──
+function validateComment(form) {
+    const ta = form.querySelector('textarea');
+    const old = form.querySelector('.comment-error-msg');
+    if (old) old.remove();
+    if (ta.value.trim().length < 3) {
+        ta.style.borderColor = '#E05252';
+        const err = document.createElement('div');
+        err.className = 'comment-error-msg';
+        err.style.cssText = 'color:#E05252;font-size:12px;font-weight:600;margin-top:6px;';
+        err.textContent = '⚠️ Le commentaire doit contenir au moins 3 caractères.';
+        ta.insertAdjacentElement('afterend', err);
+        return false;
+    }
+    ta.style.borderColor = '';
+    return true;
+}
+
+// ── TRADUCTION ──
+let pendingTrans = {};
+function toggleTranslateMenu(postId) {
+    const menu = document.getElementById('translate-menu-'+postId);
+    const isOpen = menu.style.display === 'block';
+    document.querySelectorAll('[id^="translate-menu-"]').forEach(m => m.style.display='none');
+    if (!isOpen) menu.style.display = 'block';
+}
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('[id^="translate-wrap-"]')) {
+        document.querySelectorAll('[id^="translate-menu-"]').forEach(m => m.style.display='none');
+    }
+});
+async function translatePost(postId, langCode, langLabel) {
+    document.getElementById('translate-menu-'+postId).style.display = 'none';
+    const fd = new FormData();
+    fd.append('lang', langCode);
+    const res  = await fetch(`/forum/post/${postId}/translate`, {method:'POST',body:fd});
+    const data = await res.json();
+    if (data.error) return;
+    document.getElementById('titre-'+postId).textContent   = data.titre;
+    document.getElementById('contenu-'+postId).textContent = data.contenu;
+    document.getElementById('lang-badge-'+postId).style.display = 'block';
+    document.getElementById('lang-name-'+postId).textContent = langLabel;
+}
+function resetTranslation(postId, titre, contenu) {
+    document.getElementById('titre-'+postId).textContent   = titre;
+    document.getElementById('contenu-'+postId).textContent = contenu;
+    document.getElementById('lang-badge-'+postId).style.display = 'none';
+}
+
+// ── MODALE SUPPRESSION ──
+let pendingForm = null;
+function openModal(btn, title, message) {
+    pendingForm = btn.closest('form');
+    document.getElementById('modalTitle').textContent   = title;
+    document.getElementById('modalMessage').textContent = message;
+    document.getElementById('confirmModal').style.display = 'flex';
+}
+function closeModal() {
+    document.getElementById('confirmModal').style.display = 'none';
+    pendingForm = null;
+}
+document.getElementById('modalConfirmBtn').addEventListener('click', function() {
+    if (pendingForm) pendingForm.submit();
+    closeModal();
+});
+document.getElementById('confirmModal').addEventListener('click', function(e) {
+    if (e.target===this) closeModal();
+});
+
+// ── IMAGE IA ──
+function openImageModal()  { document.getElementById('imageModal').style.display='flex'; }
+function closeImageModal() { document.getElementById('imageModal').style.display='none'; }
+document.getElementById('imageModal').addEventListener('click', function(e) { if(e.target===this) closeImageModal(); });
+async function generateImage() {
+    const prompt = document.getElementById('imagePrompt').value.trim();
+    if (!prompt) { showImgError('Merci de décrire l\'image.'); return; }
+    const btn = document.getElementById('generateBtn');
+    btn.disabled=true; btn.textContent='⏳ Génération...';
+    document.getElementById('imageLoading').style.display='block';
+    document.getElementById('imageResult').style.display='none';
+    document.getElementById('imageError').style.display='none';
+    try {
+        const fd=new FormData(); fd.append('prompt',prompt); fd.append('style','');
+        const res=await fetch('{{ path("forum_generate_image") }}',{method:'POST',body:fd});
+        const data=await res.json();
+        document.getElementById('imageLoading').style.display='none';
+        if(data.error){showImgError(data.error);resetImgBtn();return;}
+        const src='data:image/png;base64,'+data.image;
+        document.getElementById('generatedImg').src=src;
+        document.getElementById('downloadBtn').href=src;
+        document.getElementById('imageResult').style.display='block';
+        resetImgBtn();
+    } catch(e){document.getElementById('imageLoading').style.display='none';showImgError('Erreur réseau.');resetImgBtn();}
+}
+function showImgError(msg){const el=document.getElementById('imageError');el.textContent='❌ '+msg;el.style.display='block';}
+function resetImgBtn(){const b=document.getElementById('generateBtn');b.disabled=false;b.textContent='🎨 Générer l\'image';}
+function resetImageModal(){document.getElementById('imageResult').style.display='none';document.getElementById('imageError').style.display='none';document.getElementById('imagePrompt').value='';}
+
+// ── AUTO-OUVRIR COMMENTAIRES APRÈS ERREUR ──
+(function(){
+    const params=new URLSearchParams(window.location.search);
+    const openPost=params.get('open_post');
+    if(openPost){
+        const s=document.getElementById('comments-'+openPost);
+        if(s) s.style.display='block';
+    }
+})();
+</script>
+{% endblock %}
 
 
-</main>
-
+//---------------------------------------------------------------------------------------------------------------------
 
 <script>
 // ── LIKE ──
