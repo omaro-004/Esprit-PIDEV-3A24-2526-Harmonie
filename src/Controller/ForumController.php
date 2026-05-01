@@ -239,8 +239,8 @@ public function suggestReply(
 
 
         // Traduit le titre et le contenu séparément
-        $translatedTitre   = $translator->translate($post->getTitre(), 'fr', $targetLang);
-        $translatedContenu = $translator->translate($post->getContenu(), 'fr', $targetLang);
+        $translatedTitre   = $translator->translate($post->getTitre() ?? '', 'fr', (string) $targetLang);
+        $translatedContenu = $translator->translate($post->getContenu() ?? '', 'fr', (string) $targetLang);
 
 
         return new JsonResponse([
