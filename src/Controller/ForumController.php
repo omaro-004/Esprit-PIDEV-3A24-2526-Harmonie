@@ -424,7 +424,7 @@ public function posts(
 
 
     // ── Map userId => "Prénom Nom" ──
-    $userIds = array_unique(array_map(fn($p) => $p->getUserId(), $posts));
+    $userIds = array_unique(array_map(fn($p) => $p->getUserId(), (array) $posts));
     $allCommentUserIds = [];
     foreach ($commentairesMap as $comments) {
         foreach ($comments as $c) {
