@@ -585,7 +585,9 @@ public function editPost(
 ): Response {
     $post      = $em->getRepository(Post::class)->find($id);
     if (!$post) throw $this->createNotFoundException();
-    $categorie = $em->getRepository(Categorie::class)->find($post->getIdCategorie());
+    $idCat = $post->getIdCategorie();
+    if (!$idCat) throw $this->createNotFoundException('Catégorie introuvable');
+    $categorie = $em->getRepository(Categorie::class)->find($idCat);
 
 
     $form = $this->createForm(PostType::class, $post, ['attr' => ['novalidate' => 'novalidate']]);
