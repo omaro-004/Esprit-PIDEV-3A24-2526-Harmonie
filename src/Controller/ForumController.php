@@ -185,8 +185,8 @@ public function suggestReply(
         Request $request,
         SpellCheckService $spellCheck
     ): JsonResponse {
-        $text     = $request->request->get('text', '');
-        $language = $request->request->get('language', 'fr');
+        $text     = (string) $request->request->get('text', '');
+        $language = (string) $request->request->get('language', 'fr');
 
 
         // Sécurité — texte trop long
