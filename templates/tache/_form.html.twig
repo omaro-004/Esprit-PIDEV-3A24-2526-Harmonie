@@ -1,0 +1,24 @@
+{% form_theme form 'form_div_layout.html.twig' %}
+
+{% macro harmony_field(field) %}
+    <div class="harmony-field{% if field.vars.errors|length %} has-error{% endif %}">
+        {{ form_label(field) }}
+        {{ form_widget(field) }}
+        {{ form_errors(field) }}
+    </div>
+{% endmacro %}
+{% import _self as hf %}
+
+{{ form_start(form, { attr: { class: 'harmony-form' } }) }}
+    {{ form_errors(form) }}
+
+    <div class="harmony-form-section">
+        <h2 class="harmony-form-section-title">Informations</h2>
+        {{ hf.harmony_field(form.nom) }}
+        {{ hf.harmony_field(form.deadline) }}
+        {{ hf.harmony_field(form.notes) }}
+        {{ hf.harmony_field(form.statutTache) }}
+    </div>
+
+    {{ form_row(form.submit) }}
+{{ form_end(form) }}

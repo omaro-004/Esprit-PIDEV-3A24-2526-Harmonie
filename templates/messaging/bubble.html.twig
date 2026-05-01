@@ -1,0 +1,1243 @@
+{# ═══════════════════════════════════════════════════════════════════
+   HARMONY MESSAGING BUBBLE + AI ASSISTANT LAUNCHER
+   Injecté dans base.html.twig uniquement si user connecté
+   ═══════════════════════════════════════════════════════════════════ #}
+
+<style>
+    /* ── Variables (héritées du thème) ── */
+    :root {
+        --msg-purple:    #6A5ACD;
+        --msg-purple-dk: #4B3B9E;
+        --msg-pale:      #EDE8FA;
+        --msg-ghost:     #F7F5FD;
+        --msg-border:    rgba(106,90,205,.15);
+        --msg-text:      #1C1733;
+        --msg-muted:     #9590B8;
+        --msg-w:         360px;
+        --msg-h:         480px;
+    }
+
+    /* ── BULLE ── */
+    #msgBubble {
+        position: fixed;
+        bottom: 28px;
+        right: 28px;
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        background: var(--msg-purple);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 9000;
+        box-shadow: 0 6px 24px rgba(106,90,205,.45);
+        transition: transform .2s, box-shadow .2s;
+        user-select: none;
+    }
+    #msgBubble:hover { transform: scale(1.08); box-shadow: 0 8px 32px rgba(106,90,205,.55); }
+    #msgBubble svg   { width: 26px; height: 26px; }
+
+    /* Bulle clignote si message non lu */
+    #msgBubble.has-unread {
+        animation: bubblePulse 1.4s ease-in-out infinite;
+        background: #E05252;
+    }
+    @keyframes bubblePulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(224,82,82,.5); }
+        50%       { box-shadow: 0 0 0 12px rgba(224,82,82,0); }
+    }
+
+    /* Badge compteur non lus */
+    #msgBadge {
+        position: absolute;
+        top: -4px; right: -4px;
+        background: #E05252;
+        color: white;
+        border-radius: 50%;
+        min-width: 20px; height: 20px;
+        font-size: 11px; font-weight: 700;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 0 4px;
+        border: 2px solid white;
+        font-family: 'Inter', sans-serif;
+    }
+    #msgBadge.visible { display: flex; }
+
+    /* ── FENÊTRE PRINCIPALE ── */
+    #msgWindow {
+        position: fixed;
+        bottom: 96px;
+        right: 28px;
+        width: var(--msg-w);
+        height: var(--msg-h);
+        background: white;
+        border: 1px solid var(--msg-border);
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0,0,0,.18);
+        z-index: 8999;
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        font-family: 'Inter', sans-serif;
+        animation: slideUp .25s ease both;
+    }
+    #msgWindow.open { display: flex; }
+    @keyframes slideUp {
+        from { opacity:0; transform:translateY(20px) scale(.97); }
+        to   { opacity:1; transform:translateY(0)    scale(1);   }
+    }
+
+    /* ── HEADER FENÊTRE ── */
+    .msg-header {
+        background: var(--msg-purple);
+        color: white;
+        padding: 14px 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+    .msg-header-title {
+        font-family: 'Syne', sans-serif;
+        font-size: 15px;
+        font-weight: 700;
+        flex: 1;
+    }
+    .msg-header-close {
+        background: rgba(255,255,255,.2);
+        border: none; color: white;
+        width: 28px; height: 28px;
+        border-radius: 50%; cursor: pointer;
+        font-size: 16px; line-height: 1;
+        display: flex; align-items: center; justify-content: center;
+        transition: background .15s;
+    }
+    .msg-header-close:hover { background: rgba(255,255,255,.35); }
+    .msg-header-back {
+        background: rgba(255,255,255,.2);
+        border: none; color: white;
+        width: 28px; height: 28px;
+        border-radius: 50%; cursor: pointer;
+        font-size: 16px;
+        display: none; align-items: center; justify-content: center;
+        transition: background .15s;
+    }
+    .msg-header-back:hover { background: rgba(255,255,255,.35); }
+    .msg-header-back.visible { display: flex; }
+    .msg-header-avatar {
+        width: 32px; height: 32px; border-radius: 50%;
+        background: rgba(255,255,255,.3);
+        display: none; align-items: center; justify-content: center;
+        font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px;
+        overflow: hidden; flex-shrink: 0;
+    }
+    .msg-header-avatar.visible { display: flex; }
+    .msg-header-avatar img { width: 32px; height: 32px; object-fit: cover; border-radius: 50%; }
+
+    /* ── VUE LISTE CONVERSATIONS ── */
+    #msgViewList { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    #msgViewList.hidden { display: none; }
+
+    /* Barre de recherche */
+    .msg-search-wrap {
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--msg-border);
+        flex-shrink: 0;
+    }
+    .msg-search-input {
+        width: 100%;
+        padding: 8px 12px 8px 34px;
+        border: 1.5px solid var(--msg-border);
+        border-radius: 20px;
+        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+        outline: none;
+        background: var(--msg-ghost);
+        transition: border-color .15s;
+    }
+    .msg-search-input:focus { border-color: var(--msg-purple); background: white; }
+    .msg-search-icon {
+        position: absolute;
+        left: 22px; top: 50%;
+        transform: translateY(-50%);
+        font-size: 14px;
+        pointer-events: none;
+    }
+    .msg-search-container { position: relative; }
+
+    /* Suggestions de recherche */
+    #msgSearchResults {
+        background: white;
+        border: 1px solid var(--msg-border);
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0,0,0,.1);
+        margin-top: 6px;
+        max-height: 180px;
+        overflow-y: auto;
+        display: none;
+    }
+    #msgSearchResults.open { display: block; }
+    .msg-search-item {
+        display: flex; align-items: center; gap: 10px;
+        padding: 10px 12px;
+        cursor: pointer;
+        transition: background .12s;
+        border-radius: 10px;
+    }
+    .msg-search-item:hover { background: var(--msg-ghost); }
+    .msg-search-avatar {
+        width: 34px; height: 34px; border-radius: 50%;
+        background: var(--msg-purple);
+        color: white; font-weight: 700; font-size: 13px;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0; overflow: hidden;
+    }
+    .msg-search-avatar img { width: 34px; height: 34px; object-fit: cover; border-radius: 50%; }
+    .msg-search-name { font-size: 13.5px; font-weight: 600; color: var(--msg-text); }
+
+    /* Liste des conversations */
+    #msgConvList {
+        flex: 1;
+        overflow-y: auto;
+        padding: 4px 0;
+    }
+    .msg-conv-item {
+        display: flex; align-items: center; gap: 10px;
+        padding: 10px 14px;
+        cursor: pointer;
+        transition: background .12s;
+        border-bottom: 1px solid var(--msg-ghost);
+    }
+    .msg-conv-item:hover { background: var(--msg-ghost); }
+    .msg-conv-avatar {
+        width: 42px; height: 42px; border-radius: 50%;
+        background: var(--msg-purple);
+        color: white; font-family: 'Syne', sans-serif;
+        font-weight: 700; font-size: 16px;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0; overflow: hidden; position: relative;
+    }
+    .msg-conv-avatar img { width: 42px; height: 42px; object-fit: cover; border-radius: 50%; }
+    .msg-conv-info { flex: 1; min-width: 0; }
+    .msg-conv-name { font-size: 13.5px; font-weight: 600; color: var(--msg-text); }
+    .msg-conv-last { font-size: 12px; color: var(--msg-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .msg-conv-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+    .msg-conv-time { font-size: 11px; color: var(--msg-muted); }
+    .msg-unread-dot {
+        width: 18px; height: 18px; border-radius: 50%;
+        background: #E05252; color: white;
+        font-size: 10px; font-weight: 700;
+        display: flex; align-items: center; justify-content: center;
+    }
+
+    /* État vide */
+    .msg-empty {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--msg-muted);
+        font-size: 13px;
+    }
+    .msg-empty-icon { font-size: 40px; margin-bottom: 10px; }
+
+    /* ── VUE CHAT ── */
+    #msgViewChat { flex: 1; display: none; flex-direction: column; overflow: hidden; }
+    #msgViewChat.visible { display: flex; }
+
+    /* Zone messages */
+    #msgMessages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 14px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        background: var(--msg-ghost);
+    }
+
+    /* Bulles de messages */
+    .msg-bubble-wrap {
+        display: flex;
+        align-items: flex-end;
+        gap: 6px;
+    }
+    .msg-bubble-wrap.mine { flex-direction: row-reverse; }
+
+    .msg-bubble {
+        max-width: 72%;
+        padding: 8px 12px;
+        border-radius: 16px;
+        font-size: 13.5px;
+        line-height: 1.45;
+        word-break: break-word;
+    }
+    .msg-bubble-wrap.theirs .msg-bubble {
+        background: white;
+        border: 1px solid var(--msg-border);
+        color: var(--msg-text);
+        border-bottom-left-radius: 4px;
+    }
+    .msg-bubble-wrap.mine .msg-bubble {
+        background: var(--msg-purple);
+        color: white;
+        border-bottom-right-radius: 4px;
+    }
+
+    .msg-bubble-time {
+        font-size: 10px;
+        color: var(--msg-muted);
+        margin-top: 2px;
+        padding: 0 4px;
+    }
+    .msg-bubble-wrap.mine .msg-bubble-time { text-align: right; }
+
+    .msg-mini-avatar {
+        width: 26px; height: 26px; border-radius: 50%;
+        background: var(--msg-purple); color: white;
+        font-size: 10px; font-weight: 700;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0; overflow: hidden;
+    }
+    .msg-mini-avatar img { width: 26px; height: 26px; object-fit: cover; border-radius: 50%; }
+
+    /* Indicateur "en train d'écrire" */
+    .msg-typing {
+        display: none;
+        padding: 6px 14px;
+        font-size: 12px;
+        color: var(--msg-muted);
+        font-style: italic;
+    }
+
+    /* Zone de saisie */
+    .msg-input-wrap {
+        padding: 10px 12px;
+        border-top: 1px solid var(--msg-border);
+        display: flex;
+        gap: 8px;
+        align-items: flex-end;
+        background: white;
+        flex-shrink: 0;
+    }
+    .msg-input {
+        flex: 1;
+        padding: 9px 13px;
+        border: 1.5px solid var(--msg-border);
+        border-radius: 20px;
+        font-family: 'Inter', sans-serif;
+        font-size: 13.5px;
+        outline: none;
+        resize: none;
+        max-height: 80px;
+        line-height: 1.4;
+        transition: border-color .15s;
+    }
+    .msg-input:focus { border-color: var(--msg-purple); }
+    .msg-send-btn {
+        width: 36px; height: 36px;
+        border-radius: 50%;
+        background: var(--msg-purple);
+        color: white; border: none;
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+        transition: background .15s, transform .1s;
+    }
+    .msg-send-btn:hover { background: var(--msg-purple-dk); transform: scale(1.05); }
+    .msg-send-btn svg { width: 16px; height: 16px; }
+
+    /* ── AI Confirmation Card ── */
+    .ai-confirm-card {
+        background: linear-gradient(135deg,#f8f7ff,#fff);
+        border: 2px solid #667eea;
+        border-radius: 16px;
+        padding: 16px;
+        margin: 4px 0;
+        animation: slideIn .25s ease;
+    }
+    .ai-confirm-header {
+        display: flex; align-items: center; gap: 8px;
+        margin-bottom: 14px;
+    }
+    .ai-confirm-icon { font-size: 20px; }
+    .ai-confirm-title { font-weight: 700; color: #5146b8; font-size: 13.5px; }
+    .ai-confirm-subtitle { font-size: 11px; color: #9590b8; margin-top: 1px; }
+
+    .ai-confirm-rows { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .ai-confirm-row {
+        display: flex; align-items: baseline; gap: 8px;
+        padding: 6px 10px; background: white; border-radius: 10px;
+        border: 1px solid rgba(102,126,234,.15);
+    }
+    .ai-confirm-row-label {
+        font-size: 10px; font-weight: 700; color: #9590b8;
+        text-transform: uppercase; letter-spacing: .5px;
+        min-width: 56px; flex-shrink: 0;
+    }
+    .ai-confirm-row-val {
+        font-size: 13px; color: #1c1733; font-weight: 500;
+        flex: 1; outline: none; border: none; background: transparent;
+        font-family: 'Inter', sans-serif; cursor: text;
+        padding: 0; min-width: 0;
+    }
+    .ai-confirm-row-val:focus { color: #667eea; }
+    .ai-confirm-row-val option { background: white; color: #1c1733; }
+
+    .ai-confirm-actions { display: flex; gap: 8px; }
+    .ai-confirm-ok {
+        flex: 1; padding: 10px; border: none; border-radius: 10px;
+        background: linear-gradient(135deg,#667eea,#764ba2);
+        color: white; font-weight: 700; font-size: 13px; cursor: pointer;
+        transition: opacity .15s;
+    }
+    .ai-confirm-ok:hover { opacity: .88; }
+    .ai-confirm-cancel {
+        padding: 10px 14px; border: 1.5px solid #ddd; border-radius: 10px;
+        background: white; color: #888; font-size: 13px; cursor: pointer;
+    }
+    .ai-confirm-cancel:hover { background: #f5f5f5; }
+    .ai-confirm-delete-warn {
+        background: #fef2f2; border: 1.5px solid #fca5a5;
+        border-radius: 10px; padding: 9px 12px;
+        color: #b91c1c; font-size: 12.5px; margin-bottom: 12px;
+    }
+
+    /* ── LAUNCHER MENU ── */
+    #launcherMenu {
+        position: fixed;
+        bottom: 96px;
+        right: 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 9001;
+        opacity: 0;
+        transform: translateY(12px) scale(.95);
+        pointer-events: none;
+        transition: opacity .2s ease, transform .2s ease;
+    }
+    #launcherMenu.open {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        pointer-events: all;
+    }
+    .launcher-btn {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        background: white;
+        border: 1.5px solid var(--msg-border);
+        border-radius: 30px;
+        cursor: pointer;
+        font-family: 'Inter', sans-serif;
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--msg-text);
+        box-shadow: 0 4px 20px rgba(0,0,0,.12);
+        transition: background .15s, transform .1s, box-shadow .15s;
+        white-space: nowrap;
+    }
+    .launcher-btn:hover {
+        background: var(--msg-pale);
+        transform: translateX(-4px);
+        box-shadow: 0 6px 24px rgba(0,0,0,.16);
+    }
+    .launcher-btn-icon {
+        width: 32px; height: 32px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 15px;
+        flex-shrink: 0;
+    }
+    .launcher-btn-msg  .launcher-btn-icon { background: var(--msg-pale); }
+    .launcher-btn-ai   .launcher-btn-icon { background: linear-gradient(135deg,#667eea,#764ba2); color:white; }
+
+    /* ── AI CHAT PANEL ── */
+    #aiWindow {
+        position: fixed;
+        bottom: 96px;
+        right: 28px;
+        width: var(--msg-w);
+        height: var(--msg-h);
+        background: white;
+        border: 1px solid var(--msg-border);
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0,0,0,.18);
+        z-index: 8999;
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        font-family: 'Inter', sans-serif;
+        animation: slideUp .25s ease both;
+    }
+    #aiWindow.open { display: flex; }
+
+    .ai-header {
+        background: linear-gradient(135deg,#667eea,#764ba2);
+        color: white;
+        padding: 14px 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+    .ai-header-title { font-family:'Syne',sans-serif; font-size:15px; font-weight:700; flex:1; }
+    .ai-header-sub   { font-size:11px; opacity:.8; }
+    .ai-header-close {
+        background: rgba(255,255,255,.2); border: none; color: white;
+        width:28px; height:28px; border-radius:50%; cursor:pointer;
+        font-size:16px; display:flex; align-items:center; justify-content:center;
+        transition:background .15s;
+    }
+    .ai-header-close:hover { background:rgba(255,255,255,.35); }
+
+    #aiMessages {
+        flex:1; overflow-y:auto; padding:14px 12px;
+        display:flex; flex-direction:column; gap:10px;
+        background: linear-gradient(180deg,#f8f9fb,#f0f1f7);
+    }
+    #aiMessages::-webkit-scrollbar { width:4px; }
+    #aiMessages::-webkit-scrollbar-thumb { background:#ddd; border-radius:2px; }
+
+    .ai-msg { display:flex; gap:8px; animation: slideIn .25s ease; }
+    @keyframes slideIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+    .ai-msg.user-msg { justify-content:flex-end; }
+    .ai-bubble {
+        max-width:82%; padding:9px 13px;
+        border-radius:14px; font-size:13.5px; line-height:1.5; word-break:break-word;
+    }
+    .ai-msg.user-msg .ai-bubble {
+        background: linear-gradient(135deg,#667eea,#764ba2);
+        color:white; border-radius:14px 14px 4px 14px;
+    }
+    .ai-msg.bot-msg .ai-bubble {
+        background:white; border:1px solid var(--msg-border);
+        color:var(--msg-text); border-radius:14px 14px 14px 4px;
+    }
+    .ai-msg.bot-msg .ai-bubble strong { color:#5146b8; }
+    .ai-msg.bot-msg .ai-bubble code {
+        background:rgba(102,126,234,.12); padding:1px 5px;
+        border-radius:4px; font-family:monospace; font-size:12px;
+    }
+
+    .ai-typing {
+        display:flex; gap:5px; padding:9px 13px;
+        background:white; border:1px solid var(--msg-border);
+        border-radius:14px 14px 14px 4px; width:fit-content;
+    }
+    .ai-dot { width:7px; height:7px; background:#667eea; border-radius:50%; animation:aiBounce 1.4s infinite; }
+    .ai-dot:nth-child(2){animation-delay:.2s} .ai-dot:nth-child(3){animation-delay:.4s}
+    @keyframes aiBounce{0%,60%,100%{opacity:.3}30%{opacity:1;transform:translateY(-5px)}}
+
+    .ai-input-wrap {
+        padding:10px 12px; border-top:1px solid var(--msg-border);
+        display:flex; gap:8px; align-items:center; background:white; flex-shrink:0;
+    }
+    .ai-input {
+        flex:1; padding:9px 13px; border:1.5px solid var(--msg-border);
+        border-radius:20px; font-family:'Inter',sans-serif; font-size:13.5px;
+        outline:none; transition:border-color .15s;
+    }
+    .ai-input:focus { border-color:#667eea; }
+    .ai-send-btn {
+        width:36px; height:36px; border-radius:50%;
+        background:linear-gradient(135deg,#667eea,#764ba2);
+        color:white; border:none; cursor:pointer;
+        display:flex; align-items:center; justify-content:center;
+        flex-shrink:0; transition:transform .1s;
+    }
+    .ai-send-btn:hover { transform:scale(1.08); }
+    .ai-send-btn:disabled { opacity:.45; cursor:not-allowed; transform:none; }
+    .ai-send-btn svg { width:16px; height:16px; }
+    .ai-data-badge {
+        font-size:11px; background:rgba(255,255,255,.2);
+        padding:3px 9px; border-radius:12px; display:none;
+    }
+    .ai-data-badge.visible { display:inline-block; }
+</style>
+
+{# ── HTML ── #}
+
+{# Launcher menu (shown on bubble click) #}
+<div id="launcherMenu">
+    <button class="launcher-btn launcher-btn-ai" onclick="aiOpenPanel()">
+        <div class="launcher-btn-icon">🤖</div>
+        Assistant IA
+    </button>
+    <button class="launcher-btn launcher-btn-msg" onclick="msgOpenFromLauncher()">
+        <div class="launcher-btn-icon">💬</div>
+        Messages
+    </button>
+</div>
+
+{# Main bubble #}
+<div id="msgBubble" onclick="launcherToggle()">
+    <span id="msgBadge"></span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </svg>
+</div>
+
+{# AI Chat Panel #}
+<div id="aiWindow">
+    <div class="ai-header">
+        <span style="font-size:20px;">🤖</span>
+        <div style="flex:1">
+            <div class="ai-header-title">Assistant Harmonie</div>
+            <div class="ai-header-sub">Gérez événements &amp; tâches en langage naturel</div>
+        </div>
+        <span class="ai-data-badge" id="aiDataBadge">🔄 Mis à jour</span>
+        <button class="ai-header-close" onclick="aiClosePanel()">✕</button>
+    </div>
+    <div id="aiMessages">
+        <div class="ai-msg bot-msg">
+            <div class="ai-bubble">
+                <strong>Bonjour ! 👋</strong><br>
+                Je suis connecté à votre calendrier et vos tâches. Essayez :<br><br>
+                <em>• "Ajoute une réunion demain à 14h"</em><br>
+                <em>• "Qu'est-ce que j'ai prévu cette semaine ?"</em><br>
+                <em>• "Ajoute une tâche urgente : rendre le rapport"</em>
+            </div>
+        </div>
+    </div>
+    <div class="ai-input-wrap">
+        <input type="text" id="aiInput" class="ai-input" placeholder="Écrivez votre demande…" autocomplete="off">
+        <button class="ai-send-btn" id="aiSendBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+        </button>
+    </div>
+</div>
+
+<div id="msgWindow">
+    {# Header #}
+    <div class="msg-header">
+        <button class="msg-header-back" id="msgBackBtn" onclick="msgShowList()">←</button>
+        <div class="msg-header-avatar" id="msgHeaderAvatar"></div>
+        <div class="msg-header-title" id="msgHeaderTitle">Messages</div>
+        <button class="msg-header-close" onclick="msgCloseWindow()">✕</button>
+    </div>
+
+    {# Vue liste #}
+    <div id="msgViewList">
+        <div class="msg-search-wrap">
+            <div class="msg-search-container">
+                <span class="msg-search-icon">🔍</span>
+                <input type="text" id="msgSearchInput" class="msg-search-input"
+                       placeholder="Chercher un utilisateur…" autocomplete="off">
+            </div>
+            <div id="msgSearchResults"></div>
+        </div>
+        <div id="msgConvList">
+            <div class="msg-empty">
+                <div class="msg-empty-icon">💬</div>
+                <p>Chargement…</p>
+            </div>
+        </div>
+    </div>
+
+    {# Vue chat #}
+    <div id="msgViewChat">
+        <div id="msgMessages"></div>
+        <div class="msg-typing" id="msgTyping">En train d'écrire…</div>
+        <div class="msg-input-wrap">
+            <textarea id="msgInput" class="msg-input" rows="1"
+                      placeholder="Écrire un message…"></textarea>
+            <button class="msg-send-btn" id="msgSendBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"/>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+</div>
+<script>
+    const MSG = {
+        currentConvId:      null,
+        currentRecipientId: null,
+        isOpen:             false,
+        mercureSource:      null,
+        unreadCount:        0,
+        searchTimeout:      null,
+        myId:               {{ app.user.userId }},
+
+        init() {
+            this.loadUnreadCount();
+            this.initMercure();
+            this.initSearch();
+            this.initInput();
+            setInterval(() => this.loadUnreadCount(), 30000);
+        },
+
+        toggleWindow() {
+            const win = document.getElementById('msgWindow');
+            this.isOpen = !this.isOpen;
+            if (this.isOpen) {
+                win.classList.add('open');
+                this.loadConversations();
+            } else {
+                win.classList.remove('open');
+            }
+        },
+        closeWindow() {
+            document.getElementById('msgWindow').classList.remove('open');
+            this.isOpen = false;
+        },
+
+        async loadUnreadCount() {
+            try {
+                const r    = await fetch('/api/messaging/unread-count');
+                const data = await r.json();
+                this.setUnreadBadge(data.count);
+            } catch(e) {}
+        },
+        setUnreadBadge(count) {
+            this.unreadCount = count;
+            const badge  = document.getElementById('msgBadge');
+            const bubble = document.getElementById('msgBubble');
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.classList.add('visible');
+                bubble.classList.add('has-unread');
+            } else {
+                badge.classList.remove('visible');
+                bubble.classList.remove('has-unread');
+            }
+        },
+
+        async loadConversations() {
+            try {
+                const r     = await fetch('/api/messaging/conversations');
+                const convs = await r.json();
+                this.renderConversations(convs);
+            } catch(e) {
+                document.getElementById('msgConvList').innerHTML =
+                    '<div class="msg-empty"><p>Erreur de chargement.</p></div>';
+            }
+        },
+        renderConversations(convs) {
+            const el = document.getElementById('msgConvList');
+            if (!convs.length) {
+                el.innerHTML = `
+            <div class="msg-empty">
+                <div class="msg-empty-icon">💬</div>
+                <p>Aucune conversation.<br>Cherchez quelqu'un ci-dessus !</p>
+            </div>`;
+                return;
+            }
+            el.innerHTML = convs.map(c => `
+        <div class="msg-conv-item" onclick="MSG.openConversation(${c.convId}, ${c.otherId}, '${this.esc(c.otherName)}', '${c.otherAvatar || ''}', '${c.otherInitial}')">
+            <div class="msg-conv-avatar">
+                ${c.otherAvatar ? `<img src="/${c.otherAvatar}" alt="">` : c.otherInitial}
+            </div>
+            <div class="msg-conv-info">
+                <div class="msg-conv-name">${this.esc(c.otherName)}</div>
+                <div class="msg-conv-last">${this.esc(c.lastMessage)}</div>
+            </div>
+            <div class="msg-conv-meta">
+                <span class="msg-conv-time">${c.lastAt}</span>
+                ${c.unread > 0 ? `<span class="msg-unread-dot">${c.unread}</span>` : ''}
+            </div>
+        </div>`).join('');
+        },
+
+        initSearch() {
+            const input   = document.getElementById('msgSearchInput');
+            const results = document.getElementById('msgSearchResults');
+
+            input.addEventListener('input', () => {
+                clearTimeout(this.searchTimeout);
+                const q = input.value.trim();
+                if (q.length < 2) {
+                    results.classList.remove('open');
+                    results.innerHTML = '';
+                    return;
+                }
+                this.searchTimeout = setTimeout(() => this.doSearch(q), 250);
+            });
+
+            document.addEventListener('click', e => {
+                if (!input.contains(e.target) && !results.contains(e.target)) {
+                    results.classList.remove('open');
+                }
+            });
+        },
+        async doSearch(q) {
+            const results = document.getElementById('msgSearchResults');
+            try {
+                const r     = await fetch(`/api/messaging/search-users?q=${encodeURIComponent(q)}`);
+                const users = await r.json();
+                if (!users.length) {
+                    results.innerHTML = '<div class="msg-search-item" style="color:#9590B8;">Aucun résultat</div>';
+                    results.classList.add('open');
+                    return;
+                }
+                results.innerHTML = users.map(u => `
+            <div class="msg-search-item"
+                 onclick="MSG.startConversation(${u.id}, '${this.esc(u.name)}', '${u.avatar || ''}', '${u.initial}')">
+                <div class="msg-search-avatar">
+                    ${u.avatar ? `<img src="/${u.avatar}" alt="">` : u.initial}
+                </div>
+                <span class="msg-search-name">${this.esc(u.name)}</span>
+            </div>`).join('');
+                results.classList.add('open');
+            } catch(e) {}
+        },
+        startConversation(userId, userName, avatar, initial) {
+            document.getElementById('msgSearchResults').classList.remove('open');
+            document.getElementById('msgSearchInput').value = '';
+            // currentConvId = null pour une nouvelle conversation
+            this.openConversation(null, userId, userName, avatar, initial);
+        },
+
+        async openConversation(convId, recipientId, recipientName, avatar, initial) {
+            this.currentConvId      = convId;
+            this.currentRecipientId = recipientId;
+
+            // Header
+            document.getElementById('msgHeaderTitle').textContent = recipientName;
+            document.getElementById('msgBackBtn').classList.add('visible');
+            const av = document.getElementById('msgHeaderAvatar');
+            av.innerHTML = avatar ? `<img src="/${avatar}" alt="">` : initial;
+            av.classList.add('visible');
+
+            // Basculer vers vue chat
+            document.getElementById('msgViewList').classList.add('hidden');
+            document.getElementById('msgViewChat').classList.add('visible');
+
+            // Charger les messages seulement si conv existante
+            if (convId !== null && convId !== undefined) {
+                await this.loadMessages(convId);
+                this.loadUnreadCount();
+            } else {
+                // Nouvelle conversation — afficher zone vide
+                document.getElementById('msgMessages').innerHTML =
+                    '<div class="msg-empty"><p>Commencez la conversation !</p></div>';
+            }
+
+            document.getElementById('msgInput').focus();
+        },
+
+        showList() {
+            this.currentConvId      = null;
+            this.currentRecipientId = null;
+            document.getElementById('msgHeaderTitle').textContent = 'Messages';
+            document.getElementById('msgBackBtn').classList.remove('visible');
+            document.getElementById('msgHeaderAvatar').classList.remove('visible');
+            document.getElementById('msgViewList').classList.remove('hidden');
+            document.getElementById('msgViewChat').classList.remove('visible');
+            this.loadConversations();
+        },
+
+        async loadMessages(convId) {
+            if (!convId) return;
+            const container = document.getElementById('msgMessages');
+            container.innerHTML = '<div class="msg-empty"><p>Chargement…</p></div>';
+            try {
+                const r    = await fetch(`/api/messaging/conversations/${convId}/messages`);
+                const data = await r.json();
+                this.currentConvId = data.convId;
+                this.renderMessages(data.messages);
+            } catch(e) {
+                container.innerHTML = '<div class="msg-empty"><p>Erreur de chargement.</p></div>';
+            }
+        },
+        renderMessages(messages) {
+            const container = document.getElementById('msgMessages');
+            if (!messages || !messages.length) {
+                container.innerHTML = '<div class="msg-empty"><p>Commencez la conversation !</p></div>';
+                return;
+            }
+            container.innerHTML = messages.map(m => this.buildBubble(m)).join('');
+            container.scrollTop = container.scrollHeight;
+        },
+        buildBubble(m) {
+            const mine = m.senderId === this.myId;
+            return `
+        <div class="msg-bubble-wrap ${mine ? 'mine' : 'theirs'}">
+            <div class="msg-bubble">${this.esc(m.content)}</div>
+        </div>
+        <div style="display:flex;justify-content:${mine ? 'flex-end' : 'flex-start'};padding:0 4px;">
+            <span class="msg-bubble-time">${m.sentAt}</span>
+        </div>`;
+        },
+        appendMessage(m) {
+            const container = document.getElementById('msgMessages');
+            const empty = container.querySelector('.msg-empty');
+            if (empty) empty.remove();
+            container.insertAdjacentHTML('beforeend', this.buildBubble(m));
+            container.scrollTop = container.scrollHeight;
+        },
+
+        initInput() {
+            const input   = document.getElementById('msgInput');
+            const sendBtn = document.getElementById('msgSendBtn');
+
+            input.addEventListener('input', () => {
+                input.style.height = 'auto';
+                input.style.height = Math.min(input.scrollHeight, 80) + 'px';
+            });
+
+            input.addEventListener('keydown', e => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    this.sendMessage();
+                }
+            });
+
+            sendBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.sendMessage();
+            });
+        },
+
+        async sendMessage() {
+            const input   = document.getElementById('msgInput');
+            const content = input.value.trim();
+
+            if (!content) return;
+            if (!this.currentRecipientId) {
+                console.error('No recipient set');
+                return;
+            }
+
+            // Vider le champ immédiatement
+            input.value = '';
+            input.style.height = 'auto';
+
+            try {
+                const response = await fetch('/api/messaging/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: JSON.stringify({
+                        recipientId: this.currentRecipientId,
+                        content:     content,
+                    }),
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    console.error('Send error:', response.status, errData);
+                    // Remettre le contenu dans l'input si erreur
+                    input.value = content;
+                    return;
+                }
+
+                const msg = await response.json();
+
+                // Mettre à jour l'id de conversation si nouvelle conv
+                if (!this.currentConvId && msg.conversationId) {
+                    this.currentConvId = msg.conversationId;
+                }
+
+                // Afficher le message envoyé
+                this.appendMessage({
+                    content:  msg.content,
+                    senderId: this.myId,
+                    sentAt:   msg.sentAt,
+                });
+
+            } catch(e) {
+                console.error('Network error:', e);
+                input.value = content;
+            }
+        },
+
+        async initMercure() {
+            try {
+                const r    = await fetch('/api/messaging/mercure-token');
+                const data = await r.json();
+                const jwt  = data.token;
+
+                const mercureUrl = `http://localhost:3000/.well-known/mercure`;
+                const topic      = `user/${this.myId}/messages`;
+                const url        = new URL(mercureUrl);
+                url.searchParams.append('topic', topic);
+
+                this.mercureSource = new EventSource(url.toString() + `&authorization=${jwt}`);
+
+                this.mercureSource.onmessage = (e) => {
+                    const data = JSON.parse(e.data);
+                    this.handleIncomingMessage(data);
+                };
+            } catch(e) {
+                console.warn('Mercure non disponible, polling activé');
+                setInterval(() => {
+                    if (this.isOpen && this.currentConvId) {
+                        this.loadMessages(this.currentConvId);
+                    }
+                }, 5000);
+            }
+        },
+
+        handleIncomingMessage(data) {
+            if (data.type !== 'new_message') return;
+
+            const inCurrentConv = this.isOpen && this.currentConvId === data.convId;
+
+            if (inCurrentConv) {
+                this.appendMessage({
+                    content:  data.content,
+                    senderId: data.senderId,
+                    sentAt:   data.sentAt,
+                });
+                fetch(`/api/messaging/conversations/${data.convId}/messages`).catch(() => {});
+            } else {
+                this.setUnreadBadge(this.unreadCount + 1);
+                if (this.isOpen) this.loadConversations();
+            }
+        },
+
+        esc(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        },
+    };
+
+    /* ── Launcher ── */
+    let launcherOpen = false;
+    function launcherToggle() {
+        launcherOpen = !launcherOpen;
+        document.getElementById('launcherMenu').classList.toggle('open', launcherOpen);
+    }
+    function launcherClose() {
+        launcherOpen = false;
+        document.getElementById('launcherMenu').classList.remove('open');
+    }
+    function msgOpenFromLauncher() {
+        launcherClose();
+        MSG.isOpen = false; // force open
+        MSG.toggleWindow();
+    }
+
+    function msgToggleWindow() { launcherClose(); MSG.toggleWindow(); }
+    function msgCloseWindow()  { MSG.closeWindow();  }
+    function msgShowList()     { MSG.showList();      }
+
+    /* ── AI Panel ── */
+    const AI = {
+        history: [],
+        waiting: false,
+        chatUrl: '{{ path('api_chat') }}',
+
+        open() {
+            launcherClose();
+            document.getElementById('aiWindow').classList.add('open');
+            document.getElementById('aiInput').focus();
+        },
+        close() { document.getElementById('aiWindow').classList.remove('open'); },
+
+        send() {
+            const input = document.getElementById('aiInput');
+            const msg = input.value.trim();
+            if (!msg || this.waiting) return;
+            input.value = '';
+            this.addMessage(msg, 'user');
+            this.setWaiting(true);
+            this.showTyping();
+            this._callApi({ userMessage: msg, history: this.history, model: 'gemini-2.5-flash-lite' }, msg);
+        },
+
+        _callApi(payload, originalMsg) {
+            fetch(this.chatUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(r => r.json())
+            .then(data => {
+                this.removeTyping();
+                if (data.error) {
+                    this.addMessage('❌ ' + data.error, 'bot');
+                } else if (data.pendingAction) {
+                    // Show AI text first if any
+                    const reply = data.message || '';
+                    if (reply) this.addMessage(reply, 'bot', true);
+                    // Then show confirmation card
+                    this.showConfirmCard(data.pendingAction, payload.userMessage, payload.history);
+                    if (originalMsg) {
+                        this.history.push({ role: 'user',  parts: [{ text: originalMsg }] });
+                        this.history.push({ role: 'model', parts: [{ text: reply }] });
+                        if (this.history.length > 40) this.history = this.history.slice(-40);
+                    }
+                } else {
+                    const reply = data.message || '';
+                    this.addMessage(reply, 'bot', true);
+                    if (originalMsg) {
+                        this.history.push({ role: 'user',  parts: [{ text: originalMsg }] });
+                        this.history.push({ role: 'model', parts: [{ text: reply }] });
+                        if (this.history.length > 40) this.history = this.history.slice(-40);
+                    }
+                    if (data.dataChanged) {
+                        this._flashBadge();
+                        setTimeout(() => location.reload(), 1200);
+                    }
+                }
+            })
+            .catch(err => { this.removeTyping(); this.addMessage('❌ Erreur réseau: ' + err.message, 'bot'); })
+            .finally(() => this.setWaiting(false));
+        },
+
+        showConfirmCard(pendingAction, userMsg, history) {
+            const action   = pendingAction.action;
+            const data     = pendingAction.data || {};
+            const isDelete = action.startsWith('DELETE_');
+            const isEvent  = action.includes('EVENT');
+
+            const icons = { ADD_EVENT:'📅', UPDATE_EVENT:'✏️', DELETE_EVENT:'🗑️', ADD_TASK:'✅', UPDATE_TASK:'✏️', DELETE_TASK:'🗑️' };
+            const titles = { ADD_EVENT:'Nouvel événement', UPDATE_EVENT:'Modifier l\'événement', DELETE_EVENT:'Supprimer l\'événement', ADD_TASK:'Nouvelle tâche', UPDATE_TASK:'Modifier la tâche', DELETE_TASK:'Supprimer la tâche' };
+
+            const card = document.createElement('div');
+            card.className = 'ai-confirm-card';
+            card.innerHTML = `
+                <div class="ai-confirm-header">
+                    <span class="ai-confirm-icon">${icons[action]||'📌'}</span>
+                    <div>
+                        <div class="ai-confirm-title">${titles[action]||action}</div>
+                        <div class="ai-confirm-subtitle">Vérifiez et modifiez si besoin, puis confirmez</div>
+                    </div>
+                </div>`;
+
+            if (isDelete) {
+                card.innerHTML += `<div class="ai-confirm-delete-warn">⚠️ <strong>${this.esc(data.title||data.nom||'Cet élément')}</strong> sera supprimé définitivement.</div>`;
+            } else {
+                const rows = document.createElement('div');
+                rows.className = 'ai-confirm-rows';
+                rows.innerHTML = isEvent ? this._eventRows(data) : this._taskRows(data);
+                card.appendChild(rows);
+            }
+
+            const acts = document.createElement('div');
+            acts.className = 'ai-confirm-actions';
+
+            const okBtn = document.createElement('button');
+            okBtn.className = 'ai-confirm-ok';
+            okBtn.textContent = isDelete ? '🗑️ Supprimer' : '✅ Confirmer';
+            okBtn.addEventListener('click', () => {
+                const confirmedData = isDelete ? data : (isEvent ? this._readRows(card, ['title','startTime','endTime','location','description','eventType','lieuType']) : this._readRows(card, ['title','dueDate','priority','statut','notes']));
+                card.remove();
+                this.addMessage('✅ Confirmé !', 'user');
+                this.setWaiting(true);
+                this.showTyping();
+                this._callApi({ userMessage: userMsg||'', history: history||[], model:'gemini-2.5-flash-lite', confirmed:true, confirmedData, pendingAction }, null);
+            });
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'ai-confirm-cancel';
+            cancelBtn.textContent = 'Annuler';
+            cancelBtn.addEventListener('click', () => { card.remove(); this.addMessage('ℹ️ Action annulée.', 'bot', false); });
+
+            acts.appendChild(okBtn); acts.appendChild(cancelBtn);
+            card.appendChild(acts);
+
+            const container = document.getElementById('aiMessages');
+            container.appendChild(card);
+            container.scrollTop = container.scrollHeight;
+        },
+
+        _row(label, name, value, opts) {
+            const val = this.esc(value||'');
+            if (opts) {
+                const options = opts.map(([v,l]) => `<option value="${v}"${v===(value||'')?'selected':''}>${l}</option>`).join('');
+                return `<div class="ai-confirm-row"><span class="ai-confirm-row-label">${label}</span><select class="ai-confirm-row-val" name="${name}">${options}</select></div>`;
+            }
+            return `<div class="ai-confirm-row"><span class="ai-confirm-row-label">${label}</span><input class="ai-confirm-row-val" name="${name}" value="${val}" spellcheck="false"></div>`;
+        },
+        _eventRows(d) {
+            return this._row('Titre','title',d.title)
+                + this._row('Début','startTime',d.startTime)
+                + this._row('Fin','endTime',d.endTime)
+                + this._row('Lieu','location',d.location)
+                + this._row('Type','eventType',d.eventType||'autre',[['cours','Cours'],['reunion','Réunion'],['loisir','Loisir'],['autre','Autre']])
+                + this._row('Mode','lieuType',d.lieuType||'en_ligne',[['en_ligne','En ligne'],['presentiel','Présentiel']]);
+        },
+        _taskRows(d) {
+            return this._row('Titre','title',d.title||d.nom)
+                + this._row('Échéance','dueDate',d.dueDate)
+                + this._row('Priorité','priority',d.priority||'moyenne',[['haute','🔴 Haute'],['moyenne','🟡 Moyenne'],['basse','🟢 Basse']])
+                + this._row('Statut','statut',d.statut||'A_FAIRE',[['A_FAIRE','À faire'],['EN_COURS','En cours'],['TERMINEE','Terminée']])
+                + this._row('Notes','notes',d.notes);
+        },
+        _readRows(card, fields) {
+            const result = {};
+            fields.forEach(f => {
+                const el = card.querySelector(`[name="${f}"]`);
+                result[f] = el ? el.value.trim() : '';
+            });
+            return result;
+        },
+
+        _flashBadge() {
+            const badge = document.getElementById('aiDataBadge');
+            badge.classList.add('visible');
+            setTimeout(() => badge.classList.remove('visible'), 3000);
+        },
+
+        addMessage(text, sender, isMarkdown) {
+            const wrap = document.createElement('div');
+            wrap.className = 'ai-msg ' + (sender === 'user' ? 'user-msg' : 'bot-msg');
+            const bubble = document.createElement('div');
+            bubble.className = 'ai-bubble';
+            if (isMarkdown) { bubble.innerHTML = this.md(text); }
+            else { bubble.textContent = text; }
+            wrap.appendChild(bubble);
+            const c = document.getElementById('aiMessages');
+            c.appendChild(wrap); c.scrollTop = c.scrollHeight;
+        },
+        showTyping() {
+            const el = document.createElement('div');
+            el.className = 'ai-msg bot-msg'; el.id = 'aiTyping';
+            el.innerHTML = '<div class="ai-typing"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>';
+            const c = document.getElementById('aiMessages');
+            c.appendChild(el); c.scrollTop = c.scrollHeight;
+        },
+        removeTyping() { const el = document.getElementById('aiTyping'); if (el) el.remove(); },
+        setWaiting(val) {
+            this.waiting = val;
+            document.getElementById('aiSendBtn').disabled = val;
+            document.getElementById('aiInput').disabled  = val;
+        },
+        md(text) {
+            return text
+                .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g,'<em>$1</em>')
+                .replace(/`([^`]+)`/g,'<code>$1</code>')
+                .replace(/^- (.+)$/gm,'<li>$1</li>')
+                .replace(/(<li>.*<\/li>)/gs,'<ul style="padding-left:16px;margin:4px 0">$1</ul>')
+                .replace(/\n{2,}/g,'<br><br>').replace(/\n/g,'<br>');
+        },
+        esc(str) {
+            return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        },
+        init() {
+            document.getElementById('aiInput').addEventListener('keydown', e => {
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.send(); }
+            });
+            document.getElementById('aiSendBtn').addEventListener('click', () => this.send());
+        }
+    };
+
+    function aiOpenPanel()  { AI.open();  }
+    function aiClosePanel() { AI.close(); }
+
+    document.addEventListener('DOMContentLoaded', () => { MSG.init(); AI.init(); });
+</script>
+
+

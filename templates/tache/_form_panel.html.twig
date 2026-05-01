@@ -1,0 +1,40 @@
+{% form_theme form 'form_div_layout.html.twig' %}
+{% if panel_mode == 'edit' and entity is defined and entity %}
+    {% set form_action = path('app_tache_edit', { id: entity.id }) %}
+{% else %}
+    {% set form_action = path('app_tache_new') %}
+{% endif %}
+
+{{ form_start(form, {
+    action: form_action,
+    attr: {
+        class: 'harmony-panel-form harmony-form',
+        id: 'tache-panel-form',
+        autocomplete: 'off'
+    }
+}) }}
+    {{ form_errors(form) }}
+
+    <div class="harmony-panel-visible-fields">
+        {{ form_row(form.nom, { label: 'Nom de la tâche' }) }}
+        {{ form_row(form.deadline, { label: 'Deadline' }) }}
+        {{ form_row(form.notes, { attr: { rows: 3 } }) }}
+        {{ form_row(form.statutTache, { label: 'Statut' }) }}
+    </div>
+
+    <div class="harmony-panel-sr-hidden" aria-hidden="true">
+        {% for child in form %}
+            {% if not child.rendered and child.vars.name != 'submit' %}
+                {{ form_row(child) }}
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <div class="harmony-panel-actions">
+        <button type="button" class="harmony-panel-cancel js-harmony-panel-cancel">Annuler</button>
+        {{ form_row(form.submit, {
+            label: 'Enregistrer',
+            attr: { class: 'harmony-panel-submit harmony-btn-submit' }
+        }) }}
+    </div>
+{{ form_end(form, { render_rest: false }) }}

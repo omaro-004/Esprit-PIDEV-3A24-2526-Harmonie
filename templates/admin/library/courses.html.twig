@@ -1,0 +1,313 @@
+{% extends 'admin/base.html.twig' %}
+{% block title %}Gestion des cours — Harmony Admin{% endblock %}
+{% block page_title %}📚 Gestion des cours{% endblock %}
+
+{% block stylesheets %}
+    <style>
+        /* ── KPI ROW ─────────────────────────────────────────────────────────── */
+        .kpi-row {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+            margin-bottom: 28px;
+        }
+        .kpi-card {
+            background: var(--white); border: 1px solid var(--border);
+            border-radius: 16px; padding: 20px 22px;
+            display: flex; align-items: center; gap: 14px;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .kpi-card:hover { border-color: var(--purple-soft); box-shadow: 0 6px 24px rgba(106,90,205,.1); }
+        .kpi-icon {
+            width: 46px; height: 46px; border-radius: 12px;
+            background: var(--purple-pale); display: grid; place-items: center;
+            font-size: 22px; flex-shrink: 0;
+        }
+        .kpi-val  { font-family: var(--font-head); font-size: 28px; font-weight: 800; color: var(--text); }
+        .kpi-lbl  { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+
+        /* ── TOOLBAR ────────────────────────────────────────────────────────── */
+        .toolbar {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 20px; flex-wrap: wrap;
+        }
+        .search-wrap { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+        .search-input {
+            padding: 8px 14px; border-radius: 10px; font-size: 13px;
+            border: 1px solid var(--border); background: var(--white);
+            color: var(--text); outline: none; width: 260px;
+            transition: border-color .2s;
+        }
+        .search-input:focus { border-color: var(--purple); }
+        .btn-search {
+            padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 600;
+            background: var(--purple); color: #fff; border: none; cursor: pointer;
+            transition: background .15s;
+        }
+        .btn-search:hover { background: var(--purple-dark); }
+
+        /* ── TABLE CARD ─────────────────────────────────────────────────────── */
+        .table-card {
+            background: var(--white); border: 1px solid var(--border);
+            border-radius: 18px; overflow: hidden;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: .7px; color: var(--text-muted);
+            padding: 11px 18px; text-align: left; background: var(--purple-ghost);
+        }
+        td {
+            padding: 13px 18px; font-size: 13.5px; color: var(--text);
+            border-bottom: 1px solid var(--purple-ghost); vertical-align: middle;
+        }
+        tr:last-child td { border: none; }
+        tr:hover td { background: var(--purple-ghost); }
+
+        .course-title { font-weight: 600; max-width: 220px; }
+        .course-title small { display: block; font-size: 11.5px; color: var(--text-muted); font-weight: 400; }
+
+        .owner-cell { font-size: 12.5px; color: var(--text-mid); }
+        .owner-cell strong { display: block; font-size: 13px; color: var(--text); font-weight: 600; }
+
+        /* ── BADGES ─────────────────────────────────────────────────────────── */
+        .badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+        }
+        .badge-published   { background: #D1FAE5; color: #065F46; }
+        .badge-locked      { background: #FEE2E2; color: #991B1B; }
+        .badge-count {
+            background: var(--purple-pale); color: var(--purple);
+            font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px;
+        }
+        .badge-count.high  { background: #FEE2E2; color: #991B1B; }
+
+        /* ── ACTION BUTTONS ─────────────────────────────────────────────────── */
+        .btn-action {
+            padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
+            cursor: pointer; border: none; transition: .15s; white-space: nowrap;
+        }
+        .btn-unpublish       { background: #FEE2E2; color: #991B1B; }
+        .btn-unpublish:hover { background: #FECACA; }
+
+        /* ── EMPTY STATE ─────────────────────────────────────────────────────── */
+        .empty-state {
+            text-align: center; padding: 60px 20px;
+            color: var(--text-muted); font-size: 14px;
+        }
+        .empty-state .icon { font-size: 42px; margin-bottom: 12px; }
+
+        /* ── CONFIRM MODAL ───────────────────────────────────────────────────── */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,.45);
+            display: none; place-items: center; z-index: 1000;
+        }
+        .modal-overlay.open { display: grid; }
+        .modal-box {
+            background: var(--white); border-radius: 20px; padding: 32px 28px;
+            max-width: 420px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,.2);
+            animation: fadeUp .25s ease both;
+        }
+        .modal-icon  { font-size: 36px; margin-bottom: 12px; }
+        .modal-title { font-family: var(--font-head); font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+        .modal-body  { font-size: 13.5px; color: var(--text-mid); line-height: 1.6; margin-bottom: 22px; }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+        .btn-cancel {
+            padding: 9px 20px; border-radius: 10px; font-size: 13px; font-weight: 600;
+            background: var(--purple-ghost); color: var(--text-mid);
+            border: none; cursor: pointer;
+        }
+        .btn-confirm-unpublish {
+            padding: 9px 20px; border-radius: 10px; font-size: 13px; font-weight: 600;
+            background: #E05252; color: #fff; border: none; cursor: pointer;
+        }
+        .btn-confirm-unpublish:hover { background: #c94444; }
+    </style>
+{% endblock %}
+
+{% block body %}
+
+    {# ── KPI BAR ──────────────────────────────────────────────────────────── #}
+    <div class="kpi-row">
+        <div class="kpi-card">
+            <div class="kpi-icon">📚</div>
+            <div><div class="kpi-val">{{ stats.total }}</div><div class="kpi-lbl">Total cours</div></div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background:#D1FAE5;">✅</div>
+            <div><div class="kpi-val" style="color:#065F46;">{{ stats.published }}</div><div class="kpi-lbl">Publiés</div></div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background:#FEE2E2;">🔒</div>
+            <div><div class="kpi-val" style="color:#991B1B;">{{ stats.locked }}</div><div class="kpi-lbl">Verrouillés</div></div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background:#F3F4F6;">📄</div>
+            <div><div class="kpi-val" style="color:#6B7280;">{{ stats.unpublished }}</div><div class="kpi-lbl">Non publiés</div></div>
+        </div>
+    </div>
+
+    {# ── TOOLBAR ──────────────────────────────────────────────────────────── #}
+    <div class="toolbar">
+        <div>
+            <strong style="font-family:var(--font-head);font-size:15px;">
+                {{ courses|length }} cours publiés{% if search %} · "{{ search }}"{% endif %}
+            </strong>
+        </div>
+        <form method="GET" class="search-wrap" id="courseSearchForm">
+            <input
+                type="text"
+                name="q"
+                id="courseSearchInput"
+                class="search-input"
+                placeholder="Rechercher par titre ou utilisateur…"
+                value="{{ search }}"
+                autocomplete="off"
+            >
+            <button type="submit" class="btn-search">🔍 Rechercher</button>
+        </form>
+    </div>
+
+    {# ── TABLE ────────────────────────────────────────────────────────────── #}
+    <div class="table-card">
+        {% if courses is empty %}
+            <div class="empty-state">
+                <div class="icon">📭</div>
+                <div>Aucun cours publié trouvé{% if search %} pour "{{ search }}"{% endif %}.</div>
+            </div>
+        {% else %}
+            <table>
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Cours</th>
+                    <th>Propriétaire</th>
+                    <th>Fichiers</th>
+                    <th>Signalements</th>
+                    <th>Sauvegardes</th>
+                    <th>Publié le</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for c in courses %}
+                    <tr>
+                        {# ID #}
+                        <td style="color:var(--text-muted);font-size:12px;">{{ c.id }}</td>
+
+                        {# Title #}
+                        <td>
+                            <div class="course-title">
+                                {{ c.title }}
+                                {% if c.admin_locked %}
+                                    <small>🔒 Verrouillé par admin</small>
+                                {% endif %}
+                            </div>
+                        </td>
+
+                        {# Owner #}
+                        <td class="owner-cell">
+                            <strong>{{ c.owner_name|default('—') }}</strong>
+                            {{ c.owner_email|default('') }}
+                        </td>
+
+                        {# File count #}
+                        <td style="color:var(--text-muted);font-size:12.5px;">
+                            {{ c.file_count }} fichier{{ c.file_count != 1 ? 's' }}
+                        </td>
+
+                        {# Report count #}
+                        <td>
+                    <span class="badge-count {{ c.report_count >= 3 ? 'high' }}">
+                        {{ c.report_count }} rapport{{ c.report_count > 1 ? 's' }}
+                    </span>
+                        </td>
+
+                        {# Saves #}
+                        <td style="color:var(--text-muted);font-size:12.5px;">⭐ {{ c.saves }}</td>
+
+                        {# Created at #}
+                        <td style="color:var(--text-muted);font-size:12px;white-space:nowrap;">
+                            {{ c.created_at|date('d/m/Y') }}
+                        </td>
+
+                        {# Action #}
+                        <td style="display:flex;gap:6px;align-items:center;">
+                            <a href="{{ path('admin_courses_view', {courseId: c.id}) }}"
+                               class="btn-action" style="background:var(--purple-pale);color:var(--purple);text-decoration:none;">
+                                👁 Voir
+                            </a>
+                            <button class="btn-action btn-unpublish"
+                                    onclick="confirmUnpublish({{ c.id }}, '{{ c.title|e('js') }}')">
+                                🚫 Dépublier
+                            </button>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+
+    {# ── CONFIRM MODAL ────────────────────────────────────────────────────── #}
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal-box">
+            <div class="modal-icon">🚫</div>
+            <div class="modal-title">Dépublier ce cours ?</div>
+            <div class="modal-body">
+                Le cours <strong id="modalCourseTitle"></strong> sera dépublié et
+                <strong>verrouillé</strong>. Le propriétaire ne pourra pas le republier sans intervention admin.
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+                <button class="btn-confirm-unpublish" id="btnConfirm">🚫 Confirmer</button>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block javascripts %}
+    <script>
+        let pendingCourseId = null;
+
+        // Live search debounce
+        const searchInput = document.getElementById('courseSearchInput');
+        let searchTimer = null;
+        if (searchInput) {
+            searchInput.addEventListener('input', function () {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(() => document.getElementById('courseSearchForm').submit(), 350);
+            });
+        }
+
+        function confirmUnpublish(courseId, courseTitle) {
+            pendingCourseId = courseId;
+            document.getElementById('modalCourseTitle').textContent = courseTitle;
+            document.getElementById('confirmModal').classList.add('open');
+        }
+
+        function closeModal() {
+            document.getElementById('confirmModal').classList.remove('open');
+            pendingCourseId = null;
+        }
+
+        document.getElementById('btnConfirm').addEventListener('click', function () {
+            if (!pendingCourseId) return;
+            this.disabled = true;
+            this.textContent = 'En cours…';
+
+            fetch('/admin/courses/unpublish/' + pendingCourseId, { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.ok) location.reload();
+                    else alert(data.message || 'Erreur');
+                    this.disabled = false;
+                })
+                .catch(() => { alert('Erreur réseau'); this.disabled = false; });
+        });
+
+        document.getElementById('confirmModal').addEventListener('click', function (e) {
+            if (e.target === this) closeModal();
+        });
+    </script>
+{% endblock %}

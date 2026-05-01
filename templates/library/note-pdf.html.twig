@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+            font-size: 12pt;
+            line-height: 1.6;
+            color: #111;
+            background: #fff;
+            padding: 0;
+        }
+
+        /* ── COVER / TITLE PAGE ────────────────────────────────────────── */
+        .pdf-header {
+            padding: 48px 60px 36px;
+            border-bottom: 2px solid #6a5acd;
+            margin-bottom: 36px;
+        }
+
+        .pdf-header-brand {
+            font-size: 11pt;
+            font-weight: 600;
+            color: #6a5acd;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 18px;
+        }
+
+        .pdf-title {
+            font-size: 22pt;
+            font-weight: 700;
+            color: #111;
+            margin-bottom: 8px;
+            line-height: 1.25;
+        }
+
+        .pdf-meta {
+            font-size: 10pt;
+            color: #6b7280;
+        }
+
+        /* ── CONTENT AREA ──────────────────────────────────────────────── */
+        .pdf-body {
+            padding: 0 60px 60px;
+        }
+
+        .pdf-paragraph {
+            margin-bottom: 6pt;
+            font-size: 12pt;
+            color: #111;
+            min-height: 1.6em;
+            line-height: 1.7;
+            word-break: break-word;
+        }
+
+        .pdf-paragraph.align-left   { text-align: left; }
+        .pdf-paragraph.align-center { text-align: center; }
+        .pdf-paragraph.align-right  { text-align: right; }
+        .pdf-paragraph.align-justify { text-align: justify; }
+
+        /* ── FOOTER ────────────────────────────────────────────────────── */
+        .pdf-footer {
+            position: fixed;
+            bottom: 20px;
+            left: 60px;
+            right: 60px;
+            font-size: 9pt;
+            color: #9ca3af;
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="pdf-header">
+        <div class="pdf-header-brand">Harmony — Course Note</div>
+        <div class="pdf-title">{{ title }}</div>
+        <div class="pdf-meta">Exported on {{ "now"|date("F j, Y") }}</div>
+    </div>
+
+    <div class="pdf-body">
+        {% for para in paragraphs %}
+            <p class="pdf-paragraph align-{{ para.align|default('left') }}"
+               style="font-family: {{ para.font|default('Arial') }}, DejaVu Sans, sans-serif; font-size: {{ para.size|default(12) }}pt;">
+                {{ para.text|default('')|nl2br }}
+            </p>
+        {% endfor %}
+    </div>
+
+    <div class="pdf-footer">
+        <span>{{ title }}</span>
+        <span>Harmony</span>
+    </div>
+
+</body>
+</html>

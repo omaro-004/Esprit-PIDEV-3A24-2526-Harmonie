@@ -1,0 +1,69 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Salles — Admin{% endblock %}
+
+{% block body %}
+<div class="admin-topbar">
+    <h1 class="admin-page-title">Salles</h1>
+    <a href="{{ path('admin_salle_new') }}" class="admin-btn admin-btn-primary">Ajouter une salle</a>
+</div>
+
+<div class="admin-toolbar">
+    <form class="admin-toolbar__search" method="get" action="{{ path('admin_salle_index') }}" role="search">
+        <label class="visually-hidden" for="admin-salle-q">Recherche</label>
+        <input id="admin-salle-q" type="search" name="q" value="{{ searchQuery }}" placeholder="Recherche par nom…">
+    </form>
+</div>
+
+<div class="admin-cards-grid">
+    {% for s in salles %}
+        <article class="admin-module-card admin-module-card--accent-salle {{ not s.disponible ? 'admin-module-card--unavailable' : '' }}"
+                 data-admin-salle-card>
+            <div class="admin-module-card__head">
+                <h2 class="admin-module-card__title admin-module-card__title--lg" style="margin:0;">🏢 {{ s.nom }}</h2>
+            </div>
+            <div class="admin-module-card__body">
+                <p class="admin-module-card__meta">👥 Capacité : {{ s.capacite }}</p>
+                <p class="admin-module-card__meta">🔧 {% if s.equipements %}{{ s.equipements|slice(0, 80) }}{% if s.equipements|length > 80 %}…{% endif %}{% else %}—{% endif %}</p>
+                <p class="admin-module-card__meta">
+                    <button type="button"
+                            class="admin-salle-toggle js-salle-toggle {{ s.disponible ? 'is-on' : 'is-off' }}"
+                            data-toggle-url="{{ path('admin_salle_toggle', { id: s.id }) }}"
+                            data-csrf="{{ csrf_token('admin_toggle_salle' ~ s.id) }}"
+                            aria-pressed="{{ s.disponible ? 'true' : 'false' }}">
+                        <span class="js-toggle-label">{{ s.disponible ? 'ON' : 'OFF' }}</span>
+                        <span class="visually-hidden">Disponibilité</span>
+                    </button>
+                </p>
+            </div>
+            <div class="admin-module-card__footer">
+                <a href="{{ path('admin_salle_edit', { id: s.id }) }}" class="admin-btn admin-btn-ghost">Modifier</a>
+                <form class="inline-form" method="post" action="{{ path('admin_salle_delete', { id: s.id }) }}" onsubmit="return confirm('Supprimer cette salle ?');">
+                    <input type="hidden" name="_token" value="{{ csrf_token('admin_delete_salle' ~ s.id) }}">
+                    <button type="submit" class="admin-btn admin-btn-danger">Supprimer</button>
+                </form>
+            </div>
+        </article>
+    {% else %}
+        <p class="admin-empty-hint" style="grid-column: 1 / -1;">Aucune salle.</p>
+    {% endfor %}
+</div>
+
+{% if pages > 1 %}
+    <nav class="admin-pagination-round" aria-label="Pagination">
+        {% if page > 1 %}
+            <a href="{{ path('admin_salle_index', app.request.query.all|merge({ page: page - 1 })) }}">‹</a>
+        {% endif %}
+        {% for p in 1..pages %}
+            {% if p == page %}
+                <span class="is-current" aria-current="page">{{ p }}</span>
+            {% else %}
+                <a href="{{ path('admin_salle_index', app.request.query.all|merge({ page: p })) }}">{{ p }}</a>
+            {% endif %}
+        {% endfor %}
+        {% if page < pages %}
+            <a href="{{ path('admin_salle_index', app.request.query.all|merge({ page: page + 1 })) }}">›</a>
+        {% endif %}
+    </nav>
+{% endif %}
+{% endblock %}

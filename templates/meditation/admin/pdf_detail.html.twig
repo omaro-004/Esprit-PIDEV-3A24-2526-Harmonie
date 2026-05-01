@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Helvetica, Arial, sans-serif; font-size: 12px; color: #1C1733; margin: 40px; }
+        h1 { color: #6A5ACD; font-size: 22px; margin-bottom: 4px; }
+        .subtitle { color: #9590B8; font-size: 11px; margin-bottom: 24px; }
+        .info-table { width: 100%; margin-bottom: 24px; }
+        .info-table td { padding: 6px 10px; font-size: 12px; }
+        .info-table .label { color: #9590B8; font-weight: bold; width: 120px; }
+        .info-table .value { color: #1C1733; }
+        .divider { border: none; border-top: 1px solid #EDE8FA; margin: 20px 0; }
+        h2 { color: #6A5ACD; font-size: 16px; margin-bottom: 12px; }
+        .conseil { padding: 10px 14px; margin-bottom: 8px; background: #F7F5FD; border-radius: 6px; font-size: 12px; line-height: 1.5; }
+        .conseil-num { color: #6A5ACD; font-weight: bold; }
+        .footer { margin-top: 30px; font-size: 10px; color: #9590B8; text-align: center; border-top: 1px solid #EDE8FA; padding-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>HARMONIE - Session de Meditation</h1>
+    <div class="subtitle">Detail de la session - {{ "now"|date("d/m/Y") }}</div>
+
+    <table class="info-table">
+        <tr><td class="label">Theme :</td><td class="value">{{ session.theme }}</td></tr>
+        <tr><td class="label">Auteur :</td><td class="value">{{ session.auteur }}</td></tr>
+        <tr><td class="label">Duree :</td><td class="value">{{ session.duree }} minutes</td></tr>
+        {% if session.audioUrl %}
+        <tr><td class="label">Audio URL :</td><td class="value">{{ session.audioUrl }}</td></tr>
+        {% endif %}
+    </table>
+
+    <hr class="divider">
+
+    <h2>Conseils ({{ session.conseils|length }})</h2>
+
+    {% for conseil in session.conseils %}
+        <div class="conseil">
+            <span class="conseil-num">{{ loop.index }}.</span> {{ conseil.contenu }}
+        </div>
+    {% else %}
+        <p style="color:#9590B8; font-style:italic;">Aucun conseil pour cette session.</p>
+    {% endfor %}
+
+    <div class="footer">
+        Genere le {{ "now"|date("d/m/Y H:i") }} - Harmonie &copy; {{ "now"|date("Y") }}
+    </div>
+</body>
+</html>

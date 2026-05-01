@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.Circle?>
+
+<!--
+    Accueil.fxml — Page d'accueil Étudiant
+
+    MODIFICATIONS (Phase 3 - Intégration Activités):
+      1. Button btnActivites remplacé par MenuButton menuActivites
+         Les 4 MenuItem (Accueil, Aliments, Exercices, Sommeil) sont ajoutés dynamiquement
+
+    CORRECTIONS EXISTANTES:
+      1. StackPane racine → le tooltip profil est en dernier enfant = jamais clipé par la navbar
+      2. Bouton déconnexion ajouté dans la navbar
+-->
+<StackPane xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="controllers.UserControlleers.modifControl.AccueilController">
+
+    <stylesheets>/views/admin-styles.css</stylesheets>
+
+    <!-- ── Contenu principal ── -->
+    <BorderPane fx:id="root"
+                prefWidth="1440" prefHeight="830"
+                styleClass="front-root">
+
+        <top>
+            <HBox fx:id="navBar" alignment="CENTER_LEFT" spacing="4"
+                  styleClass="accueil-navbar">
+
+                <!-- Logo + Titre -->
+                <HBox alignment="CENTER_LEFT" spacing="8">
+                    <HBox.margin><Insets left="20" right="16"/></HBox.margin>
+                    <ImageView fx:id="logoImage" fitHeight="28" fitWidth="28" preserveRatio="true"/>
+                    <Label text="Harmony" styleClass="accueil-navbar-brand"/>
+                </HBox>
+
+                <Separator orientation="VERTICAL" styleClass="accueil-nav-sep"/>
+
+                <!-- MODIFIÉ: MenuButton pour Activités (remplace Button) -->
+                <MenuButton fx:id="menuActivites"
+                            text="🏋  Activités"
+                            styleClass="accueil-nav-btn, accueil-nav-btn-active">
+
+                    <!-- Les items sont ajoutés dynamiquement dans AccueilController.setupActivityMenuButton() -->
+                </MenuButton>
+
+                <!-- 5 autres boutons navigation (inchangés) -->
+                <Button fx:id="btnForum"
+                        text="💬  Forum"
+                        styleClass="accueil-nav-btn"
+                        onAction="#handleForum"/>
+
+                <Button fx:id="btnRessources"
+                        text="📚  Tâches"
+                        styleClass="accueil-nav-btn"
+                        onAction="#handleRessources"/>
+
+                <Button fx:id="btnEvents"
+                        text="📅  Événements"
+                        styleClass="accueil-nav-btn"
+                        onAction="#handleEvents"/>
+
+                <Button fx:id="btnNutrition"
+                        text="🥗  Nutrition"
+                        styleClass="accueil-nav-btn"
+                        onAction="#handleNutrition"/>
+
+                <Button fx:id="btnMeditation"
+                        text="🧘  Méditation"
+                        styleClass="accueil-nav-btn"
+                        onAction="#handleMeditation"/>
+
+                <Button fx:id="btnJournal"
+                        text="📔  Journal"
+                        styleClass="accueil-nav-btn"
+                        onAction="#handleJournal"/>
+                <Button fx:id="btnLibrary"
+                        text="📖  Library"
+                        styleClass="accueil-nav-btn"
+                        onAction="#handleLibrary"/>
+
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <!-- Bouton Déconnexion -->
+                <Button fx:id="btnLogout"
+                        text="🚪  Déconnexion"
+                        styleClass="accueil-nav-btn, accueil-nav-btn-logout"
+                        onAction="#handleLogout">
+                    <HBox.margin><Insets right="6"/></HBox.margin>
+                </Button>
+
+                <Separator orientation="VERTICAL" styleClass="accueil-nav-sep"/>
+
+                <!-- Avatar profil -->
+                <StackPane fx:id="profileZone"
+                           onMouseEntered="#handleProfileHover"
+                           onMouseExited="#handleProfileHoverEnd"
+                           onMouseClicked="#handleProfileClick"
+                           styleClass="accueil-profile-zone">
+                    <HBox.margin><Insets left="8" right="20"/></HBox.margin>
+
+                    <StackPane fx:id="avatarContainer" styleClass="accueil-avatar-container">
+                        <Label fx:id="avatarInitial"
+                               styleClass="accueil-avatar-initial"
+                               text="E"/>
+                        <ImageView fx:id="avatarImage"
+                                   fitWidth="44" fitHeight="44"
+                                   preserveRatio="false"
+                                   visible="false">
+                            <clip><Circle centerX="22" centerY="22" radius="22"/></clip>
+                        </ImageView>
+                        <Label fx:id="editBadge" text="✎"
+                               styleClass="accueil-avatar-badge"
+                               visible="false"/>
+                    </StackPane>
+                </StackPane>
+
+            </HBox>
+        </top>
+
+        <center>
+            <StackPane fx:id="contentArea"
+                       styleClass="accueil-content-area"
+                       style="-fx-background-image: url('/views/UserViews/backgLIGHT.png');
+                              -fx-background-size: cover;
+                              -fx-background-position: center center;"/>
+        </center>
+
+    </BorderPane>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         OVERLAY TOOLTIP PROFIL
+         Placé en DERNIER enfant du StackPane racine → s'affiche
+         au-dessus de tout, jamais coupé par la navbar.
+         Aligné TOP_RIGHT, décalé sous l'avatar par margin top=54.
+    ══════════════════════════════════════════════════════════════ -->
+    <VBox fx:id="profileTooltip"
+          styleClass="accueil-profile-tooltip"
+          visible="false" managed="false"
+          spacing="6"
+          alignment="CENTER_LEFT"
+          StackPane.alignment="TOP_RIGHT">
+        <StackPane.margin><Insets top="54" right="20"/></StackPane.margin>
+
+        <Label fx:id="tooltipNom"
+               styleClass="accueil-tooltip-name"
+               text="Étudiant"/>
+        <Label fx:id="tooltipEmail"
+               styleClass="accueil-tooltip-email"
+               text="email@exemple.com"/>
+        <Label styleClass="accueil-tooltip-hint"
+               text="Double-clic pour modifier"/>
+    </VBox>
+
+</StackPane>

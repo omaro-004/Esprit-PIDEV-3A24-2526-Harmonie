@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harmonie Assistant - Chatbot IA</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .chatbot-container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 500px;
+            height: 90vh;
+            max-height: 800px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            border-bottom: none;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .header-logo {
+            font-size: 28px;
+        }
+
+        .header p {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: linear-gradient(180deg, #f8f9fb 0%, #f0f1f7 100%);
+        }
+
+        .messages-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .messages-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .messages-container::-webkit-scrollbar-thumb {
+            background: #ddd;
+            border-radius: 3px;
+        }
+
+        .message {
+            display: flex;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            word-wrap: break-word;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 18px 18px 4px 18px;
+        }
+
+        .bot .message-content {
+            background: #e8e9f3;
+            color: #333;
+            border-radius: 18px 18px 18px 4px;
+        }
+
+        .message-card {
+            background: white;
+            border-left: 4px solid #667eea;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 5px 0;
+            font-size: 13px;
+        }
+
+        .message-card strong {
+            color: #667eea;
+        }
+
+        .message-card.event {
+            border-left-color: #10b981;
+        }
+
+        .message-card.task {
+            border-left-color: #f59e0b;
+        }
+
+        .message-card.error {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 12px 16px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes bounce {
+            0%, 60%, 100% {
+                opacity: 0.3;
+                transform: translateY(0);
+            }
+            30% {
+                opacity: 1;
+                transform: translateY(-10px);
+            }
+        }
+
+        .input-area {
+            display: flex;
+            gap: 10px;
+            padding: 15px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .input-area input:focus {
+            border-color: #667eea;
+        }
+
+        .input-area button {
+            width: 44px;
+            height: 44px;
+            border: none;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: transform 0.2s;
+        }
+
+        .input-area button:hover {
+            transform: scale(1.05);
+        }
+
+        .input-area button:active {
+            transform: scale(0.95);
+        }
+
+        .welcome-message {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .welcome-message h2 {
+            color: #667eea;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .welcome-message p {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .commands-list {
+            margin-top: 15px;
+            font-size: 12px;
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+
+        .commands-list strong {
+            display: block;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .command-item {
+            color: #666;
+            margin: 4px 0;
+            padding-left: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .chatbot-container {
+                max-height: 100vh;
+                border-radius: 0;
+                max-width: 100%;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chatbot-container">
+        <div class="header">
+            <h1>
+                <span class="header-logo">🎯</span>
+                Harmonie Assistant
+            </h1>
+            <p>Votre assistant personnel pour vos événements et tâches</p>
+        </div>
+
+        <div class="messages-container" id="messagesContainer">
+            <div class="message bot">
+                <div class="message-content">
+                    <div class="welcome-message">
+                        <h2>Bienvenue dans Harmonie Assistant! 👋</h2>
+                        <p>Je suis votre assistant personnel. Je peux vous aider à gérer vos événements et vos tâches. Dites-moi ce que vous souhaitez faire!</p>
+                        <div class="commands-list">
+                            <strong>📅 Événements:</strong>
+                            <div class="command-item">• Ajoute une réunion demain à 10h</div>
+                            <div class="command-item">• Qu'est-ce que j'ai prévu ce weekend?</div>
+                            <div class="command-item">• Annule mon rendez-vous de vendredi</div>
+                            <strong style="margin-top: 10px;">✅ Tâches:</strong>
+                            <div class="command-item">• Ajoute une tâche: préparer le rapport</div>
+                            <div class="command-item">• Quelles sont mes tâches urgentes?</div>
+                            <div class="command-item">• Marque 'envoyer le mail' comme terminée</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <input
+                type="text"
+                id="userInput"
+                placeholder="Écrivez votre demande..."
+                autocomplete="off"
+            >
+            <button id="sendButton">→</button>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            API_KEY: '', // À remplir avec votre clé API Claude
+            MODEL: 'claude-sonnet-4-20250514',
+            API_URL: 'https://api.anthropic.com/v1/messages'
+        };
+
+        // État de l'application
+        const state = {
+            events: [],
+            tasks: [],
+            eventCounter: 1,
+            taskCounter: 1,
+            isWaitingForResponse: false
+        };
+
+        // Éléments DOM
+        const messagesContainer = document.getElementById('messagesContainer');
+        const userInput = document.getElementById('userInput');
+        const sendButton = document.getElementById('sendButton');
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', () => {
+            userInput.focus();
+            userInput.addEventListener('keypress', handleKeyPress);
+            sendButton.addEventListener('click', sendMessage);
+        });
+
+        function handleKeyPress(e) {
+            if (e.key === 'Enter' && !state.isWaitingForResponse) {
+                sendMessage();
+            }
+        }
+
+        function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message || state.isWaitingForResponse) return;
+
+            // Afficher le message utilisateur
+            addMessage(message, 'user');
+            userInput.value = '';
+            userInput.focus();
+
+            // Montrer l'indicateur de frappe
+            showTypingIndicator();
+            state.isWaitingForResponse = true;
+
+            // Obtenir la réponse du bot
+            processUserMessage(message);
+        }
+
+        function addMessage(text, sender = 'bot', isHTML = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+
+            if (isHTML) {
+                contentDiv.innerHTML = text;
+            } else {
+                contentDiv.textContent = text;
+            }
+
+            messageDiv.appendChild(contentDiv);
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message bot';
+            messageDiv.id = 'typingIndicator';
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'typing-indicator';
+            contentDiv.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+
+            messageDiv.appendChild(contentDiv);
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) indicator.remove();
+        }
+
+        async function processUserMessage(userMessage) {
+            try {
+                // Premier, traiter les commandes locales
+                const localResponse = await handleLocalCommands(userMessage);
+                if (localResponse) {
+                    removeTypingIndicator();
+                    addMessage(localResponse, 'bot', true);
+                    state.isWaitingForResponse = false;
+                    return;
+                }
+
+                // Sinon, utiliser l'API Claude
+                if (!CONFIG.API_KEY) {
+                    removeTypingIndicator();
+                    addMessage('⚠️ <strong>Clé API non configurée</strong><br>Veuillez ajouter votre clé API Claude dans le code (CONFIG.API_KEY).', 'bot', true);
+                    state.isWaitingForResponse = false;
+                    return;
+                }
+
+                const response = await callClaudeAPI(userMessage);
+                removeTypingIndicator();
+
+                if (response.success) {
+                    addMessage(response.message, 'bot', true);
+                } else {
+                    addMessage('❌ Une erreur est survenue. Veuillez réessayer.', 'bot', true);
+                }
+            } catch (error) {
+                removeTypingIndicator();
+                console.error('Erreur:', error);
+                addMessage('❌ Une erreur est survenue lors du traitement de votre demande.', 'bot', true);
+            } finally {
+                state.isWaitingForResponse = false;
+            }
+        }
+
+        async function handleLocalCommands(userMessage) {
+            const msg = userMessage.toLowerCase();
+
+            // Commandes pour les événements
+            if (msg.includes('ajoute') && (msg.includes('événement') || msg.includes('réunion') || msg.includes('rendez-vous'))) {
+                return handleAddEvent(userMessage);
+            }
+
+            if ((msg.includes('affiche') || msg.includes('montre') || msg.includes('quoi') || msg.includes("c'est") || msg.includes("qu'est")) && (msg.includes('prévu') || msg.includes('événement') || msg.includes('calendrier'))) {
+                return handleShowEvents(userMessage);
+            }
+
+            if ((msg.includes('supprim') || msg.includes('annule') || msg.includes('déprog')) && (msg.includes('événement') || msg.includes('réunion') || msg.includes('rendez-vous'))) {
+                return handleDeleteEvent(userMessage);
+            }
+
+            // Commandes pour les tâches
+            if (msg.includes('ajoute') && (msg.includes('tâche') || msg.includes('task') || msg.includes('todo'))) {
+                return handleAddTask(userMessage);
+            }
+
+            if ((msg.includes('affiche') || msg.includes('montre') || msg.includes('liste') || msg.includes('quoi')) && (msg.includes('tâche') || msg.includes('task') || msg.includes('urgent') || msg.includes('retard'))) {
+                return handleShowTasks(userMessage);
+            }
+
+            if ((msg.includes('marque') || msg.includes('complète') || msg.includes('finit')) && msg.includes('terminée')) {
+                return handleCompleteTask(userMessage);
+            }
+
+            if ((msg.includes('supprim') || msg.includes('déprog')) && (msg.includes('tâche') || msg.includes('task'))) {
+                return handleDeleteTask(userMessage);
+            }
+
+            // Commandes générales
+            if (msg.includes('aide') || msg.includes('quoi faire') || msg.includes('comment')) {
+                return getHelpMessage();
+            }
+
+            return null;
+        }
+
+        function handleAddEvent(message) {
+            const eventId = state.eventCounter++;
+            const now = new Date();
+            const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+            // Parser simple pour extraire les informations
+            const timeMatch = message.match(/(\d{1,2})[h:](\d{0,2})?/i);
+            const hours = timeMatch ? parseInt(timeMatch[1]) : 10;
+            const minutes = timeMatch && timeMatch[2] ? parseInt(timeMatch[2]) : 0;
+
+            const event = {
+                id: eventId,
+                title: extractEventTitle(message),
+                date: tomorrow.toISOString().split('T')[0],
+                startTime: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`,
+                endTime: `${(hours + 1).toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`,
+                location: extractLocation(message) || 'À définir',
+                description: ''
+            };
+
+            state.events.push(event);
+
+            return `✅ <strong>Événement créé!</strong><br>
+                <div class="message-card event">
+                    <strong>📅 ${event.title}</strong><br>
+                    📆 ${formatDate(event.date)}<br>
+                    🕐 ${event.startTime} - ${event.endTime}<br>
+                    📍 ${event.location}
+                </div>`;
+        }
+
+        function handleShowEvents(message) {
+            if (state.events.length === 0) {
+                return '📭 Vous n\'avez pas d\'événements programmés.';
+            }
+
+            let html = '📅 <strong>Vos événements:</strong><br>';
+            state.events.forEach(event => {
+                html += `<div class="message-card event">
+                    <strong>${event.title}</strong><br>
+                    ${formatDate(event.date)} • ${event.startTime}-${event.endTime}<br>
+                    📍 ${event.location}
+                </div>`;
+            });
+
+            return html;
+        }
+
+        function handleDeleteEvent(message) {
+            if (state.events.length === 0) {
+                return '📭 Vous n\'avez pas d\'événements à supprimer.';
+            }
+
+            const lastEvent = state.events[state.events.length - 1];
+            state.events.pop();
+
+            return `✅ <strong>Événement supprimé!</strong><br>
+                <div class="message-card event">
+                    <strong>❌ ${lastEvent.title}</strong><br>
+                    ${formatDate(lastEvent.date)} • ${lastEvent.startTime}
+                </div>`;
+        }
+
+        function handleAddTask(message) {
+            const taskId = state.taskCounter++;
+            const priority = extractPriority(message);
+            const dueDate = extractDueDate(message);
+
+            const task = {
+                id: taskId,
+                title: extractTaskTitle(message),
+                priority: priority,
+                dueDate: dueDate,
+                completed: false,
+                createdAt: new Date().toISOString()
+            };
+
+            state.tasks.push(task);
+
+            const priorityEmoji = {
+                'haute': '🔴',
+                'moyenne': '🟡',
+                'basse': '🟢'
+            }[priority];
+
+            return `✅ <strong>Tâche ajoutée!</strong><br>
+                <div class="message-card task">
+                    <strong>${priorityEmoji} ${task.title}</strong><br>
+                    Priorité: ${priority}<br>
+                    📅 ${dueDate}
+                </div>`;
+        }
+
+        function handleShowTasks(message) {
+            const msg = message.toLowerCase();
+            let tasks = state.tasks;
+
+            if (msg.includes('terminée')) {
+                tasks = tasks.filter(t => t.completed);
+            } else if (msg.includes('retard')) {
+                tasks = tasks.filter(t => !t.completed && new Date(t.dueDate) < new Date());
+            } else if (msg.includes('urgent')) {
+                tasks = tasks.filter(t => !t.completed && t.priority === 'haute');
+            } else {
+                tasks = tasks.filter(t => !t.completed);
+            }
+
+            if (tasks.length === 0) {
+                return '✨ Aucune tâche à afficher!';
+            }
+
+            let html = '✅ <strong>Vos tâches:</strong><br>';
+            tasks.forEach(task => {
+                const priorityEmoji = {
+                    'haute': '🔴',
+                    'moyenne': '🟡',
+                    'basse': '🟢'
+                }[task.priority];
+
+                html += `<div class="message-card task">
+                    <strong>${priorityEmoji} ${task.title}</strong><br>
+                    Priorité: ${task.priority}<br>
+                    📅 ${task.dueDate}
+                </div>`;
+            });
+
+            return html;
+        }
+
+        function handleCompleteTask(message) {
+            if (state.tasks.length === 0) {
+                return '📭 Vous n\'avez pas de tâches.';
+            }
+
+            const incompleteTask = state.tasks.find(t => !t.completed);
+            if (incompleteTask) {
+                incompleteTask.completed = true;
+                return `✨ <strong>Félicitations!</strong><br>
+                    <div class="message-card task">
+                        <strong>✅ ${incompleteTask.title}</strong><br>
+                        Tâche marquée comme terminée!
+                    </div>`;
+            }
+
+            return '✨ Toutes vos tâches sont déjà terminées!';
+        }
+
+        function handleDeleteTask(message) {
+            if (state.tasks.length === 0) {
+                return '📭 Vous n\'avez pas de tâches à supprimer.';
+            }
+
+            const lastTask = state.tasks.pop();
+            return `✅ <strong>Tâche supprimée!</strong><br>
+                <div class="message-card task">
+                    <strong>❌ ${lastTask.title}</strong>
+                </div>`;
+        }
+
+        function getHelpMessage() {
+            return `<strong>📚 Comment utiliser Harmonie Assistant?</strong><br>
+                <div class="message-card" style="border-left-color: #667eea;">
+                    <strong>📅 Gestion des événements:</strong><br>
+                    • "Ajoute une réunion demain à 10h"<br>
+                    • "Qu'est-ce que j'ai prévu ce weekend?"<br>
+                    • "Annule mon rendez-vous de vendredi"<br><br>
+                    <strong>✅ Gestion des tâches:</strong><br>
+                    • "Ajoute une tâche: préparer le rapport"<br>
+                    • "Quelles sont mes tâches urgentes?"<br>
+                    • "Montre-moi les tâches en retard"<br>
+                    • "Marque 'envoyer le mail' comme terminée"
+                </div>`;
+        }
+
+        async function callClaudeAPI(userMessage) {
+            const systemPrompt = `Tu es Harmonie Assistant, un assistant personnel bienveillant et professionnel pour l'application Harmonie.
+
+RÈGLES ESSENTIELLES:
+1. Tu réponds TOUJOURS en français
+2. Tu es bienveillant, professionnel et utile
+3. Tu gères UNIQUEMENT les deux modules: Événements et Tâches
+4. Pour toute demande hors sujet, rappelle poliment ton rôle
+
+MODULES:
+- ÉVÉNEMENTS: Créer, modifier, supprimer, afficher, détecter conflits d'horaires
+- TÂCHES: Créer, marquer terminées, modifier, supprimer, lister, trier par priorité
+
+FORMAT DES RÉPONSES:
+- Action réussie: Confirmation avec résumé + emoji
+- Liste d'éléments: Cartes visuelles structurées
+- Erreur: Explication claire + alternative proposée
+- Question: Une seule question à la fois
+
+ÉTAT ACTUEL DES DONNÉES:
+Événements: ${JSON.stringify(state.events)}
+Tâches: ${JSON.stringify(state.tasks)}
+
+Si une information est manquante, pose une seule question à la fois.
+Avant toute suppression, demande confirmation.
+Ne jamais inventer de données inexistantes.`;
+
+            try {
+                const response = await fetch(CONFIG.API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': CONFIG.API_KEY,
+                        'anthropic-version': '2023-06-01'
+                    },
+                    body: JSON.stringify({
+                        model: CONFIG.MODEL,
+                        max_tokens: 1024,
+                        messages: [
+                            {
+                                role: 'user',
+                                content: userMessage
+                            }
+                        ],
+                        system: systemPrompt
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    console.error('Erreur API:', error);
+                    return {
+                        success: false,
+                        message: 'Erreur API'
+                    };
+                }
+
+                const data = await response.json();
+                const message = data.content[0].text;
+
+                return {
+                    success: true,
+                    message: message
+                };
+            } catch (error) {
+                console.error('Erreur:', error);
+                return {
+                    success: false,
+                    message: 'Erreur de connexion'
+                };
+            }
+        }
+
+        // Fonctions utilitaires
+        function extractEventTitle(message) {
+            // Essayer d'extraire le titre de l'événement
+            const titleMatch = message.match(/(ajoute|crée?|programme)\s+(?:une|un)?\s+([^à]*?)(?=à|\d|pour|le|la|dans|ce|de)/i);
+            return titleMatch ? titleMatch[2].trim() : 'Événement sans titre';
+        }
+
+        function extractTaskTitle(message) {
+            const titleMatch = message.match(/(tâche|task)[\s:]*([^.!?\n]*)/i);
+            return titleMatch ? titleMatch[2].trim() : 'Tâche sans titre';
+        }
+
+        function extractLocation(message) {
+            const locationMatch = message.match(/(?:à|au|lieu:?)\s+([^.!?]*?)(?=pour|à|le|la|,|$)/i);
+            return locationMatch ? locationMatch[1].trim() : null;
+        }
+
+        function extractPriority(message) {
+            const msg = message.toLowerCase();
+            if (msg.includes('urgent') || msg.includes('haute') || msg.includes('importante')) {
+                return 'haute';
+            } else if (msg.includes('basse') || msg.includes('faible')) {
+                return 'basse';
+            }
+            return 'moyenne';
+        }
+
+        function extractDueDate(message) {
+            const now = new Date();
+            const msg = message.toLowerCase();
+
+            if (msg.includes('demain')) {
+                const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+                return tomorrow.toISOString().split('T')[0];
+            } else if (msg.includes('lundi')) {
+                const monday = getNextDayOfWeek(1);
+                return monday.toISOString().split('T')[0];
+            } else if (msg.includes('mardi')) {
+                const tuesday = getNextDayOfWeek(2);
+                return tuesday.toISOString().split('T')[0];
+            } else if (msg.includes('mercredi')) {
+                const wednesday = getNextDayOfWeek(3);
+                return wednesday.toISOString().split('T')[0];
+            } else if (msg.includes('jeudi')) {
+                const thursday = getNextDayOfWeek(4);
+                return thursday.toISOString().split('T')[0];
+            } else if (msg.includes('vendredi')) {
+                const friday = getNextDayOfWeek(5);
+                return friday.toISOString().split('T')[0];
+            } else if (msg.includes('samedi')) {
+                const saturday = getNextDayOfWeek(6);
+                return saturday.toISOString().split('T')[0];
+            } else if (msg.includes('dimanche')) {
+                const sunday = getNextDayOfWeek(0);
+                return sunday.toISOString().split('T')[0];
+            }
+
+            return now.toISOString().split('T')[0];
+        }
+
+        function getNextDayOfWeek(day) {
+            const now = new Date();
+            const dayOfWeek = now.getDay();
+            const daysAhead = (day - dayOfWeek + 7) % 7 || 7;
+            const futureDate = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000);
+            return futureDate;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString + 'T00:00:00');
+            return date.toLocaleDateString('fr-FR', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+    </script>
+</body>
+</html>

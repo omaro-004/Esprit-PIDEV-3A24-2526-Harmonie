@@ -1,0 +1,134 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ cat ? 'Modifier' : 'Nouvelle' }} catégorie — Harmony{% endblock %}
+
+{% block stylesheets %}
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{--purple:#6A5ACD;--purple-dark:#4B3B9E;--purple-soft:#8B7FD4;
+        --purple-pale:#EDE8FA;--purple-ghost:#F7F5FD;--text:#1C1733;
+        --text-mid:#4A4570;--text-muted:#9590B8;--border:rgba(106,90,205,.12);
+        --white:#FFFFFF;--font-head:'Syne',sans-serif;--font-body:'Inter',sans-serif;}
+    html,body{font-family:var(--font-body);background:var(--purple-ghost);color:var(--text);}
+    .topbar{position:sticky;top:0;z-index:200;background:var(--white);
+        border-bottom:1px solid var(--border);height:62px;display:flex;
+        align-items:center;padding:0 40px;gap:8px;}
+    .topbar-logo{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:32px;}
+    .logo-mark{width:34px;height:34px;border-radius:10px;object-fit:contain;}
+    .nav-links{display:flex;align-items:center;gap:2px;flex:1;}
+    .nav-link{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;
+        border-radius:9px;font-size:13.5px;font-weight:500;color:var(--text-mid);
+        text-decoration:none;transition:background .15s,color .15s;}
+    .nav-link:hover,.nav-link.active{background:var(--purple-pale);color:var(--purple);font-weight:600;}
+    .topbar-right{display:flex;align-items:center;gap:10px;margin-left:auto;}
+    .logout-btn{padding:7px 16px;border-radius:9px;border:1.5px solid rgba(239,68,68,.2);
+        background:transparent;color:#E05252;font-size:13px;cursor:pointer;}
+    .avatar{width:36px;height:36px;border-radius:50%;background:var(--purple);
+        color:white;font-family:var(--font-head);font-weight:700;font-size:14px;
+        display:grid;place-items:center;}
+
+    .page{max-width:600px;margin:0 auto;padding:48px 40px 80px;}
+
+    .form-card{background:var(--white);border:1px solid var(--border);
+        border-radius:20px;padding:40px;}
+    .form-title{font-family:var(--font-head);font-size:24px;font-weight:800;
+        color:var(--text);margin-bottom:28px;display:flex;align-items:center;gap:10px;}
+
+    .form-group{margin-bottom:20px;}
+    .form-label{display:block;font-size:13px;font-weight:600;color:var(--text-mid);
+        margin-bottom:7px;}
+    .form-input,.form-textarea{width:100%;padding:11px 14px;border:1.5px solid var(--border);
+        border-radius:10px;font-family:var(--font-body);font-size:14px;color:var(--text);
+        background:var(--white);transition:border-color .15s,box-shadow .15s;outline:none;}
+    .form-input:focus,.form-textarea:focus{border-color:var(--purple);
+        box-shadow:0 0 0 3px rgba(106,90,205,.1);}
+    .form-input.error,.form-textarea.error{border-color:#E05252;}
+    .form-textarea{resize:vertical;min-height:100px;}
+    .char-count{font-size:11px;color:var(--text-muted);text-align:right;margin-top:4px;}
+
+    .error-box{background:#FEF2F2;border:1px solid rgba(239,68,68,.2);
+        border-radius:10px;padding:12px 16px;margin-bottom:20px;
+        color:#E05252;font-size:13px;display:flex;align-items:center;gap:8px;}
+
+    .form-actions{display:flex;gap:12px;margin-top:28px;}
+    .btn-submit{flex:1;padding:12px;background:var(--purple);color:white;
+        border:none;border-radius:11px;font-family:var(--font-body);font-size:14px;
+        font-weight:600;cursor:pointer;transition:background .15s;}
+    .btn-submit:hover{background:var(--purple-dark);}
+    .btn-cancel{padding:12px 24px;background:var(--purple-ghost);color:var(--text-mid);
+        border:1.5px solid var(--border);border-radius:11px;font-family:var(--font-body);
+        font-size:14px;font-weight:500;cursor:pointer;text-decoration:none;
+        display:inline-flex;align-items:center;}
+    .btn-cancel:hover{border-color:var(--purple-soft);}
+</style>
+{% endblock %}
+
+{% block body %}
+<header class="topbar">
+    <a href="{{ path('homepage') }}" class="topbar-logo">
+        <img src="{{ asset('images/logo.png') }}" class="logo-mark" alt="Harmony">
+    </a>
+    <nav class="nav-links">
+        <a href="{{ path('activites') }}" class="nav-link">🏋 Activités</a>
+        <a href="{{ path('forum') }}"     class="nav-link active">💬 Forum</a>
+        <a href="{{ path('taches') }}"    class="nav-link">📚 Tâches</a>
+        <a href="{{ path('evenements') }}" class="nav-link">📅 Événements</a>
+        <a href="{{ path('nutrition') }}" class="nav-link">🥗 Nutrition</a>
+        <a href="{{ path('meditation') }}" class="nav-link">🧘 Méditation</a>
+        <a href="{{ path('journal') }}"   class="nav-link">📔 Journal</a>
+        <a href="{{ path('library') }}"   class="nav-link">📖 Library</a>
+    </nav>
+    <div class="topbar-right">
+        <button class="logout-btn">🚪 Déconnexion</button>
+        <div class="avatar">E</div>
+    </div>
+</header>
+
+<main class="page">
+    <div class="form-card">
+        <div class="form-title">
+            {{ cat ? '✏️ Modifier la catégorie' : '➕ Nouvelle catégorie' }}
+        </div>
+
+        {{ form_start(form) }}
+
+            <div class="form-group">
+                <label class="form-label">Nom de la catégorie *</label>
+                {{ form_widget(form.nomCategorie) }}
+                {% for error in form.nomCategorie.vars.errors %}
+                    <div class="error-box">⚠️ {{ error.message }}</div>
+                {% endfor %}
+                <div class="char-count"><span id="nomCount">0</span>/100</div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                {{ form_widget(form.description) }}
+                {% for error in form.description.vars.errors %}
+                    <div class="error-box">⚠️ {{ error.message }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="form-actions">
+                <a href="{{ path('forum') }}" class="btn-cancel">Annuler</a>
+                <button type="submit" class="btn-submit">
+                    {{ cat ? '💾 Enregistrer' : '➕ Créer la catégorie' }}
+                </button>
+            </div>
+
+        {{ form_end(form) }}
+    </div>
+</main>
+
+{% block javascripts %}
+<script>
+    const nomInput = document.getElementById('categorie_nomCategorie');
+    const nomCount = document.getElementById('nomCount');
+    if (nomInput && nomCount) {
+        function updateCount() { nomCount.textContent = nomInput.value.length; }
+        nomInput.addEventListener('input', updateCount);
+        updateCount();
+    }
+</script>
+{% endblock %}
+{% endblock %}

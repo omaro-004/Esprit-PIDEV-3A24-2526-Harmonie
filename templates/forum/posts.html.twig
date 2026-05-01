@@ -1,0 +1,741 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ categorie.nomCategorie }} — Forum Harmony{% endblock %}
+
+
+{% block stylesheets %}
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Clash+Display:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+    --ink:#0D0D14;--ink-mid:#3A3A52;--ink-muted:#8A8AA8;
+    --surface:#F4F3FF;--card:#FFFFFF;
+    --v:#6C47FF;--v2:#8B6BFF;--v3:#EDE9FF;
+    --accent:#FF6B6B;--accent2:#FFD93D;--accent3:#6BCB77;
+    --border:rgba(108,71,255,.1);
+    --font-head:'Clash Display',sans-serif;
+    --font-body:'DM Sans',sans-serif;
+    --shadow:0 4px 24px rgba(108,71,255,.1);
+    --shadow-lg:0 12px 48px rgba(108,71,255,.16);
+}
+html,body{font-family:var(--font-body);background:var(--surface);color:var(--ink);}
+
+
+/* ── TOPBAR ── */
+.topbar{position:sticky;top:0;z-index:300;background:rgba(244,243,255,.88);
+    backdrop-filter:blur(16px);border-bottom:1px solid var(--border);
+    height:60px;display:flex;align-items:center;padding:0 32px;gap:6px;}
+.topbar-logo{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:28px;}
+.logo-mark{width:32px;height:32px;border-radius:9px;object-fit:contain;}
+.nav-links{display:flex;align-items:center;gap:2px;flex:1;}
+.nav-link{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;
+    border-radius:8px;font-size:13px;font-weight:500;color:var(--ink-mid);
+    text-decoration:none;transition:all .15s;}
+.nav-link:hover{background:var(--v3);color:var(--v);}
+.nav-link.active{background:var(--v);color:white;font-weight:600;}
+.topbar-right{display:flex;align-items:center;gap:10px;margin-left:auto;}
+.logout-btn{padding:6px 14px;border-radius:8px;border:1.5px solid rgba(255,107,107,.25);
+    background:transparent;color:var(--accent);font-size:13px;cursor:pointer;}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--v),var(--v2));
+    color:white;font-family:var(--font-head);font-weight:600;font-size:13px;
+    display:grid;place-items:center;}
+
+
+/* ── PAGE ── */
+.page{max-width:820px;margin:0 auto;padding:36px 24px 80px;}
+
+
+/* ── BREADCRUMB ── */
+.breadcrumb{display:flex;align-items:center;gap:8px;font-size:13px;
+    color:var(--ink-muted);margin-bottom:20px;}
+.breadcrumb a{color:var(--v);text-decoration:none;font-weight:500;}
+
+
+/* ── CAT HEADER ── */
+.cat-header{
+    background:linear-gradient(135deg,var(--v) 0%,#4B2FCC 60%,#2D1B8C 100%);
+    border-radius:20px;padding:28px 32px;margin-bottom:20px;
+    display:flex;align-items:center;justify-content:space-between;
+    position:relative;overflow:hidden;
+}
+.cat-header::before{content:'';position:absolute;right:-60px;top:-60px;
+    width:240px;height:240px;border-radius:50%;background:rgba(255,255,255,.05);}
+.cat-header h1{font-family:var(--font-head);font-size:22px;font-weight:700;color:white;}
+.cat-header p{color:rgba(255,255,255,.65);font-size:13px;margin-top:4px;}
+.btn-new-post{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;
+    background:white;color:var(--ink);border-radius:10px;font-size:13px;
+    font-weight:700;text-decoration:none;transition:all .2s;position:relative;z-index:1;
+    box-shadow:0 2px 12px rgba(0,0,0,.15);}
+.btn-new-post:hover{transform:translateY(-2px);}
+
+
+/* ── AI CHIPS BARRE ── */
+.ai-chips-bar{
+    display:flex;align-items:center;gap:8px;padding:12px 16px;
+    background:linear-gradient(135deg,#1a0a2e,#2D1B8C);
+    border-radius:14px;margin-bottom:20px;flex-wrap:wrap;
+}
+.ai-chips-label{font-size:11px;font-weight:700;color:rgba(255,255,255,.5);
+    letter-spacing:.5px;text-transform:uppercase;margin-right:4px;}
+.ai-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;
+    border-radius:20px;font-size:11px;font-weight:700;border:1.5px solid;}
+.chip-s{background:rgba(107,203,119,.2);color:#6BCB77;border-color:rgba(107,203,119,.4);}
+.chip-t{background:rgba(255,217,61,.2);color:#FFD93D;border-color:rgba(255,217,61,.4);}
+.chip-sent{background:rgba(255,107,107,.2);color:#FF9090;border-color:rgba(255,107,107,.4);}
+.chip-img{background:rgba(139,107,255,.2);color:#B39DFF;border-color:rgba(139,107,255,.4);}
+
+
+/* ── TOOLBAR ── */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap;}
+.search-wrap{flex:1;min-width:180px;position:relative;}
+.search-input{width:100%;padding:10px 14px 10px 36px;border:1.5px solid var(--border);
+    border-radius:10px;font-family:var(--font-body);font-size:13px;color:var(--ink);
+    background:var(--card);outline:none;transition:all .15s;}
+.search-input:focus{border-color:var(--v);box-shadow:0 0 0 3px rgba(108,71,255,.08);}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none;}
+.search-btn{padding:10px 16px;background:var(--v);color:white;border:none;
+    border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;}
+.search-btn:hover{background:#4B2FCC;}
+.tri-group{display:flex;gap:5px;}
+.btn-tri{padding:8px 13px;border:1.5px solid var(--border);border-radius:9px;
+    background:var(--card);color:var(--ink-mid);font-size:12px;font-weight:600;
+    cursor:pointer;text-decoration:none;transition:all .15s;white-space:nowrap;}
+.btn-tri:hover,.btn-tri.active{background:var(--v3);border-color:var(--v);color:var(--v);}
+.results-info{font-size:12px;color:var(--ink-muted);margin-bottom:16px;}
+
+
+/* ── POST CARD ── */
+.posts-list{display:flex;flex-direction:column;gap:16px;}
+.post-card{background:var(--card);border:1.5px solid var(--border);
+    border-radius:18px;overflow:hidden;transition:all .2s;
+    box-shadow:0 2px 8px rgba(108,71,255,.05);}
+.post-card:hover{border-color:rgba(108,71,255,.25);box-shadow:var(--shadow);}
+
+
+.post-author-row{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 0;}
+.post-author-left{display:flex;align-items:center;gap:10px;}
+.post-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--v),var(--v2));
+    color:white;font-size:13px;font-weight:700;display:grid;place-items:center;font-family:var(--font-head);}
+.post-author-name{font-size:13px;font-weight:600;color:var(--ink);}
+.post-author-date{font-size:11px;color:var(--ink-muted);}
+.post-actions-top{display:flex;gap:5px;}
+.btn-edit-sm{display:inline-flex;align-items:center;gap:3px;padding:4px 10px;
+    background:var(--v3);color:var(--v);border:none;border-radius:7px;
+    font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .15s;}
+.btn-edit-sm:hover{background:var(--v);color:white;}
+.btn-del-sm{display:inline-flex;align-items:center;gap:3px;padding:4px 10px;
+    background:rgba(255,107,107,.1);color:var(--accent);border:none;border-radius:7px;
+    font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;}
+.btn-del-sm:hover{background:var(--accent);color:white;}
+
+
+.post-body{padding:12px 20px 0;}
+.post-title{font-family:var(--font-head);font-size:16px;font-weight:600;
+    color:var(--ink);margin-bottom:5px;line-height:1.35;}
+.post-excerpt{font-size:13px;color:var(--ink-mid);line-height:1.7;}
+
+
+/* ── POST FOOTER — BOUTONS IA BIEN VISIBLES ── */
+.post-footer{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    padding:14px 20px;margin-top:12px;
+    border-top:1px solid var(--v3);
+    background:linear-gradient(to right,rgba(108,71,255,.02),transparent);
+}
+
+
+/* Bouton like */
+.btn-like{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;
+    background:var(--v3);color:var(--ink-mid);border:1.5px solid var(--border);
+    border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-like:hover{border-color:var(--v);color:var(--v);}
+.btn-like.liked{background:rgba(255,107,107,.12);color:var(--accent);border-color:rgba(255,107,107,.3);}
+
+
+/* Bouton commentaires */
+.btn-comment-toggle{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;
+    background:var(--v3);color:var(--ink-mid);border:1.5px solid var(--border);
+    border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;}
+.btn-comment-toggle:hover,.btn-comment-toggle.open{background:var(--v3);color:var(--v);border-color:var(--v);}
+
+
+/* ─── BOUTONS IA — TAPE À L'ŒIL ─── */
+.btn-ia-translate{
+    display:inline-flex;align-items:center;gap:6px;padding:7px 15px;
+    background:linear-gradient(135deg,rgba(255,217,61,.15),rgba(255,217,61,.25));
+    color:#B8860B;border:1.5px solid rgba(255,217,61,.5);
+    border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;
+    transition:all .2s;font-family:var(--font-body);position:relative;
+}
+.btn-ia-translate:hover{background:linear-gradient(135deg,#FFD93D,#FFA500);color:white;border-color:#FFD93D;transform:translateY(-1px);}
+
+
+.btn-ia-summary{
+    display:inline-flex;align-items:center;gap:6px;padding:7px 15px;
+    background:linear-gradient(135deg,rgba(107,203,119,.15),rgba(107,203,119,.25));
+    color:#2d8c3e;border:1.5px solid rgba(107,203,119,.5);
+    border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;
+    transition:all .2s;font-family:var(--font-body);
+}
+.btn-ia-summary:hover{background:linear-gradient(135deg,#6BCB77,#4caf50);color:white;border-color:#6BCB77;transform:translateY(-1px);}
+
+
+/* Badge IA sur les boutons */
+.ia-badge-dot{
+    width:6px;height:6px;background:currentColor;border-radius:50%;
+    animation:pulse-dot 1.5s ease-in-out infinite;
+}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.5);}}
+
+
+/* ── SECTION COMMENTAIRES ── */
+.comments-section{display:none;padding:0 20px 20px;border-top:1px solid var(--v3);}
+.comments-section.open{display:block;}
+.add-comment-form{display:flex;gap:10px;align-items:flex-start;padding:14px 0 10px;}
+.add-comment-avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--v2),var(--v));
+    color:white;font-size:11px;font-weight:700;display:grid;place-items:center;flex-shrink:0;margin-top:2px;}
+.add-comment-right{flex:1;display:flex;flex-direction:column;gap:7px;}
+.add-comment-input{width:100%;padding:9px 13px;border:1.5px solid var(--border);
+    border-radius:10px;font-family:var(--font-body);font-size:13px;color:var(--ink);
+    background:var(--v3);outline:none;resize:none;min-height:56px;transition:all .15s;}
+.add-comment-input:focus{border-color:var(--v);background:white;}
+.add-comment-input.error{border-color:var(--accent);}
+.add-comment-actions{display:flex;justify-content:flex-end;}
+.btn-send-comment{padding:6px 16px;background:var(--v);color:white;border:none;
+    border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;}
+.comments-divider{height:1px;background:var(--v3);margin:4px 0 10px;}
+
+
+.comment-row{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(108,71,255,.05);}
+.comment-row:last-child{border-bottom:none;}
+.comment-thread-line{width:2px;background:var(--v3);border-radius:2px;flex-shrink:0;margin:4px 0;}
+.comment-main{flex:1;}
+.comment-header{display:flex;align-items:center;gap:7px;margin-bottom:5px;}
+.comment-avatar{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--v2),#9B7BFF);
+    color:white;font-size:10px;font-weight:700;display:grid;place-items:center;}
+.comment-author{font-size:12px;font-weight:700;color:var(--ink);}
+.comment-date{font-size:11px;color:var(--ink-muted);}
+.comment-body{font-size:13px;color:var(--ink-mid);line-height:1.65;margin-bottom:7px;}
+
+
+/* ─── ACTIONS COMMENTAIRE — SENTIMENT BIEN VISIBLE ─── */
+.comment-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+
+
+.btn-sentiment{
+    display:inline-flex;align-items:center;gap:5px;padding:4px 11px;
+    background:linear-gradient(135deg,rgba(255,107,107,.12),rgba(255,107,107,.2));
+    color:#c0392b;border:1.5px solid rgba(255,107,107,.4);
+    border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;
+    transition:all .2s;font-family:var(--font-body);
+}
+.btn-sentiment:hover{background:linear-gradient(135deg,#FF6B6B,#FF4757);color:white;border-color:#FF6B6B;transform:translateY(-1px);}
+
+
+.btn-comment-edit{display:inline-flex;align-items:center;gap:3px;padding:4px 10px;
+    background:var(--v3);color:var(--v);border:none;border-radius:7px;
+    font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;}
+.btn-comment-edit:hover{background:var(--v);color:white;}
+.btn-comment-delete{display:inline-flex;align-items:center;gap:3px;padding:4px 10px;
+    background:rgba(255,107,107,.1);color:var(--accent);border:none;border-radius:7px;
+    font-size:11px;font-weight:600;cursor:pointer;}
+.btn-comment-delete:hover{background:var(--accent);color:white;}
+
+
+.no-comments{font-size:13px;color:var(--ink-muted);text-align:center;padding:18px 0;font-style:italic;}
+
+
+/* ── MODALE RÉSUMÉ ── */
+.resume-modal{display:none;position:fixed;inset:0;background:rgba(13,13,20,.7);
+    z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
+.resume-modal-box{background:white;border-radius:20px;width:90%;max-width:520px;overflow:hidden;
+    box-shadow:var(--shadow-lg);}
+.resume-modal-header{background:linear-gradient(135deg,var(--v),#4B2FCC);
+    color:white;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;}
+.resume-modal-body{padding:24px;min-height:80px;font-size:14px;line-height:1.7;color:var(--ink-mid);}
+.resume-modal-footer{padding:12px 20px;text-align:right;border-top:1px solid var(--v3);}
+
+
+/* ── LANG DROPDOWN ── */
+.translate-dropdown{position:relative;display:inline-block;}
+.lang-menu{display:none;position:absolute;bottom:calc(100% + 8px);left:0;
+    background:white;border:1.5px solid var(--border);border-radius:12px;
+    box-shadow:var(--shadow);padding:6px;z-index:100;min-width:155px;}
+.lang-btn{display:block;width:100%;text-align:left;padding:7px 10px;
+    border:none;background:none;border-radius:8px;font-size:13px;
+    color:var(--ink);cursor:pointer;font-family:var(--font-body);transition:background .15s;}
+.lang-btn:hover{background:var(--v3);}
+
+
+/* ── BADGE LANGUE ── */
+.lang-badge{display:none;margin-top:8px;}
+.lang-badge-pill{font-size:11px;background:var(--v3);color:var(--v);
+    padding:3px 10px;border-radius:20px;font-weight:600;}
+
+
+/* ── EMPTY ── */
+.empty-state{text-align:center;padding:60px 20px;color:var(--ink-muted);}
+
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+.fade{animation:fadeUp .4s ease both;}
+</style>
+{% endblock %}
+
+
+{% block body %}
+<header class="topbar">
+    <a href="{{ path('homepage') }}" class="topbar-logo">
+        <img src="{{ asset('images/logo.png') }}" class="logo-mark" alt="Harmony">
+    </a>
+    <nav class="nav-links">
+        <a href="{{ path('activites') }}"  class="nav-link">🏋 Activités</a>
+        <a href="{{ path('forum') }}"      class="nav-link active">💬 Forum</a>
+        <a href="{{ path('taches') }}"     class="nav-link">📚 Tâches</a>
+        <a href="{{ path('evenements') }}" class="nav-link">📅 Événements</a>
+        <a href="{{ path('nutrition') }}"  class="nav-link">🥗 Nutrition</a>
+        <a href="{{ path('meditation') }}" class="nav-link">🧘 Méditation</a>
+        <a href="{{ path('journal') }}"    class="nav-link">📔 Journal</a>
+        <a href="{{ path('library') }}"    class="nav-link">📖 Library</a>
+    </nav>
+    <div class="topbar-right">
+        <button class="logout-btn">🚪 Déconnexion</button>
+        <div class="avatar">{{ app.user ? app.user.getUserPrenom()|first|upper : 'U' }}</div>
+    </div>
+</header>
+
+
+<main class="page">
+
+
+    <div class="breadcrumb fade">
+        <a href="{{ path('forum') }}">💬 Forum</a>
+        <span>›</span>
+        <span>{{ categorie.nomCategorie }}</span>
+    </div>
+
+
+    <div class="cat-header fade">
+        <div>
+            <h1>{{ categorie.nomCategorie }}</h1>
+            {% if categorie.description %}<p>{{ categorie.description }}</p>{% endif %}
+        </div>
+        <a href="{{ path('forum_post_new', {idCat: categorie.idCategorie}) }}" class="btn-new-post">
+            ✏️ Nouveau post
+        </a>
+    </div>
+
+
+   
+
+
+    {# ── TOOLBAR ── #}
+    <form method="GET" action="{{ path('forum_posts', {id: categorie.idCategorie}) }}">
+        <div class="toolbar fade" style="animation-delay:.1s;">
+            <div class="search-wrap">
+                <span class="search-icon">🔍</span>
+                <input type="text" name="search" class="search-input"
+                       placeholder="Rechercher dans les posts..."
+                       value="{{ search }}">
+            </div>
+            <button type="submit" class="search-btn">Rechercher</button>
+            <div class="tri-group">
+                <a href="{{ path('forum_posts', {id: categorie.idCategorie, tri: 'date_desc', search: search}) }}"
+                   class="btn-tri {{ tri == 'date_desc' ? 'active' }}">🕐 Récent</a>
+                <a href="{{ path('forum_posts', {id: categorie.idCategorie, tri: 'date_asc', search: search}) }}"
+                   class="btn-tri {{ tri == 'date_asc' ? 'active' }}">🕐 Ancien</a>
+                <a href="{{ path('forum_posts', {id: categorie.idCategorie, tri: 'likes', search: search}) }}"
+                   class="btn-tri {{ tri == 'likes' ? 'active' }}">🔥 Populaire</a>
+            </div>
+        </div>
+    </form>
+
+
+    <div class="results-info">
+        {% if search %}
+            <strong style="color:var(--v);">{{ pagination.getTotalItemCount() }}</strong> résultat(s) pour "<strong>{{ search }}</strong>"
+        {% else %}
+            <strong style="color:var(--v);">{{ pagination.getTotalItemCount() }}</strong> post(s) au total
+        {% endif %}
+    </div>
+
+
+    {# ── LISTE POSTS ── #}
+    <div class="posts-list">
+    {% for post in posts %}
+        {% set postComments = commentairesMap[post.idPost] ?? [] %}
+        {% set liked = likedByMe[post.idPost] ?? false %}
+        {% set nbLikes = likesMap[post.idPost] ?? 0 %}
+
+
+        <div class="post-card fade" style="animation-delay:{{ loop.index * 0.06 }}s;">
+
+
+            <div class="post-author-row">
+                <div class="post-author-left">
+                    <div class="post-avatar">{{ (usersMap[post.userId] ?? 'U')|first|upper }}</div>
+                    <div>
+                        <div class="post-author-name">{{ usersMap[post.userId] ?? 'Utilisateur #' ~ post.userId }}</div>
+                        <div class="post-author-date">{{ post.dateCreation ? post.dateCreation|date('d/m/Y à H:i') : '' }}</div>
+                    </div>
+                </div>
+                <div class="post-actions-top">
+                    <a href="{{ path('forum_post_edit', {id: post.idPost}) }}" class="btn-edit-sm">✏️ Modifier</a>
+                    <form method="POST" action="{{ path('forum_post_delete', {id: post.idPost}) }}"
+                          onsubmit="return confirm('Supprimer ce post ?');" style="display:inline;">
+                        <button type="submit" class="btn-del-sm">🗑</button>
+                    </form>
+                </div>
+            </div>
+
+
+            <div class="post-body">
+                <div class="post-title" id="titre-{{ post.idPost }}">{{ post.titre }}</div>
+                <div class="post-excerpt" id="contenu-{{ post.idPost }}">{{ post.contenu }}</div>
+
+
+                {% if post.imagePath %}
+                <div style="margin-top:12px;">
+                    <img src="{{ asset('uploads/posts/' ~ post.imagePath) }}" alt="Image du post"
+                         style="max-width:100%;max-height:280px;border-radius:12px;object-fit:cover;
+                                border:1px solid var(--border);">
+                </div>
+                {% endif %}
+
+
+                <div class="lang-badge" id="lang-badge-{{ post.idPost }}">
+                    <span class="lang-badge-pill">🌍 Traduit en <span id="lang-name-{{ post.idPost }}"></span></span>
+                    <button onclick="resetTranslation({{ post.idPost }}, '{{ post.titre|e('js') }}', '{{ post.contenu|e('js') }}')"
+                            style="font-size:11px;background:none;border:none;color:var(--ink-muted);
+                            cursor:pointer;text-decoration:underline;margin-left:6px;">Voir original</button>
+                </div>
+            </div>
+
+
+            {# ── FOOTER AVEC BOUTONS IA TAPE-À-L'ŒIL ── #}
+            <div class="post-footer">
+
+
+                {# Like #}
+                <button type="button" class="btn-like {{ liked ? 'liked' }}"
+                    data-post-id="{{ post.idPost }}" onclick="toggleLike(this)">
+                    {{ liked ? '❤️' : '🤍' }} <span class="like-count">{{ nbLikes }}</span>
+                </button>
+
+
+                {# Commentaires #}
+                <button type="button" class="btn-comment-toggle"
+                    onclick="toggleComments('comments-{{ post.idPost }}', this)">
+                    💬 {{ postComments|length }} commentaire(s)
+                </button>
+
+
+                {# ─── TRADUCTION — BOUTON IA JAUNE ─── #}
+                <div class="translate-dropdown" id="translate-wrap-{{ post.idPost }}">
+                    <button type="button" class="btn-ia-translate"
+                        onclick="toggleTranslateMenu({{ post.idPost }})"
+                        id="translate-btn-{{ post.idPost }}">
+                        <div class="ia-badge-dot"></div>
+                        🌍 Traduire
+                    </button>
+                    <div class="lang-menu" id="translate-menu-{{ post.idPost }}">
+                        <div style="font-size:10px;color:var(--ink-muted);padding:4px 8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">Langue</div>
+                        {% set langs = {'en':'🇬🇧 Anglais','ar':'🇸🇦 Arabe','es':'🇪🇸 Espagnol','de':'🇩🇪 Allemand','it':'🇮🇹 Italien'} %}
+                        {% for code, label in langs %}
+                        <button class="lang-btn" onclick="translatePost({{ post.idPost }}, '{{ code }}', '{{ label }}')">{{ label }}</button>
+                        {% endfor %}
+                    </div>
+                </div>
+
+
+                {# ─── RÉSUMÉ IA — BOUTON VERT ─── #}
+                {% if postComments|length > 0 %}
+                <button class="btn-ia-summary" onclick="resumeDiscussion({{ post.idPost }})">
+                    <div class="ia-badge-dot"></div>
+                    🤖 Résumé IA
+                </button>
+                {% endif %}
+
+
+            </div>
+
+
+            {# ── SECTION COMMENTAIRES ── #}
+            <div class="comments-section" id="comments-{{ post.idPost }}">
+
+
+                <form method="POST" action="{{ path('forum_comment_new', {idPost: post.idPost}) }}"
+                      class="add-comment-form" onsubmit="return validateComment(this)">
+                    <div class="add-comment-avatar">{{ app.user ? app.user.getUserPrenom()|first|upper : 'U' }}</div>
+                    <div class="add-comment-right">
+                        <textarea name="contenu" class="add-comment-input"
+                            placeholder="Rejoindre la conversation…" rows="2"></textarea>
+                        <div class="add-comment-actions">
+                            <button type="submit" class="btn-send-comment">💬 Commenter</button>
+                        </div>
+                    </div>
+                </form>
+
+
+                <div class="comments-divider"></div>
+
+
+                {% if postComments is empty %}
+                    <div class="no-comments">Aucun commentaire — sois le premier ! 👋</div>
+                {% else %}
+                    {% for c in postComments %}
+                    <div class="comment-row">
+                        <div class="comment-thread-line"></div>
+                        <div class="comment-main">
+                            <div class="comment-header">
+                                <div class="comment-avatar">{{ (usersMap[c.userId] ?? 'U')|first|upper }}</div>
+                                <span class="comment-author">{{ usersMap[c.userId] ?? 'Utilisateur #' ~ c.userId }}</span>
+                                <span class="comment-date">• {{ c.dateCommentaire ? c.dateCommentaire|date('d/m/Y à H:i') : '' }}</span>
+                            </div>
+                            <div class="comment-body">{{ c.contenu }}</div>
+
+
+                            {# ─── ACTIONS : SENTIMENT VISIBLE + CRUD ─── #}
+                            <div class="comment-actions">
+                                <button class="btn-sentiment"
+                                        onclick="analyzeSentiment({{ c.idCommentaire }}, this)"
+                                        id="sentiment-btn-{{ c.idCommentaire }}"
+                                        title="Analyser le sentiment avec l'IA">
+                                    <div class="ia-badge-dot"></div>
+                                    😊 Sentiment IA
+                                </button>
+                                <span id="sentiment-result-{{ c.idCommentaire }}"></span>
+                                <a href="{{ path('forum_comment_edit', {id: c.idCommentaire}) }}" class="btn-comment-edit">✏️ Modifier</a>
+                                <form method="POST" action="{{ path('forum_comment_delete', {id: c.idCommentaire}) }}"
+                                      onsubmit="return confirm('Supprimer ?');" style="display:inline;">
+                                    <button type="submit" class="btn-comment-delete">🗑</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+
+
+                    {# MODALE RÉSUMÉ dynamique #}
+                    <div class="resume-modal" id="resumeModal-{{ post.idPost }}"
+                         onclick="if(event.target===this) closeResumeModal({{ post.idPost }})">
+                        <div class="resume-modal-box">
+                            <div class="resume-modal-header">
+                                <div style="display:flex;align-items:center;gap:10px;">
+                                    <div style="width:36px;height:36px;background:rgba(255,255,255,.2);
+                                        border-radius:10px;display:grid;place-items:center;font-size:18px;">🤖</div>
+                                    <div>
+                                        <div style="font-family:'Clash Display',sans-serif;font-size:15px;font-weight:600;">Résumé IA de la discussion</div>
+                                        <div style="font-size:11px;opacity:.7;">Powered by Groq · LLaMA 3.3</div>
+                                    </div>
+                                </div>
+                                <button onclick="closeResumeModal({{ post.idPost }})"
+                                    style="background:rgba(255,255,255,.2);border:none;color:white;
+                                    border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:15px;">✕</button>
+                            </div>
+                            <div class="resume-modal-body" id="resumeContent-{{ post.idPost }}"></div>
+                            <div class="resume-modal-footer">
+                                <button onclick="closeResumeModal({{ post.idPost }})"
+                                    style="padding:8px 20px;border-radius:20px;border:none;
+                                    background:var(--v3);color:var(--v);font-weight:600;cursor:pointer;">
+                                    Fermer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+
+        </div>
+    {% else %}
+        <div class="empty-state fade">
+            <div style="font-size:48px;">{{ search ? '🔍' : '💬' }}</div>
+            <p>{{ search ? 'Aucun post trouvé pour "' ~ search ~ '"' : 'Aucun post dans cette catégorie.' }}</p>
+        </div>
+    {% endfor %}
+    </div>
+
+
+    {{ knp_pagination_render(pagination) }}
+
+
+    {# ── MODALE CONFIRMATION ── #}
+    <div id="confirmModal" class="modal-overlay">
+        <div class="modal-box">
+            <div style="font-size:32px;text-align:center;margin-bottom:12px;">🗑️</div>
+            <div style="font-family:'Clash Display',sans-serif;font-size:18px;font-weight:600;
+                color:var(--ink);text-align:center;margin-bottom:8px;" id="modalTitle">Supprimer ?</div>
+            <div style="font-size:13px;color:var(--ink-muted);text-align:center;margin-bottom:24px;" id="modalMessage">Cette action est irréversible.</div>
+            <div style="display:flex;gap:10px;">
+                <button onclick="closeModal()" style="flex:1;padding:10px;border-radius:10px;
+                    border:1.5px solid var(--border);background:white;color:var(--ink-mid);
+                    font-size:13px;font-weight:600;cursor:pointer;">Annuler</button>
+                <button id="modalConfirmBtn" style="flex:1;padding:10px;border-radius:10px;border:none;
+                    background:linear-gradient(135deg,var(--accent),#c0392b);color:white;
+                    font-size:13px;font-weight:600;cursor:pointer;">🗑 Supprimer</button>
+            </div>
+        </div>
+    </div>
+
+
+</main>
+
+
+<script>
+// ── LIKE ──
+async function toggleLike(btn) {
+    const postId = btn.dataset.postId;
+    try {
+        const res = await fetch(`/forum/post/${postId}/like`, {
+            method:'POST', headers:{'X-Requested-With':'XMLHttpRequest','Content-Type':'application/x-www-form-urlencoded'}, body:'_token='
+        });
+        const data = await res.json();
+        if (data.liked) { btn.classList.add('liked'); btn.innerHTML='❤️ <span class="like-count">'+data.count+'</span>'; }
+        else { btn.classList.remove('liked'); btn.innerHTML='🤍 <span class="like-count">'+data.count+'</span>'; }
+    } catch(e) { console.error(e); }
+}
+
+
+// ── AUTO OPEN ──
+(function(){
+    const params = new URLSearchParams(window.location.search);
+    const openPost = params.get('open_post');
+    if (openPost) {
+        const section = document.getElementById('comments-' + openPost);
+        const btn = document.querySelector(`[onclick*="comments-${openPost}"]`);
+        if (section) { section.classList.add('open'); if(btn) btn.classList.add('open'); }
+    }
+})();
+
+
+// ── TOGGLE COMMENTAIRES ──
+function toggleComments(id, btn) {
+    const section = document.getElementById(id);
+    const isOpen = section.classList.toggle('open');
+    btn.classList.toggle('open', isOpen);
+}
+
+
+// ── VALIDATION ──
+function validateComment(form) {
+    const ta = form.querySelector('textarea');
+    const oldError = form.querySelector('.comment-error-msg');
+    if (oldError) oldError.remove();
+    if (ta.value.trim().length < 3) {
+        ta.classList.add('error'); ta.focus();
+        const e = document.createElement('div');
+        e.className='comment-error-msg';
+        e.style.cssText='color:#FF6B6B;font-size:12px;font-weight:600;margin-top:5px;';
+        e.textContent='⚠️ Minimum 3 caractères.';
+        ta.insertAdjacentElement('afterend', e);
+        return false;
+    }
+    ta.classList.remove('error'); return true;
+}
+
+
+// ── MODALE CONFIRM ──
+let pendingForm = null;
+function openModal(btn, title, message) {
+    pendingForm = btn.closest('form');
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalMessage').textContent = message;
+    document.getElementById('confirmModal').style.display = 'flex';
+}
+function closeModal() { document.getElementById('confirmModal').style.display='none'; pendingForm=null; }
+document.getElementById('modalConfirmBtn').addEventListener('click', function() { if(pendingForm) pendingForm.submit(); closeModal(); });
+document.getElementById('confirmModal').addEventListener('click', function(e) { if(e.target===this) closeModal(); });
+
+
+// ── TRADUCTION ──
+function toggleTranslateMenu(postId) {
+    const menu = document.getElementById('translate-menu-' + postId);
+    const isOpen = menu.style.display === 'block';
+    document.querySelectorAll('[id^="translate-menu-"]').forEach(m => m.style.display='none');
+    if (!isOpen) menu.style.display = 'block';
+}
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('[id^="translate-wrap-"]'))
+        document.querySelectorAll('[id^="translate-menu-"]').forEach(m => m.style.display='none');
+});
+async function translatePost(postId, langCode, langLabel) {
+    document.getElementById('translate-menu-' + postId).style.display = 'none';
+    const btn = document.getElementById('translate-btn-' + postId);
+    btn.innerHTML = '⏳ Traduction…'; btn.disabled = true;
+    try {
+        const fd = new FormData(); fd.append('lang', langCode);
+        const res = await fetch(`/forum/post/${postId}/translate`, {method:'POST', body:fd});
+        const data = await res.json();
+        if (data.error) { btn.innerHTML='❌ Erreur'; btn.disabled=false; return; }
+        document.getElementById('titre-' + postId).textContent   = data.titre;
+        document.getElementById('contenu-' + postId).textContent = data.contenu;
+        document.getElementById('lang-badge-' + postId).style.display = 'block';
+        document.getElementById('lang-name-' + postId).textContent = langLabel;
+        btn.innerHTML = '<div class="ia-badge-dot"></div> 🌍 Traduit ✓'; btn.disabled=false;
+    } catch(e) { btn.innerHTML='❌ Erreur'; btn.disabled=false; }
+}
+function resetTranslation(postId, t, c) {
+    document.getElementById('titre-' + postId).textContent = t;
+    document.getElementById('contenu-' + postId).textContent = c;
+    document.getElementById('lang-badge-' + postId).style.display = 'none';
+    document.getElementById('translate-btn-' + postId).innerHTML = '<div class="ia-badge-dot"></div> 🌍 Traduire';
+}
+
+
+// ── RÉSUMÉ IA ──
+function resumeDiscussion(postId) {
+    document.getElementById('resumeModal-' + postId).style.display = 'flex';
+    document.getElementById('resumeContent-' + postId).innerHTML =
+        '<div style="text-align:center;padding:20px;color:#6C47FF;"><div style="font-size:28px;animation:spin 1.5s linear infinite;display:inline-block;">⚙️</div><div style="margin-top:8px;font-size:13px;font-weight:600;">Génération du résumé…</div><div style="font-size:11px;color:#8A8AA8;margin-top:4px;">Groq · LLaMA 3.3</div></div>';
+    fetch('/forum/post/' + postId + '/summarize', {
+        method:'POST', headers:{'X-Requested-With':'XMLHttpRequest','Content-Type':'application/json'}
+    })
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('resumeContent-' + postId).innerHTML =
+            data.error
+            ? '<div style="color:#FF6B6B;">❌ ' + data.error + '</div>'
+            : '<div style="line-height:1.75;">' + data.summary + '</div>';
+    })
+    .catch(err => {
+        document.getElementById('resumeContent-' + postId).innerHTML = '<div style="color:#FF6B6B;">❌ Erreur réseau</div>';
+    });
+}
+function closeResumeModal(postId) {
+    document.getElementById('resumeModal-' + postId).style.display = 'none';
+}
+
+
+// ── ANALYSE SENTIMENT ──
+async function analyzeSentiment(commentId, btn) {
+    btn.innerHTML = '⏳'; btn.disabled = true;
+    try {
+        const res = await fetch(`/forum/comment/${commentId}/sentiment`, {
+            method:'POST', headers:{'X-Requested-With':'XMLHttpRequest'}
+        });
+        const data = await res.json();
+        const resultEl = document.getElementById('sentiment-result-' + commentId);
+        if (data.error) { resultEl.innerHTML='❌'; btn.style.display='none'; return; }
+        const palette = {
+            'positif': {bg:'rgba(107,203,119,.15)',color:'#2d8c3e',border:'rgba(107,203,119,.4)'},
+            'negatif': {bg:'rgba(255,107,107,.15)',color:'#c0392b',border:'rgba(255,107,107,.4)'},
+            'neutre':  {bg:'rgba(255,217,61,.15)', color:'#B8860B',border:'rgba(255,217,61,.4)'}
+        };
+        const p = palette[data.sentiment] ?? {bg:'#EDE9FF',color:'#6C47FF',border:'rgba(108,71,255,.3)'};
+        resultEl.innerHTML = `<span style="background:${p.bg};color:${p.color};border:1.5px solid ${p.border};
+            padding:4px 12px;border-radius:20px;font-weight:700;font-size:11px;display:inline-flex;align-items:center;gap:4px;">
+            ${data.emoji} ${data.sentiment} · ${data.score}%</span>`;
+        btn.style.display = 'none';
+    } catch(e) {
+        document.getElementById('sentiment-result-' + commentId).textContent = '❌';
+        btn.disabled = false; btn.innerHTML = '😊 Sentiment IA';
+    }
+}
+
+
+</script>
+<style>@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}</style>
+{% endblock %}
+
+
+

@@ -1,0 +1,41 @@
+{% set current_route = app.request.attributes.get('_route') %}
+<header class="topbar">
+    <a href="{{ path('homepage') }}" class="topbar-logo">
+            <img src="{{ asset('images/logo.png') }}" class="logo-mark" alt="Harmony">
+        <span class="logo-name">Harmony</span>
+    </a>
+
+    <nav class="nav-links">
+        <a href="{{ path('activites') }}"   class="nav-link {% if current_route == 'activites' %}active{% endif %}"><span class="nav-emoji">🏋</span> Activités</a>
+        <a href="{{ path('forum') }}"       class="nav-link {% if current_route starts with 'forum' %}active{% endif %}"><span class="nav-emoji">💬</span> Forum</a>
+        <a href="{{ path('taches') }}"      class="nav-link {% if current_route starts with 'app_tache' or current_route == 'taches' %}active{% endif %}"><span class="nav-emoji">📚</span> Tâches</a>
+        <a href="{{ path('evenements') }}"  class="nav-link {% if current_route starts with 'app_evenement' or current_route == 'evenements' %}active{% endif %}"><span class="nav-emoji">📅</span> Événements</a>
+        <a href="{{ path('nutrition') }}"   class="nav-link {% if current_route == 'nutrition' %}active{% endif %}"><span class="nav-emoji">🥗</span> Nutrition</a>
+        <a href="{{ path('meditation') }}"  class="nav-link {% if current_route starts with 'meditation' %}active{% endif %}"><span class="nav-emoji">🧘</span> Méditation</a>
+        <a href="{{ path('journal') }}"     class="nav-link {% if current_route starts with 'journal' %}active{% endif %}"><span class="nav-emoji">📔</span> Journal</a>
+        <a href="{{ path('library') }}"     class="nav-link {% if current_route == 'library' %}active{% endif %}"><span class="nav-emoji">📖</span> Library</a>
+    </nav>
+
+    <div class="topbar-right">
+        <a href="{{ path('app_logout') }}" class="logout-btn" style="text-decoration:none;">🚪 Déconnexion</a>
+
+        <div class="profile-wrap">
+            <div class="avatar" id="avatarBtn">
+                {{ app.user ? app.user.firstName|first|upper : 'E' }}
+            </div>
+            <div class="profile-dropdown" id="profileDropdown">
+                <div class="pd-name">{{ app.user ? app.user.firstName ~ ' ' ~ app.user.lastName : 'Étudiant' }}</div>
+                <div class="pd-email">{{ app.user ? app.user.email : 'email@exemple.com' }}</div>
+                <div class="pd-divider"></div>
+                <div class="pd-hint">Double-clic pour modifier</div>
+            </div>
+        </div>
+    </div>
+</header>
+<script>
+(function(){
+    var b=document.getElementById('avatarBtn'),d=document.getElementById('profileDropdown');
+    if(b&&d){b.addEventListener('click',function(e){e.stopPropagation();d.classList.toggle('open');});
+    document.addEventListener('click',function(){d.classList.remove('open');});}
+})();
+</script>

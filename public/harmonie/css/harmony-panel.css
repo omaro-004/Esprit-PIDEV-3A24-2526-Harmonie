@@ -1,0 +1,281 @@
+/* Panneau / overlay formulaires (calendrier + Kanban) */
+
+.harmony-split-root {
+    position: relative;
+    max-width: 1320px;
+    margin: 0 auto;
+}
+
+.harmony-split-layout {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    transition: gap 0.25s ease;
+}
+
+.harmony-split-main {
+    flex: 1;
+    min-width: 0;
+    transition: flex-basis 0.28s ease;
+}
+
+.harmony-panel-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.4);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+    z-index: 450;
+}
+
+.harmony-panel-backdrop.is-open {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Desktop : panneau à droite */
+.harmony-side-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: min(400px, 100vw);
+    max-width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    background: #fff;
+    box-shadow: -12px 0 40px rgba(15, 23, 42, 0.12);
+    z-index: 460;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.harmony-side-panel.is-open {
+    transform: translateX(0);
+}
+
+.harmony-panel-inner {
+    padding: 24px 22px 28px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.harmony-panel-title {
+    font-family: var(--font-head, 'Syne', sans-serif);
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text, #1C1733);
+    margin: 0 0 20px;
+    letter-spacing: -0.02em;
+}
+
+.harmony-panel-form .harmony-field,
+.harmony-panel-form > div {
+    margin-bottom: 16px;
+}
+
+.harmony-panel-form label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-mid, #4A4570);
+    margin-bottom: 6px;
+}
+
+.harmony-panel-form input[type="text"],
+.harmony-panel-form input[type="date"],
+.harmony-panel-form input[type="datetime-local"],
+.harmony-panel-form select,
+.harmony-panel-form textarea {
+    width: 100%;
+    max-width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #fafafa;
+    font-family: var(--font-body, 'Inter', sans-serif);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    box-sizing: border-box;
+}
+
+.harmony-panel-form input:focus,
+.harmony-panel-form select:focus,
+.harmony-panel-form textarea:focus {
+    outline: none;
+    border-color: #7c3aed;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+}
+
+.harmony-panel-form textarea {
+    min-height: 88px;
+    resize: vertical;
+}
+
+.harmony-panel-form ul {
+    margin: 6px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 13px;
+    color: #dc2626;
+}
+
+.harmony-panel-sr-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.harmony-panel-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 22px;
+}
+
+.harmony-panel-submit {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff !important;
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
+    transition: filter 0.15s ease, transform 0.1s ease;
+}
+
+.harmony-panel-submit:hover {
+    filter: brightness(1.06);
+}
+
+.harmony-panel-cancel {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-muted, #9590B8);
+    background: transparent;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.harmony-panel-cancel:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+    color: #7c3aed;
+}
+
+.harmony-panel-form .harmony-form-row-submit label {
+    display: none !important;
+}
+
+.harmony-panel-form .harmony-form-row-submit {
+    margin: 0 !important;
+}
+
+.harmony-panel-type-icon {
+    font-size: 1.75rem;
+    display: block;
+    margin: -8px 0 12px;
+}
+
+.harmony-lieu-type-radios {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+}
+
+.harmony-lieu-type-radios label {
+    font-weight: 500;
+    margin: 0;
+}
+
+/* Kanban : zone cliquable pour ajouter */
+.kan-col-add-hit {
+    min-height: 44px;
+    margin: 0 0 12px;
+    border: 1px dashed rgba(124, 58, 237, 0.25);
+    border-radius: 12px;
+    background: rgba(124, 58, 237, 0.04);
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.kan-col-add-hit:hover,
+.kan-col-add-hit:focus-visible {
+    background: rgba(124, 58, 237, 0.1);
+    border-color: rgba(124, 58, 237, 0.45);
+    outline: none;
+}
+
+.kan-col-add-hit:focus-visible {
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+}
+
+/* Calendrier : bouton + discret */
+.cal-cell-add {
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.cal-cell[data-iso-date] {
+    cursor: pointer;
+}
+
+.cal-cell[data-iso-date]:hover {
+    background: #fafaff;
+}
+
+.cal-ev-open {
+    display: block;
+    width: 100%;
+    text-align: left;
+    border: none;
+    background: transparent;
+    padding: 0;
+    font: inherit;
+    font-weight: 600;
+    color: inherit;
+    cursor: pointer;
+}
+
+.cal-ev-open:hover .cal-ev-title {
+    text-decoration: underline;
+}
+
+/* Mobile : bottom sheet */
+@media (max-width: 768px) {
+    .harmony-side-panel {
+        top: auto;
+        bottom: 0;
+        right: 0;
+        left: 0;
+        width: 100%;
+        height: auto;
+        max-height: min(88vh, 640px);
+        border-radius: 20px 20px 0 0;
+        transform: translateY(100%);
+        box-shadow: 0 -12px 40px rgba(15, 23, 42, 0.15);
+    }
+
+    .harmony-side-panel.is-open {
+        transform: translateY(0);
+    }
+}

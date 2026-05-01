@@ -1,0 +1,395 @@
+{% extends 'admin/base.html.twig' %}
+{% block title %}Cours signalés — Harmony Admin{% endblock %}
+{% block page_title %}📚 Cours signalés{% endblock %}
+
+{% block stylesheets %}
+    <style>
+        /* ── KPI ROW ─────────────────────────────────────────────────────────── */
+        .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+        .kpi-card {
+            background: var(--white); border: 1px solid var(--border); border-radius: 16px;
+            padding: 20px 22px; display: flex; align-items: center; gap: 14px;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .kpi-card:hover { border-color: var(--purple-soft); box-shadow: 0 6px 24px rgba(106,90,205,.1); }
+        .kpi-icon { width: 46px; height: 46px; border-radius: 12px; background: var(--purple-pale); display: grid; place-items: center; font-size: 22px; flex-shrink: 0; }
+        .kpi-val  { font-family: var(--font-head); font-size: 28px; font-weight: 800; color: var(--text); }
+        .kpi-lbl  { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+
+        /* ── TOOLBAR ────────────────────────────────────────────────────────── */
+        .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+        .filter-tabs { display: flex; gap: 6px; }
+        .ftab {
+            padding: 7px 16px; border-radius: 30px; font-size: 13px; font-weight: 500;
+            border: 1px solid var(--border); background: var(--white);
+            color: var(--text-mid); text-decoration: none; transition: .15s;
+        }
+        .ftab:hover  { border-color: var(--purple); color: var(--purple); }
+        .ftab.active { background: var(--purple); border-color: var(--purple); color: #fff; font-weight: 600; }
+        .search-wrap { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+        .search-input {
+            padding: 8px 14px; border-radius: 10px; font-size: 13px;
+            border: 1px solid var(--border); background: var(--white);
+            color: var(--text); outline: none; width: 220px; transition: border-color .2s;
+        }
+        .search-input:focus { border-color: var(--purple); }
+        .btn-search {
+            padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 600;
+            background: var(--purple); color: #fff; border: none; cursor: pointer; transition: background .15s;
+        }
+        .btn-search:hover { background: var(--purple-dark); }
+
+        /* ── TABLE CARD ─────────────────────────────────────────────────────── */
+        .table-card { background: var(--white); border: 1px solid var(--border); border-radius: 18px; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: .7px; color: var(--text-muted);
+            padding: 11px 18px; text-align: left; background: var(--purple-ghost);
+        }
+        td { padding: 13px 18px; font-size: 13.5px; color: var(--text); border-bottom: 1px solid var(--purple-ghost); vertical-align: middle; }
+        tr:last-child td { border: none; }
+
+        /* ── GROUP ROW (one per course) ─────────────────────────────────────── */
+        .group-row { cursor: default; }
+        .group-row:hover td { background: var(--purple-ghost); }
+        .group-row td { border-bottom: none; }
+
+        .course-title-cell { font-weight: 600; }
+        .course-title-cell small { display: block; font-size: 11.5px; color: var(--text-muted); font-weight: 400; margin-top: 2px; }
+
+        /* ── EXPAND BUTTON ───────────────────────────────────────────────────── */
+        .btn-expand {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 4px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 600;
+            background: var(--purple-pale); color: var(--purple);
+            border: none; cursor: pointer; transition: background .15s;
+            white-space: nowrap;
+        }
+        .btn-expand:hover { background: #ddd8f8; }
+        .btn-expand .arrow { display: inline-block; transition: transform .2s; }
+        .btn-expand.open .arrow { transform: rotate(180deg); }
+
+        /* ── SUB-ROWS (individual reports) ──────────────────────────────────── */
+        .sub-group { display: none; }
+        .sub-group.open { display: table-row-group; }
+        .sub-row td { background: #faf9ff; padding: 9px 18px 9px 36px; border-bottom: 1px solid var(--purple-ghost); font-size: 13px; }
+        .sub-row:last-of-type td { border-bottom: 2px solid var(--border); }
+        .sub-row td:first-child { color: var(--text-muted); font-size: 11.5px; }
+
+        /* ── BADGES ─────────────────────────────────────────────────────────── */
+        .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .badge-pending    { background: #FEF3C7; color: #92400E; }
+        .badge-reviewed   { background: #D1FAE5; color: #065F46; }
+        .badge-dismissed  { background: #F3F4F6; color: #6B7280; }
+        .badge-published  { background: #D1FAE5; color: #065F46; }
+        .badge-locked     { background: #FEE2E2; color: #991B1B; }
+        .badge-count { background: var(--purple-pale); color: var(--purple); font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+        .badge-count.high { background: #FEE2E2; color: #991B1B; }
+
+        /* ── ACTION BUTTONS ─────────────────────────────────────────────────── */
+        .actions { display: flex; gap: 6px; align-items: center; flex-wrap: nowrap; }
+        .btn-action {
+            padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600;
+            cursor: pointer; border: none; transition: .15s; white-space: nowrap;
+        }
+        .btn-unpublish { background: #FEE2E2; color: #991B1B; }
+        .btn-unpublish:hover { background: #FECACA; }
+        .btn-restore   { background: #D1FAE5; color: #065F46; }
+        .btn-restore:hover { background: #A7F3D0; }
+        .btn-dismiss   { background: var(--purple-ghost); color: var(--text-mid); }
+        .btn-dismiss:hover { background: var(--purple-pale); color: var(--purple); }
+
+        /* ── EMPTY STATE ─────────────────────────────────────────────────────── */
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 14px; }
+        .empty-state .icon { font-size: 42px; margin-bottom: 12px; }
+
+        /* ── CONFIRM MODAL ───────────────────────────────────────────────────── */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; place-items: center; z-index: 1000; }
+        .modal-overlay.open { display: grid; }
+        .modal-box { background: var(--white); border-radius: 20px; padding: 32px 28px; max-width: 420px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,.2); animation: fadeUp .25s ease both; }
+        .modal-icon  { font-size: 36px; margin-bottom: 12px; }
+        .modal-title { font-family: var(--font-head); font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+        .modal-body  { font-size: 13.5px; color: var(--text-mid); line-height: 1.6; margin-bottom: 22px; }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+        .btn-cancel { padding: 9px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; background: var(--purple-ghost); color: var(--text-mid); border: none; cursor: pointer; }
+        .btn-confirm-unpublish { padding: 9px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; background: #E05252; color: #fff; border: none; cursor: pointer; }
+        .btn-confirm-unpublish:hover { background: #c94444; }
+    </style>
+{% endblock %}
+
+{% block body %}
+
+    {# ── KPI BAR ──────────────────────────────────────────────────────────── #}
+    <div class="kpi-row">
+        <div class="kpi-card">
+            <div class="kpi-icon">🚩</div>
+            <div><div class="kpi-val">{{ stats.total }}</div><div class="kpi-lbl">Total signalements</div></div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background:#FEF3C7;">⏳</div>
+            <div><div class="kpi-val" style="color:#92400E;">{{ stats.pending }}</div><div class="kpi-lbl">En attente</div></div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background:#D1FAE5;">✅</div>
+            <div><div class="kpi-val" style="color:#065F46;">{{ stats.reviewed }}</div><div class="kpi-lbl">Traités</div></div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background:#F3F4F6;">🗑</div>
+            <div><div class="kpi-val" style="color:#6B7280;">{{ stats.dismissed }}</div><div class="kpi-lbl">Rejetés</div></div>
+        </div>
+    </div>
+
+    {# ── TOOLBAR ──────────────────────────────────────────────────────────── #}
+    <div class="toolbar">
+        <div class="filter-tabs">
+            <a href="{{ path('admin_course_reports_index', {status: 'all',       q: search}) }}" class="ftab {{ currentStatus == 'all'       ? 'active' }}">Tous</a>
+            <a href="{{ path('admin_course_reports_index', {status: 'pending',   q: search}) }}" class="ftab {{ currentStatus == 'pending'   ? 'active' }}">⏳ En attente</a>
+            <a href="{{ path('admin_course_reports_index', {status: 'reviewed',  q: search}) }}" class="ftab {{ currentStatus == 'reviewed'  ? 'active' }}">✅ Traités</a>
+            <a href="{{ path('admin_course_reports_index', {status: 'dismissed', q: search}) }}" class="ftab {{ currentStatus == 'dismissed' ? 'active' }}">🗑 Rejetés</a>
+        </div>
+        <form method="GET" action="{{ path('admin_course_reports_index') }}" class="search-wrap" id="reportSearchForm">
+            <input type="hidden" name="status" value="{{ currentStatus }}">
+            <input type="text" name="q" value="{{ search }}" class="search-input" id="reportSearchInput"
+                   placeholder="Rechercher cours ou email" autocomplete="off">
+            <button type="submit" class="btn-search">🔍</button>
+        </form>
+    </div>
+
+    {# ── TABLE ────────────────────────────────────────────────────────────── #}
+    <div class="table-card">
+        {% if grouped is empty %}
+            <div class="empty-state">
+                <div class="icon">🎉</div>
+                <div>Aucun signalement trouvé.</div>
+            </div>
+        {% else %}
+            <table>
+                <thead>
+                <tr>
+                    <th>Cours</th>
+                    <th>Statut cours</th>
+                    <th>Signalements</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for group in grouped %}
+                {% set first = group.reports[0] %}
+                {% set count = group.reports|length %}
+
+                {# ── GROUP ROW (one per course) ── #}
+                <tr class="group-row">
+                    {# Course title + expand button #}
+                    <td class="course-title-cell">
+                        {{ group.course_title|default('—') }}
+                        <small>Propriétaire : {{ group.owner_email|default('inconnu') }}</small>
+                    </td>
+
+                    {# Course publish status #}
+                    <td>
+                        {% if group.course_is_published == 1 %}
+                            <span class="badge badge-published">✅ Publié</span>
+                        {% else %}
+                            <span class="badge badge-locked">🔒 Dépublié</span>
+                        {% endif %}
+                    </td>
+
+                    {# Report count + expand button #}
+                    <td>
+                        <button class="btn-expand" id="expand-btn-{{ group.course_id }}"
+                                onclick="toggleGroup({{ group.course_id }})">
+                        <span class="badge-count {{ count >= 3 ? 'high' }}" style="margin:0;">
+                            {{ count }} rapport{{ count > 1 ? 's' }}
+                        </span>
+                            <span class="arrow">▼</span>
+                        </button>
+                    </td>
+
+                    {# Worst status across all reports for this course #}
+                    <td>
+                        {% if group.worst_status == 'pending' %}
+                            <span class="badge badge-pending">⏳ En attente</span>
+                        {% elseif group.worst_status == 'reviewed' %}
+                            <span class="badge badge-reviewed">✅ Traité</span>
+                        {% else %}
+                            <span class="badge badge-dismissed">🗑 Rejeté</span>
+                        {% endif %}
+                    </td>
+
+                    {# Course-level actions #}
+                    <td>
+                        <div class="actions">
+                            {% if group.course_is_published == 1 %}
+                                <button class="btn-action btn-unpublish"
+                                        onclick="confirmUnpublish({{ group.course_id }}, '{{ group.course_title|e('js') }}')">
+                                    🚫 Dépublier
+                                </button>
+                            {% else %}
+                                <button class="btn-action btn-restore"
+                                        onclick="doRestore({{ group.course_id }}, this)">
+                                    ♻ Restaurer
+                                </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+
+                {# ── SUB-ROWS (one per individual report, hidden by default) ── #}
+                <tbody class="sub-group" id="sub-group-{{ group.course_id }}">
+                <tr>
+                    <td colspan="5" style="padding:0;">
+                        <table style="width:100%;border-collapse:collapse;">
+                            <thead>
+                            <tr style="background:#f0eeff;">
+                                <th style="padding:7px 18px 7px 36px;font-size:10px;letter-spacing:.6px;color:var(--text-muted);font-weight:700;text-transform:uppercase;text-align:left;">Motif</th>
+                                <th style="padding:7px 18px;font-size:10px;letter-spacing:.6px;color:var(--text-muted);font-weight:700;text-transform:uppercase;text-align:left;">Signalé par</th>
+                                <th style="padding:7px 18px;font-size:10px;letter-spacing:.6px;color:var(--text-muted);font-weight:700;text-transform:uppercase;text-align:left;">Statut</th>
+                                <th style="padding:7px 18px;font-size:10px;letter-spacing:.6px;color:var(--text-muted);font-weight:700;text-transform:uppercase;text-align:left;">Date</th>
+                                <th style="padding:7px 18px;font-size:10px;letter-spacing:.6px;color:var(--text-muted);font-weight:700;text-transform:uppercase;text-align:left;">Action</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for r in group.reports %}
+                                <tr style="border-bottom:1px solid var(--purple-ghost);">
+                                    <td style="padding:10px 18px 10px 36px;font-size:13px;vertical-align:middle;">
+                                        {{ r.reason }}
+                                        {% if r.details %}
+                                            <div style="font-size:11.5px;color:var(--text-muted);margin-top:3px;">{{ r.details }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td style="padding:10px 18px;font-size:12.5px;color:var(--text-muted);vertical-align:middle;">
+                                        {{ r.reporter_email|default('—') }}
+                                    </td>
+                                    <td style="padding:10px 18px;vertical-align:middle;">
+                                        {% if r.status == 'pending' %}
+                                            <span class="badge badge-pending">⏳ En attente</span>
+                                        {% elseif r.status == 'reviewed' %}
+                                            <span class="badge badge-reviewed">✅ Traité</span>
+                                        {% else %}
+                                            <span class="badge badge-dismissed">🗑 Rejeté</span>
+                                        {% endif %}
+                                    </td>
+                                    <td style="padding:10px 18px;font-size:12px;color:var(--text-muted);white-space:nowrap;vertical-align:middle;">
+                                        {{ r.created_at|date('d/m/Y H:i') }}
+                                    </td>
+                                    <td style="padding:10px 18px;vertical-align:middle;">
+                                        {% if r.status == 'pending' %}
+                                            <button class="btn-action btn-dismiss"
+                                                    onclick="doDismiss({{ r.id }}, this)">
+                                                Rejeter
+                                            </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+                </tbody>
+
+                {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+
+    {# ── CONFIRM MODAL ────────────────────────────────────────────────────── #}
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal-box">
+            <div class="modal-icon">🚫</div>
+            <div class="modal-title">Dépublier ce cours ?</div>
+            <div class="modal-body">
+                Le cours <strong id="modalCourseTitle"></strong> sera dépublié et
+                <strong>verrouillé</strong>. Le propriétaire ne pourra pas le republier.
+                Tous les signalements en attente seront marqués comme traités.
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+                <button class="btn-confirm-unpublish" id="btnConfirm">🚫 Confirmer la dépublication</button>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block javascripts %}
+    <script>
+        let pendingCourseId = null;
+
+        // Live search
+        const reportSearchForm  = document.getElementById('reportSearchForm');
+        const reportSearchInput = document.getElementById('reportSearchInput');
+        let searchTimer = null;
+        if (reportSearchForm && reportSearchInput) {
+            reportSearchInput.addEventListener('input', function () {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(() => reportSearchForm.submit(), 300);
+            });
+        }
+
+        // Toggle expand/collapse sub-group
+        function toggleGroup(courseId) {
+            const sub = document.getElementById('sub-group-' + courseId);
+            const btn = document.getElementById('expand-btn-' + courseId);
+            if (!sub) return;
+            sub.classList.toggle('open');
+            btn.classList.toggle('open');
+        }
+
+        // Confirm unpublish modal
+        function confirmUnpublish(courseId, courseTitle) {
+            pendingCourseId = courseId;
+            document.getElementById('modalCourseTitle').textContent = courseTitle;
+            document.getElementById('confirmModal').classList.add('open');
+        }
+        function closeModal() {
+            document.getElementById('confirmModal').classList.remove('open');
+            pendingCourseId = null;
+        }
+        document.getElementById('btnConfirm').addEventListener('click', function () {
+            if (!pendingCourseId) return;
+            this.disabled = true;
+            this.textContent = 'En cours...';
+            fetch('/admin/course-reports/unpublish/' + pendingCourseId, { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.ok) location.reload();
+                    else alert(data.message || 'Erreur');
+                    this.disabled = false;
+                })
+                .catch(() => { alert('Erreur réseau'); this.disabled = false; });
+        });
+        document.getElementById('confirmModal').addEventListener('click', function (e) {
+            if (e.target === this) closeModal();
+        });
+
+        // Dismiss individual report
+        function doDismiss(reportId, btn) {
+            if (!confirm('Rejeter ce signalement ?')) return;
+            btn.disabled = true;
+            fetch('/admin/course-reports/dismiss/' + reportId, { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.ok) location.reload();
+                    else alert(data.message || 'Erreur');
+                    btn.disabled = false;
+                });
+        }
+
+        // Restore course
+        function doRestore(courseId, btn) {
+            if (!confirm('Restaurer et republier ce cours ?')) return;
+            btn.disabled = true;
+            fetch('/admin/course-reports/restore/' + courseId, { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.ok) location.reload();
+                    else alert(data.message || 'Erreur');
+                    btn.disabled = false;
+                });
+        }
+    </script>
+{% endblock %}

@@ -1,0 +1,177 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Sessions de méditation - Admin{% endblock %}
+{% block page_title %}🧘 Sessions de méditation{% endblock %}
+
+{% block stylesheets %}
+    <style>
+        .toolbar { display:flex; align-items:center; gap:12px; margin-bottom:28px; flex-wrap:wrap; }
+        .search-box {
+            flex:1; min-width:200px; display:flex; align-items:center;
+            background:var(--white); border:1px solid var(--border); border-radius:12px;
+            padding:0 14px; height:42px;
+        }
+        .search-box input {
+            border:none; outline:none; flex:1; font-size:14px; font-family:var(--font-body);
+            background:transparent; color:var(--text);
+        }
+        .sort-btn, .action-btn {
+            height:42px; padding:0 18px; border-radius:12px; border:1px solid var(--border);
+            background:var(--white); color:var(--text-mid); font-size:13px; font-weight:500;
+            cursor:pointer; transition:.15s; font-family:var(--font-body);
+            display:inline-flex; align-items:center; gap:6px; text-decoration:none;
+        }
+        .sort-btn:hover, .action-btn:hover { background:var(--purple-pale); color:var(--purple); border-color:var(--purple); }
+        .sort-btn.active { background:var(--purple); color:white; border-color:var(--purple); }
+        .btn-primary { background:var(--purple); color:white; border-color:var(--purple); }
+        .btn-primary:hover { background:var(--purple-dark); }
+        .btn-pdf { background:#E05252; color:white; border-color:#E05252; }
+        .btn-pdf:hover { background:#c93c3c; }
+
+        .cards-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:20px; }
+        .card {
+            background:var(--white); border:1px solid var(--border); border-radius:16px;
+            padding:24px; transition:box-shadow .2s;
+        }
+        .card:hover { box-shadow:0 8px 30px rgba(106,90,205,.1); }
+        .card-theme { font-family:var(--font-head); font-size:18px; font-weight:700; color:var(--text); margin-bottom:8px; }
+        .card-meta { font-size:13px; color:var(--text-muted); margin-bottom:4px; }
+        .card-meta span { color:var(--text-mid); font-weight:500; }
+        .badge { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600;
+            background:var(--purple-pale); color:var(--purple); padding:3px 10px; border-radius:20px; margin-top:8px; }
+        .card-actions { display:flex; gap:8px; margin-top:16px; }
+        .card-actions a, .card-actions button {
+            padding:6px 14px; border-radius:9px; font-size:12px; font-weight:500;
+            text-decoration:none; border:1px solid var(--border); background:var(--white);
+            color:var(--text-mid); cursor:pointer; transition:.15s; font-family:var(--font-body);
+        }
+        .card-actions a:hover { background:var(--purple-pale); color:var(--purple); }
+        .card-actions .btn-del { color:#E05252; border-color:rgba(224,82,82,.2); }
+        .card-actions .btn-del:hover { background:#FEF2F2; }
+
+        .results-count { font-size:13px; color:var(--text-muted); margin-bottom:16px; }
+        .empty-state { text-align:center; padding:60px 20px; color:var(--text-muted); }
+        .empty-state .icon { font-size:48px; margin-bottom:12px; }
+        .loading { display:none; text-align:center; padding:40px; color:var(--text-muted); font-size:14px; }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="toolbar">
+        <div class="search-box">
+            <span style="margin-right:8px;color:var(--text-muted)">🔍</span>
+            <input type="text" id="searchInput" placeholder="Rechercher par thème ou auteur..." value="{{ q }}">
+        </div>
+        <button class="sort-btn {{ sort == 'theme' ? 'active' }}" data-sort="theme">Thème</button>
+        <button class="sort-btn {{ sort == 'auteur' ? 'active' }}" data-sort="auteur">Auteur</button>
+        <button class="sort-btn {{ sort == 'duree' ? 'active' }}" data-sort="duree">Durée</button>
+        <a href="{{ path('admin_meditation_new') }}" class="action-btn btn-primary">+ Nouvelle session</a>
+        <a href="{{ path('admin_meditation_pdf_list') }}" class="action-btn btn-pdf" target="_blank">📄 Export PDF</a>
+    </div>
+
+    <div class="results-count" id="resultsCount">{{ sessions|length }} session(s) trouvée(s)</div>
+
+    <div class="loading" id="loading">⏳ Chargement...</div>
+
+    <div class="cards-grid" id="cardsGrid">
+        {% for s in sessions %}
+            <div class="card">
+                <div class="card-theme">{{ s.theme }}</div>
+                <div class="card-meta">👨‍⚕️ Auteur : <span>{{ s.auteur }}</span></div>
+                <div class="card-meta">⏱ Durée : <span>{{ s.duree }} min</span></div>
+                {% if s.audioUrl %}
+                    <div class="card-meta">🎵 <a href="{{ s.audioUrl }}" target="_blank" style="color:var(--purple)">Lien YouTube</a></div>
+                {% endif %}
+                <div class="badge">💡 {{ s.conseils|length }} conseil(s)</div>
+                <div class="card-actions">
+                    <a href="{{ path('admin_meditation_show', {id: s.id}) }}">👁 Voir</a>
+                    <a href="{{ path('admin_meditation_edit', {id: s.id}) }}">✏️ Modifier</a>
+                    <form method="post" action="{{ path('admin_meditation_delete', {id: s.id}) }}" style="display:inline" onsubmit="return confirm('Supprimer cette session ?')">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ s.id) }}">
+                        <button type="submit" class="btn-del">🗑 Supprimer</button>
+                    </form>
+                </div>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="icon">🧘</div>
+                <p>Aucune session de méditation pour le moment.</p>
+                <a href="{{ path('admin_meditation_new') }}" class="action-btn btn-primary" style="margin-top:16px;display:inline-flex">+ Créer une session</a>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+(function(){
+    const searchInput = document.getElementById('searchInput');
+    const grid = document.getElementById('cardsGrid');
+    const count = document.getElementById('resultsCount');
+    const loading = document.getElementById('loading');
+    const sortBtns = document.querySelectorAll('.sort-btn');
+    let currentSort = '{{ sort }}';
+    let currentDir = '{{ dir }}';
+    let debounce;
+
+    function doSearch() {
+        const q = searchInput.value.trim();
+        loading.style.display = 'block';
+        grid.style.opacity = '0.4';
+
+        fetch(`{{ path('admin_meditation_search') }}?q=${encodeURIComponent(q)}&sort=${currentSort}&dir=${currentDir}`)
+            .then(r => r.json())
+            .then(data => {
+                loading.style.display = 'none';
+                grid.style.opacity = '1';
+                count.textContent = data.length + ' session(s) trouvée(s)';
+
+                if (data.length === 0) {
+                    grid.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><p>Aucun résultat.</p></div>';
+                    return;
+                }
+
+                grid.innerHTML = data.map(s => `
+                    <div class="card">
+                        <div class="card-theme">${esc(s.theme)}</div>
+                        <div class="card-meta">👨‍⚕️ Auteur : <span>${esc(s.auteur)}</span></div>
+                        <div class="card-meta">⏱ Durée : <span>${s.duree} min</span></div>
+                        ${s.audioUrl ? `<div class="card-meta">🎵 <a href="${esc(s.audioUrl)}" target="_blank" style="color:var(--purple)">Lien YouTube</a></div>` : ''}
+                        <div class="badge">💡 ${s.conseilsCount} conseil(s)</div>
+                        <div class="card-actions">
+                            <a href="/admin/meditation/${s.id}">👁 Voir</a>
+                            <a href="/admin/meditation/${s.id}/edit">✏️ Modifier</a>
+                        </div>
+                    </div>
+                `).join('');
+            });
+    }
+
+    searchInput.addEventListener('input', () => {
+        clearTimeout(debounce);
+        debounce = setTimeout(doSearch, 250);
+    });
+
+    sortBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const s = btn.dataset.sort;
+            if (currentSort === s) {
+                currentDir = currentDir === 'ASC' ? 'DESC' : 'ASC';
+            } else {
+                currentSort = s;
+                currentDir = 'ASC';
+            }
+            sortBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            doSearch();
+        });
+    });
+
+    function esc(str) {
+        const d = document.createElement('div');
+        d.textContent = str || '';
+        return d.innerHTML;
+    }
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Statistiques étudiants - Admin{% endblock %}
+{% block page_title %}📊 Bien-être des étudiants{% endblock %}
+
+{% block stylesheets %}
+<style>
+    .back-link { display:inline-flex; align-items:center; gap:6px; color:var(--text-muted); text-decoration:none; font-size:13px; margin-bottom:20px; }
+    .back-link:hover { color:var(--purple); }
+    .students-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:20px; }
+    .student-card {
+        background:var(--white); border:1px solid var(--border); border-radius:16px;
+        padding:24px; transition:box-shadow .2s;
+    }
+    .student-card:hover { box-shadow:0 8px 30px rgba(106,90,205,.1); }
+    .s-name { font-family:var(--font-head); font-size:16px; font-weight:700; color:var(--text); margin-bottom:4px; }
+    .s-email { font-size:12px; color:var(--text-muted); margin-bottom:14px; }
+    .s-stats { display:flex; gap:12px; margin-bottom:16px; }
+    .s-stat { text-align:center; flex:1; background:var(--purple-pale); border-radius:10px; padding:10px; }
+    .s-stat .num { font-family:var(--font-head); font-size:20px; font-weight:800; color:var(--purple); }
+    .s-stat .lbl { font-size:10px; color:var(--text-muted); margin-top:2px; }
+    .s-actions { display:flex; gap:8px; }
+    .s-btn { flex:1; padding:7px 12px; border-radius:9px; font-size:12px; font-weight:500; text-decoration:none; border:1px solid var(--border); background:var(--white); color:var(--text-mid); text-align:center; transition:.15s; }
+    .s-btn:hover { background:var(--purple-pale); color:var(--purple); }
+    .s-btn-pdf { background:#E05252; color:white; border-color:#E05252; }
+    .s-btn-pdf:hover { background:#c93c3c; color:white; }
+    .empty-state { text-align:center; padding:60px 20px; color:var(--text-muted); }
+    .empty-state .icon { font-size:48px; margin-bottom:12px; }
+</style>
+{% endblock %}
+
+{% block body %}
+    <a href="{{ path('admin_journal_index') }}" class="back-link">← Retour aux entrées</a>
+
+    {% if userData is empty %}
+        <div class="empty-state">
+            <div class="icon">📔</div>
+            <p>Aucun étudiant n'a encore écrit dans son journal.</p>
+        </div>
+    {% else %}
+        <div class="students-grid">
+            {% for row in userData %}
+                <div class="student-card">
+                    <div class="s-name">{{ row.user.firstName }} {{ row.user.lastName }}</div>
+                    <div class="s-email">{{ row.user.email }}</div>
+                    <div class="s-stats">
+                        <div class="s-stat">
+                            <div class="num">{{ row.stats.total }}</div>
+                            <div class="lbl">Entrées</div>
+                        </div>
+                        <div class="s-stat">
+                            <div class="num">{{ row.stats.avgScore }}</div>
+                            <div class="lbl">Score /5</div>
+                        </div>
+                    </div>
+                    <div class="s-actions">
+                        <a href="{{ path('admin_journal_user', {id: row.user.id}) }}" class="s-btn">📔 Voir journal</a>
+                        <a href="{{ path('admin_journal_rapport', {id: row.user.id}) }}" class="s-btn s-btn-pdf" target="_blank">🤖 PDF</a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<StackPane xmlns:fx="http://javafx.com/fxml"
+           xmlns="http://javafx.com/javafx/21"
+           fx:controller="controllers.ForumControllers.ForumHomeController"
+           prefWidth="1100"
+           prefHeight="650"
+           styleClass="forum-root"
+           stylesheets="@/views/admin-styles.css">
+
+    <!-- ══════════════════════════════════════════════
+         CONTENU PRINCIPAL (BorderPane original intact)
+         ══════════════════════════════════════════════ -->
+    <BorderPane>
+
+        <!-- TOP BAR -->
+        <top>
+            <HBox spacing="20" alignment="CENTER_LEFT" styleClass="modern-topbar">
+                <padding>
+                    <Insets top="15" right="30" bottom="15" left="30"/>
+                </padding>
+                <Button text="←"
+                        onAction="#handleBack"
+                        styleClass="icon-btn"/>
+                <Label text="Forum et Communauté"
+                       styleClass="forum-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="✨ Générer une image IA"
+                        onAction="#openImageGenerator"
+                        styleClass="ai-gen-btn"/>
+            </HBox>
+        </top>
+
+        <!-- CONTENU -->
+        <center>
+            <ScrollPane fitToWidth="true"
+                        fitToHeight="false"
+                        hbarPolicy="NEVER"
+                        styleClass="forum-scroll"
+                        style="-fx-background: transparent; -fx-background-color: transparent;">
+                <content>
+                    <FlowPane fx:id="categoriesPane"
+                              hgap="20"
+                              vgap="20"
+                              prefWrapLength="1060"
+                              style="-fx-background-color: #f4f6f9;">
+                        <padding>
+                            <Insets top="30" right="30" bottom="30" left="30"/>
+                        </padding>
+                    </FlowPane>
+                </content>
+            </ScrollPane>
+        </center>
+
+    </BorderPane>
+
+    <!-- ══════════════════════════════════════════════
+         OVERLAY TOAST — EN DERNIER (s'affiche par-dessus)
+         ══════════════════════════════════════════════ -->
+    <StackPane fx:id="toastOverlay"
+               pickOnBounds="false"
+               mouseTransparent="false"/>
+
+</StackPane>

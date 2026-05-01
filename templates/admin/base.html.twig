@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Admin — Harmony{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('harmonie/css/harmony-theme.css') }}">
+    <link rel="stylesheet" href="{{ asset('harmonie/css/admin-harmony.css') }}">
+    <link rel="stylesheet" href="{{ asset('harmonie/css/admin-cards.css') }}">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --purple: #6A5ACD; --purple-dark: #4B3B9E; --purple-soft: #8B7FD4;
+            --purple-pale: #EDE8FA; --purple-ghost: #F7F5FD;
+            --text: #1C1733; --text-mid: #4A4570; --text-muted: #9590B8;
+            --border: rgba(106,90,205,.12); --white: #FFFFFF;
+            --sidebar-w: 240px;
+            --font-head: 'Syne', sans-serif; --font-body: 'Inter', sans-serif;
+        }
+        html, body { height: 100%; font-family: var(--font-body); background: var(--purple-ghost); color: var(--text); }
+
+        /* ── LAYOUT ── */
+        .admin-layout { display: flex; min-height: 100vh; }
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            width: var(--sidebar-w); flex-shrink: 0;
+            background: var(--white);
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column;
+            position: sticky; top: 0; height: 100vh; overflow-y: auto;
+        }
+        .sidebar-logo {
+            display: flex; align-items: center; gap: 10px;
+            padding: 24px 20px 20px; border-bottom: 1px solid var(--border);
+        }
+        .logo-mark { width: 32px; height: 32px; border-radius: 9px; object-fit: contain; }
+        .logo-name { font-family: var(--font-head); font-size: 17px; font-weight: 700; color: var(--text); }
+        .sidebar-section { padding: 10px 12px 4px; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); }
+        .sidebar-nav { flex: 1; padding: 8px 12px; }
+        .sidebar-link {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 12px; border-radius: 10px;
+            font-size: 13.5px; font-weight: 500; color: var(--text-mid);
+            text-decoration: none; margin-bottom: 2px;
+            transition: background .15s, color .15s;
+        }
+        .sidebar-link:hover { background: var(--purple-pale); color: var(--purple); }
+        .sidebar-link.active { background: var(--purple-pale); color: var(--purple); font-weight: 600; }
+        .sidebar-link .s-icon { font-size: 16px; width: 20px; text-align: center; }
+
+        .sidebar-bottom {
+            padding: 16px 12px;
+            border-top: 1px solid var(--border);
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .sidebar-admin-info { display: flex; align-items: center; gap: 10px; padding: 8px 12px; }
+        .admin-avatar {
+            width: 34px; height: 34px; border-radius: 50%;
+            background: var(--purple); color: white;
+            font-family: var(--font-head); font-weight: 700; font-size: 13px;
+            display: grid; place-items: center; flex-shrink: 0;
+        }
+        .admin-name { font-size: 13px; font-weight: 600; color: var(--text); }
+        .admin-role { font-size: 11px; color: var(--text-muted); }
+        .sidebar-btn {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 9px 14px; border-radius: 10px;
+            font-size: 13px; font-weight: 500; cursor: pointer;
+            text-decoration: none; transition: .15s;
+        }
+        .btn-profile { background: var(--purple-pale); color: var(--purple); }
+        .btn-profile:hover { background: #ddd8f8; }
+        .btn-logout { background: #FEF2F2; color: #E05252; border: none; }
+        .btn-logout:hover { background: #FECACA; }
+
+        /* ── MAIN ── */
+        .admin-main { flex: 1; display: flex; flex-direction: column; }
+        .admin-topbar {
+            height: 58px; background: var(--white);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center;
+            padding: 0 32px; gap: 12px; position: sticky; top: 0; z-index: 100;
+        }
+        .admin-topbar-title { font-family: var(--font-head); font-size: 16px; font-weight: 700; color: var(--text); }
+        .admin-content { padding: 36px 32px 64px; flex: 1; }
+
+        /* ── FLASH MESSAGES ── */
+        .flash-success, .flash-error {
+            padding: 12px 18px; border-radius: 10px; margin-bottom: 20px;
+            font-size: 14px; font-weight: 500;
+        }
+        .flash-success { background: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7; }
+        .flash-error   { background: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
+
+        @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+        .fade { animation: fadeUp .35s ease both; }
+
+        .notif-badge {
+            background: #E05252; color: #fff;
+            border-radius: 10px; font-size: 10px; font-weight: 700;
+            padding: 2px 6px; margin-left: auto;
+            animation: badgePulse 2s ease-in-out infinite;
+        }
+        @keyframes badgePulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%       { opacity: .7; transform: scale(1.1); }
+        }
+    </style>
+    {% block stylesheets %}{% endblock %}
+</head>
+<body>
+<div class="admin-layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <a href="{{ path('homepage') }}" class="sidebar-logo">
+            <img src="{{ asset('images/logo.png') }}" class="logo-mark" alt="Harmony">
+            <span class="logo-name">Harmony</span>
+        </a>
+
+        <nav class="sidebar-nav">
+            <div class="sidebar-section">Tableau de bord</div>
+            <a href="{{ path('admin_dashboard') }}" class="sidebar-link {% if app.request.attributes.get('_route') == 'admin_dashboard' %}active{% endif %}">
+                <span class="s-icon">🏠</span> Accueil Admin
+            </a>
+
+            <div class="sidebar-section" style="margin-top:8px;">Utilisateurs</div>
+            <a href="{{ path('admin_users_index') }}" class="sidebar-link {% if 'admin_users' in app.request.attributes.get('_route') and app.request.attributes.get('_route') != 'admin_users_suspended' %}active{% endif %}">
+                <span class="s-icon">👥</span> Tous les comptes
+            </a>
+            <a href="{{ path('admin_users_suspended') }}" class="sidebar-link {% if app.request.attributes.get('_route') == 'admin_users_suspended' %}active{% endif %}">
+                <span class="s-icon">🔒</span> Comptes suspendus
+            </a>
+
+            <div class="sidebar-section" style="margin-top:8px;">Méditation</div>
+            <a href="{{ path('admin_meditation_index') }}" class="sidebar-link {% if 'admin_meditation' in app.request.attributes.get('_route') or 'admin_conseil' in app.request.attributes.get('_route') %}active{% endif %}">
+                <span class="s-icon">🧘</span> Sessions
+            </a>
+
+            <div class="sidebar-section" style="margin-top:8px;">Journal Intime</div>
+            {% set _unread = unread_journal_count() %}
+            <a href="{{ path('admin_journal_index') }}" class="sidebar-link {% if 'admin_journal' in app.request.attributes.get('_route') %}active{% endif %}">
+                <span class="s-icon">📔</span> Journal Intime
+                {% if _unread > 0 %}
+                    <span class="notif-badge">{{ _unread }}</span>
+                {% endif %}
+            </a>
+            <div class="sidebar-section" style="margin-top:8px;">Forum</div>
+            <a href="{{ path('back_dashboard') }}"
+               class="sidebar-link {{ app.request.attributes.get('_route') == 'back_dashboard' ? 'active' }}">
+                <span class="s-icon">🏠</span> Forum
+            </a>
+            <a href="{{ path('back_categories') }}"
+               class="sidebar-link {{ app.request.attributes.get('_route') starts with 'back_categor' ? 'active' }}">
+                <span class="s-icon">🗂️</span> Catégories
+            </a>
+
+            <a href="{{ path('back_posts') }}"
+               class="sidebar-link {{ app.request.attributes.get('_route') == 'back_posts' ? 'active' }}">
+                <span class="s-icon">📝</span> Posts
+            </a>
+            <a href="{{ path('back_commentaires') }}"
+               class="sidebar-link {{ app.request.attributes.get('_route') == 'back_commentaires' ? 'active' }}">
+                <span class="s-icon">💬</span> Commentaires
+            </a>
+
+
+
+            <div class="sidebar-section" style="margin-top:8px;">Sport & Nutrition</div>
+            <a href="{{ path('admin_sport_index') }}" class="sidebar-link {% if app.request.attributes.get('_route') starts with 'admin_sport' %}active{% endif %}">
+                <span class="s-icon">🏋️</span> Gestion Sport
+            </a>
+            <a href="{{ path('admin_nutrition_index') }}" class="sidebar-link {% if app.request.attributes.get('_route') starts with 'admin_nutrition' %}active{% endif %}">
+                <span class="s-icon">🥗</span> Gestion Nutrition
+            </a>
+
+            <div class="sidebar-section" style="margin-top:8px;">Cours</div>
+            <a href="{{ path('admin_courses_index') }}" class="sidebar-link {% if app.request.attributes.get('_route') starts with 'admin_courses_index' %}active{% endif %}">
+                <span class="s-icon">📚</span> Tous les cours
+            </a>
+            <a href="{{ path('admin_course_reports_index') }}" class="sidebar-link {% if app.request.attributes.get('_route') starts with 'admin_course_reports' %}active{% endif %}">
+                <span class="s-icon">🚩</span> Cours signalés
+            </a>
+
+            <div class="sidebar-section" style="margin-top:8px;">Planning</div>
+            <a href="{{ path('admin_evenement_index') }}" class="sidebar-link {% if app.request.attributes.get('_route') starts with 'admin_evenement' %}active{% endif %}">
+                <span class="s-icon">📅</span> Événements
+            </a>
+            <a href="{{ path('admin_tache_index') }}" class="sidebar-link {% if app.request.attributes.get('_route') starts with 'admin_tache' %}active{% endif %}">
+                <span class="s-icon">📋</span> Tâches
+            </a>
+            <a href="{{ path('admin_salle_index') }}" class="sidebar-link {% if app.request.attributes.get('_route') starts with 'admin_salle' %}active{% endif %}">
+                <span class="s-icon">🏢</span> Salles
+            </a>
+            <a href="{{ path('admin_demande_index') }}" class="sidebar-link {% if app.request.attributes.get('_route') starts with 'admin_demande' %}active{% endif %}">
+                <span class="s-icon">📨</span> Demandes
+            </a>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+            <div class="sidebar-admin-info">
+                <div class="admin-avatar">
+                    {{ app.user ? (app.user.firstName|first)|upper : 'A' }}
+                </div>
+                <div>
+                    <div class="admin-name">{{ app.user ? app.user.firstName ~ ' ' ~ app.user.lastName : 'Admin' }}</div>
+                    <div class="admin-role">Administrateur</div>
+                </div>
+            </div>
+            <a href="{{ path('app_profile_edit') }}" class="sidebar-btn btn-profile">⚙ Gérer mon profil</a>
+            <a href="{{ path('app_logout') }}" class="sidebar-btn btn-logout">🚪 Déconnexion</a>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="admin-main">
+        <div class="admin-topbar">
+            <div class="admin-topbar-title">{% block page_title %}Admin{% endblock %}</div>
+        </div>
+        <div class="admin-content fade">
+            {% for msg in app.flashes('success') %}
+                <div class="flash-success">✅ {{ msg }}</div>
+            {% endfor %}
+            {% for msg in app.flashes('error') %}
+                <div class="flash-error">❌ {{ msg }}</div>
+            {% endfor %}
+            {% block body %}{% endblock %}
+        </div>
+    </div>
+</div>
+{% block javascripts %}
+    <script src="{{ asset('harmonie/js/admin-ajax.js') }}"></script>
+{% endblock %}
+</body>
+</html>

@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.TilePane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+
+<?import java.net.URL?>
+<BorderPane fx:id="root"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="controllers.LibraryControllers.LibraryLayoutController"
+            prefWidth="1200" prefHeight="700"
+            styleClass="front-root">
+    <stylesheets>
+        <URL value="@styles.css"/>
+    </stylesheets>
+    <center>
+        <BorderPane fx:id="contentPane" style="-fx-background-color: transparent;">
+            <top>
+                <VBox>
+                    <!-- Header bar -->
+                    <HBox alignment="CENTER_LEFT" spacing="10" styleClass="library-header">
+                        <padding>
+                            <Insets top="20" right="20" bottom="20" left="20"/>
+                        </padding>
+                        <HBox alignment="CENTER_LEFT" spacing="8">
+                            <ImageView fx:id="libraryHeaderIcon" fitWidth="28" fitHeight="28" preserveRatio="true" styleClass="header-icon"/>
+                            <Label text="Library" styleClass="section-title"/>
+                        </HBox>
+                        <TextField fx:id="searchField" promptText="Search courses..." prefWidth="220" styleClass="search-field"/>
+                        <ComboBox fx:id="subjectFilter" promptText="All Subjects" prefWidth="160" styleClass="subject-filter"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="myCoursesBtn" text="My Courses" styleClass="action-button"/>
+                    </HBox>
+
+                    <!-- Grid / List toggle -->
+                    <HBox alignment="CENTER_LEFT" spacing="6" style="-fx-padding: 0 20 8 20;">
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="gridViewBtn" styleClass="view-toggle-btn" contentDisplay="GRAPHIC_ONLY">
+                            <graphic>
+                                <ImageView fitWidth="18" fitHeight="18" preserveRatio="true">
+                                    <image><Image url="@/grid-view-svgrepo-com.png"/></image>
+                                </ImageView>
+                            </graphic>
+                        </Button>
+                        <Button fx:id="listViewBtn" styleClass="view-toggle-btn" contentDisplay="GRAPHIC_ONLY">
+                            <graphic>
+                                <ImageView fitWidth="18" fitHeight="18" preserveRatio="true">
+                                    <image><Image url="@/list-view-svgrepo-com.png"/></image>
+                                </ImageView>
+                            </graphic>
+                        </Button>
+                    </HBox>
+                </VBox>
+            </top>
+
+            <center>
+                <ScrollPane fx:id="libraryScrollPane"
+                            fitToWidth="true"
+                            styleClass="library-content"
+                            style="-fx-background-color: transparent; -fx-control-inner-background: transparent;">
+                    <VBox>
+
+                        <!-- ══════════════════════════════════════════
+                             RECOMMENDED SECTION
+                        ═════════════════════════════════════════════ -->
+                        <VBox fx:id="recommendedSection" visible="false" managed="false"
+                              styleClass="recommended-section">
+                            <padding>
+                                <Insets top="20" right="0" bottom="0" left="24"/>
+                            </padding>
+
+                            <!-- Title row with scroll hint arrow -->
+                            <HBox alignment="CENTER_LEFT" spacing="8" style="-fx-padding: 0 24 10 0;">
+                                <Label fx:id="recommendedTitle"
+                                       text="Recommended for You"
+                                       styleClass="recommended-title"/>
+                                <!-- chevron hint that strip is scrollable -->
+                                <Label text="›  ›  ›" styleClass="recommended-scroll-hint"/>
+                            </HBox>
+
+                            <!--
+                                hbarPolicy=ALWAYS keeps the scrollbar visible
+                                as a permanent visual cue that the strip scrolls.
+                                Right padding of 24 is handled on the HBox so the
+                                fade-out edge has space.
+                            -->
+                            <ScrollPane fx:id="recommendedScrollPane"
+                                        styleClass="recommended-scroll"
+                                        fitToHeight="true"
+                                        hbarPolicy="ALWAYS"
+                                        vbarPolicy="NEVER"
+                                        style="-fx-background-color: transparent; -fx-control-inner-background: transparent;">
+                                <HBox fx:id="recommendedContainer" spacing="14">
+                                    <padding>
+                                        <Insets top="4" right="32" bottom="8" left="4"/>
+                                    </padding>
+                                </HBox>
+                            </ScrollPane>
+                        </VBox>
+
+                        <!-- ══════════════════════════════════════════
+                             ALL COURSES — no hard divider line,
+                             just spacing + label acts as separator
+                        ═════════════════════════════════════════════ -->
+                        <VBox style="-fx-padding: 24 24 4 24;">
+                            <Label text="All Courses" styleClass="recommended-title"/>
+                        </VBox>
+
+                        <VBox fx:id="coursesWrapper">
+                            <TilePane fx:id="publishedCoursesContainer" hgap="18" vgap="18" prefColumns="3">
+                                <padding>
+                                    <Insets top="8" right="24" bottom="24" left="24"/>
+                                </padding>
+                            </TilePane>
+                        </VBox>
+
+                    </VBox>
+                </ScrollPane>
+            </center>
+        </BorderPane>
+    </center>
+
+    <bottom>
+        <StackPane pickOnBounds="false" styleClass="nav-wheel-bottom-wrap">
+            <StackPane fx:id="wheelZone" prefWidth="200" maxWidth="200" prefHeight="120" styleClass="nav-wheel-host">
+                <StackPane fx:id="navWheelContainer" prefHeight="160"/>
+            </StackPane>
+        </StackPane>
+    </bottom>
+
+</BorderPane>
