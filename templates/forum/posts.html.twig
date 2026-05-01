@@ -306,6 +306,7 @@ html,body{font-family:var(--font-body);background:var(--purple-ghost);color:var(
 
 {% endblock %}
 {% block body %}
+
 <header class="topbar">
     <a href="{{ path('homepage') }}" class="topbar-logo">
         <img src="{{ asset('images/logo.png') }}" class="logo-mark" alt="Harmony">
@@ -482,6 +483,7 @@ html,body{font-family:var(--font-body);background:var(--purple-ghost);color:var(
 
                         {# Footer actions #}
                         <div class="post-footer">
+                        
                             <button type="button"
                                 class="pill pill-like {{ liked ? 'active' }}"
                                 data-post-id="{{ post.idPost }}"
@@ -872,5 +874,60 @@ function resetImageModal(){document.getElementById('imageResult').style.display=
         if(s) s.style.display='block';
     }
 })();
+
+async function runFactCheck(postId) {
+    const resultDiv = document.getElementById(`factcheck-result-${postId}`);
+    resultDiv.innerHTML = '<span class="loading">🔄 Analyse en cours...</span>';
+
+    const res = await fetch(`/forum/post/${postId}/factcheck`, {method: 'POST'});
+    const data = await res.json();
+
+    const verdictEmoji = {
+        'vrai': '✅', 'fake': '❌', 'incertain': '⚠️'
+    }[data.verdict] || '❓';
+
+    const verdictColor = {
+        'vrai': '#22c55e', 'fake': '#ef4444', 'incertain': '#f59e0b'
+    }[data.verdict] || '#gray';
+
+    resultDiv.innerHTML = `
+        <div style="border-left: 4px solid ${verdictColor}; padding: 10px;">
+            <h5>${verdictEmoji} ${data.verdict?.toUpperCase()} 
+                — Fiabilité: ${data.score_fiabilite}%</h5>
+            <p>${data.explication}</p>
+            ${data.points_suspects?.length ? 
+                `<p>⚠️ Points suspects: ${data.points_suspects.join(', ')}</p>` : ''}
+            ${data.sources_suggérées?.length ? 
+                `<p>📚 Sources: ${data.sources_suggérées.join(', ')}</p>` : ''}
+        </div>
+    `;
+}
+
+async function sendFactCheckChat(postId) {
+    const input = document.getElementById(`chat-input-${postId}`);
+    const question = input.value.trim();
+    if (!question) return;
+
+    const messagesDiv = document.getElementById(`chat-messages-${postId}`);
+    messagesDiv.innerHTML += `<div class="msg-user">👤 ${question}</div>`;
+    input.value = '';
+
+    const formData = new FormData();
+    formData.append('question', question);
+
+    const res = await fetch(`/forum/post/${postId}/factcheck-chat`, {
+        method: 'POST', body: formData
+    });
+    const data = await res.json();
+    messagesDiv.innerHTML += `<div class="msg-ai">🤖 ${data.response}</div>`;
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+function openFactCheck(postId) {
+    document.getElementById(`factcheck-modal-${postId}`).style.display = 'block';
+}
+function closeFactCheck(postId) {
+    document.getElementById(`factcheck-modal-${postId}`).style.display = 'none';
+}
 </script>
 {% endblock %}
