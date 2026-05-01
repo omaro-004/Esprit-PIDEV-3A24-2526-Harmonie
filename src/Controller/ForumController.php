@@ -715,6 +715,7 @@ public function editComment(int $id, Request $request, EntityManagerInterface $e
     $c = $em->getRepository(Commentaire::class)->find($id);
     if (!$c) throw $this->createNotFoundException();
     $post = $em->getRepository(Post::class)->find($c->getIdPost());
+    if (!$post) throw $this->createNotFoundException();
 
 
     $form = $this->createForm(CommentaireType::class, $c, ['attr' => ['novalidate' => 'novalidate']]);
