@@ -122,7 +122,7 @@ public function suggestReply(
 
 
             $resume = $summaryService->summarizeDiscussion(
-                $post->getTitre(),
+                $post->getTitre() ?? '',
                 $commentaires
             );
 
