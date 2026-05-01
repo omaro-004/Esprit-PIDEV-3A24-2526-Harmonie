@@ -190,7 +190,7 @@ public function suggestReply(
 
 
         // Sécurité — texte trop long
-        if (strlen($text) > 2000) {
+        if (strlen((string) $prompt) > 500) {
             return new JsonResponse(['errors' => []]);
         }
 
