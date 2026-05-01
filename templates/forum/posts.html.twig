@@ -302,6 +302,290 @@ html,body{font-family:var(--font-body);background:var(--purple-ghost);color:var(
 
 @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
 .fade{animation:fadeUp .4s ease both;}
+
+/* ── PILL FACT-CHECK ── */
+.pill-factcheck {
+    background: linear-gradient(135deg, #1C1733, #3b2d8f);
+    color: white;
+    border: none;
+    font-weight: 600;
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all .2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.pill-factcheck:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(106,90,205,.35);
+    background: linear-gradient(135deg, #6C47FF, #4B2FCC);
+}
+
+/* ── OVERLAY ── */
+.factcheck-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: rgba(13,13,20,.65);
+    backdrop-filter: blur(8px);
+    align-items: center;
+    justify-content: center;
+}
+.factcheck-overlay.open {
+    display: flex;
+}
+
+/* ── BOÎTE PRINCIPALE ── */
+.factcheck-box {
+    background: white;
+    border-radius: 24px;
+    width: 90%;
+    max-width: 520px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 24px 60px rgba(106,90,205,.25);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+/* ── HEADER ── */
+.factcheck-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px 24px 18px;
+    border-bottom: 1px solid #EDE9FD;
+    background: linear-gradient(135deg, #6C47FF08, #4B2FCC05);
+    border-radius: 24px 24px 0 0;
+}
+.factcheck-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.factcheck-icon {
+    font-size: 28px;
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #6C47FF, #4B2FCC);
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+}
+.factcheck-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    color: #1C1733;
+}
+.factcheck-subtitle {
+    font-size: 12px;
+    color: #9590B8;
+    margin-top: 2px;
+}
+.factcheck-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: #F0EDFD;
+    color: #6C47FF;
+    font-size: 14px;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition: background .2s;
+}
+.factcheck-close:hover { background: #DDD6FE; }
+
+/* ── SECTION ANALYSE ── */
+.factcheck-analyze-section {
+    padding: 20px 24px;
+}
+.btn-analyze {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #6C47FF, #4B2FCC);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s;
+    font-family: 'Inter', sans-serif;
+}
+.btn-analyze:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(108,71,255,.35);
+}
+.btn-analyze:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ── RÉSULTAT ANALYSE ── */
+.factcheck-result {
+    margin-top: 16px;
+}
+.verdict-card {
+    border-radius: 14px;
+    padding: 16px;
+    margin-top: 4px;
+}
+.verdict-vrai   { background: #F0FDF4; border-left: 4px solid #22c55e; }
+.verdict-fake   { background: #FEF2F2; border-left: 4px solid #ef4444; }
+.verdict-incertain { background: #FFFBEB; border-left: 4px solid #f59e0b; }
+
+.verdict-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+.verdict-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    color: #1C1733;
+}
+.verdict-score {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: white;
+    color: #1C1733;
+}
+.verdict-explication {
+    font-size: 13px;
+    color: #4A4570;
+    line-height: 1.6;
+    margin-bottom: 10px;
+}
+.verdict-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+.verdict-tag {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: white;
+    color: #4A4570;
+    border: 1px solid #E5E0F8;
+}
+
+/* ── DIVIDER ── */
+.factcheck-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 24px;
+    margin: 4px 0;
+}
+.factcheck-divider::before,
+.factcheck-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #EDE9FD;
+}
+.factcheck-divider span {
+    font-size: 11px;
+    color: #9590B8;
+    white-space: nowrap;
+    font-weight: 500;
+}
+
+/* ── CHAT ── */
+.factcheck-chat {
+    padding: 16px 24px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.chat-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 220px;
+    overflow-y: auto;
+    min-height: 0;
+}
+.msg-user {
+    align-self: flex-end;
+    background: linear-gradient(135deg, #6C47FF, #4B2FCC);
+    color: white;
+    padding: 10px 14px;
+    border-radius: 16px 16px 4px 16px;
+    font-size: 13px;
+    max-width: 80%;
+    line-height: 1.5;
+}
+.msg-ai {
+    align-self: flex-start;
+    background: #F7F5FD;
+    color: #1C1733;
+    padding: 10px 14px;
+    border-radius: 16px 16px 16px 4px;
+    font-size: 13px;
+    max-width: 85%;
+    line-height: 1.5;
+    border: 1px solid #EDE9FD;
+}
+.msg-loading {
+    align-self: flex-start;
+    color: #9590B8;
+    font-size: 12px;
+    font-style: italic;
+    padding: 6px 10px;
+}
+.chat-input-wrap {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.chat-input {
+    flex: 1;
+    padding: 11px 14px;
+    border: 1.5px solid #EDE9FD;
+    border-radius: 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: #1C1733;
+    outline: none;
+    transition: border-color .2s;
+    background: #F7F5FD;
+}
+.chat-input:focus { border-color: #6C47FF; background: white; }
+.chat-send-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, #6C47FF, #4B2FCC);
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition: all .2s;
+    flex-shrink: 0;
+}
+.chat-send-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(108,71,255,.35);
+}
+
 </style>
 
 {% endblock %}
@@ -524,6 +808,60 @@ html,body{font-family:var(--font-body);background:var(--purple-ghost);color:var(
                             </div>
 
                             <span class="pill pill-ia">🤖 Résumé IA</span>
+                            {# ── MODAL FACT-CHECK ── #}
+                            <div id="factcheck-modal-{{ post.idPost }}"
+                                class="factcheck-overlay"
+                                onclick="if(event.target===this) closeFactCheck({{ post.idPost }})">
+                                <div class="factcheck-box">
+
+                                    {# Header #}
+                                    <div class="factcheck-header">
+                                        <div class="factcheck-header-left">
+                                            <span class="factcheck-icon">🔍</span>
+                                            <div>
+                                                <div class="factcheck-title">Fact-Check IA</div>
+                                                <div class="factcheck-subtitle">{{ post.titre|length > 50 ? post.titre|slice(0,50) ~ '...' : post.titre }}</div>
+                                            </div>
+                                        </div>
+                                        <button class="factcheck-close" onclick="closeFactCheck({{ post.idPost }})">✕</button>
+                                    </div>
+
+                                    {# Analyse automatique #}
+                                    <div class="factcheck-analyze-section">
+                                        <button class="btn-analyze" id="btn-analyze-{{ post.idPost }}"
+                                                onclick="runFactCheck({{ post.idPost }})">
+                                            ▶ Analyser ce post
+                                        </button>
+                                        <div id="factcheck-result-{{ post.idPost }}" class="factcheck-result"></div>
+                                    </div>
+
+                                    {# Divider #}
+                                    <div class="factcheck-divider">
+                                        <span>ou pose une question</span>
+                                    </div>
+
+                                    {# Chat contextuel #}
+                                    <div class="factcheck-chat">
+                                        <div id="chat-messages-{{ post.idPost }}" class="chat-messages"></div>
+                                        <div class="chat-input-wrap">
+                                            <input type="text"
+                                                id="chat-input-{{ post.idPost }}"
+                                                class="chat-input"
+                                                placeholder="Ex: Cette information est-elle fiable ?"
+                                                onkeydown="if(event.key==='Enter') sendFactCheckChat({{ post.idPost }})">
+                                            <button class="chat-send-btn"
+                                                    onclick="sendFactCheckChat({{ post.idPost }})">
+                                                ➤
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+
+
+
                         </div>
                     </div>
 
@@ -929,5 +1267,92 @@ function openFactCheck(postId) {
 function closeFactCheck(postId) {
     document.getElementById(`factcheck-modal-${postId}`).style.display = 'none';
 }
+
+function openFactCheck(postId) {
+    document.getElementById('factcheck-modal-' + postId).classList.add('open');
+}
+function closeFactCheck(postId) {
+    document.getElementById('factcheck-modal-' + postId).classList.remove('open');
+}
+
+async function runFactCheck(postId) {
+    const btn = document.getElementById('btn-analyze-' + postId);
+    const resultDiv = document.getElementById('factcheck-result-' + postId);
+
+    btn.disabled = true;
+    btn.textContent = '🔄 Analyse en cours...';
+    resultDiv.innerHTML = '';
+
+    try {
+        const res = await fetch('/forum/post/' + postId + '/factcheck', {method: 'POST'});
+        const data = await res.json();
+
+        const verdictConfig = {
+            'vrai':      { emoji: '✅', label: 'FIABLE',     css: 'verdict-vrai' },
+            'fake':      { emoji: '❌', label: 'FAKE NEWS',  css: 'verdict-fake' },
+            'incertain': { emoji: '⚠️', label: 'INCERTAIN',  css: 'verdict-incertain' }
+        };
+        const cfg = verdictConfig[data.verdict] || verdictConfig['incertain'];
+
+        const pointsTags = (data.points_suspects || [])
+            .map(p => `<span class="verdict-tag">⚠️ ${p}</span>`).join('');
+        const sourcesTags = (data['sources_suggérées'] || [])
+            .map(s => `<span class="verdict-tag">📚 ${s}</span>`).join('');
+
+        resultDiv.innerHTML = `
+            <div class="verdict-card ${cfg.css}">
+                <div class="verdict-header">
+                    <div class="verdict-label">${cfg.emoji} ${cfg.label}</div>
+                    <div class="verdict-score">Fiabilité : ${data.score_fiabilite ?? 50}%</div>
+                </div>
+                <div class="verdict-explication">${data.explication ?? ''}</div>
+                ${pointsTags ? `<div class="verdict-tags">${pointsTags}</div>` : ''}
+                ${sourcesTags ? `<div class="verdict-tags" style="margin-top:6px;">${sourcesTags}</div>` : ''}
+            </div>
+        `;
+        btn.textContent = '🔄 Relancer l\'analyse';
+    } catch(e) {
+        resultDiv.innerHTML = '<div style="color:#E05252;font-size:13px;">❌ Erreur lors de l\'analyse.</div>';
+        btn.textContent = '▶ Analyser ce post';
+    }
+    btn.disabled = false;
+}
+
+async function sendFactCheckChat(postId) {
+    const input = document.getElementById('chat-input-' + postId);
+    const question = input.value.trim();
+    if (!question) return;
+
+    const messagesDiv = document.getElementById('chat-messages-' + postId);
+
+    // Message utilisateur
+    messagesDiv.innerHTML += `<div class="msg-user">👤 ${question}</div>`;
+    input.value = '';
+
+    // Loading
+    const loadingId = 'loading-' + Date.now();
+    messagesDiv.innerHTML += `<div class="msg-loading" id="${loadingId}">🤖 L'IA réfléchit...</div>`;
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+    try {
+        const formData = new FormData();
+        formData.append('question', question);
+
+        const res = await fetch('/forum/post/' + postId + '/factcheck-chat', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await res.json();
+
+        // Retire loading
+        document.getElementById(loadingId)?.remove();
+        messagesDiv.innerHTML += `<div class="msg-ai">🤖 ${data.response ?? 'Réponse indisponible.'}</div>`;
+    } catch(e) {
+        document.getElementById(loadingId)?.remove();
+        messagesDiv.innerHTML += `<div class="msg-ai" style="color:#E05252;">❌ Erreur de connexion.</div>`;
+    }
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
 </script>
 {% endblock %}
