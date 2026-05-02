@@ -9,12 +9,6 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  * ---------------
  * Interroge l'API Groq (LLaMA-3) pour obtenir des conseils de récupération
  * personnalisés en fonction de l'articulation blessée et du type d'activité.
- *
- * Dépendances injectées :
- *  - HttpClientInterface  (Symfony HTTP client, autowired)
- *  - $groqApiKey          (env GROQ_API_KEY)
- *  - $groqChatUrl         (env GROQ_CHAT_URL)
- *  - $groqChatModel       (env GROQ_CHAT_MODEL)
  */
 class BlessureService
 {
@@ -79,10 +73,11 @@ class BlessureService
             $data    = $response->toArray();
             $content = $data['choices'][0]['message']['content'] ?? '';
 
-            return $this->parseResponse($articulation, $label, $content);
+            // Fix PHPStan :82 — parseResponse() est maintenant annoté avec le même shape
+            return $this->parseResponse($articulation, $label, (string) $content);
 
         } catch (\Throwable $e) {
-            // Fallback gracieux si l'API est indisponible
+            // Fix PHPStan :86 — getFallbackAdvice() est maintenant annoté avec le même shape
             return $this->getFallbackAdvice($articulation, $label, $e->getMessage());
         }
     }
@@ -127,6 +122,17 @@ class BlessureService
 
     /**
      * Parse la réponse JSON de Groq.
+     *
+     * @return array{
+     *   articulation: string,
+     *   label: string,
+     *   traitements: array<string>,
+     *   exercices_recuperation: array<string>,
+     *   conseils_nutrition: array<string>,
+     *   quand_consulter: string,
+     *   duree_recuperation: string,
+     *   raw: string
+     * }
      */
     private function parseResponse(string $articulation, string $label, string $content): array
     {
@@ -137,22 +143,35 @@ class BlessureService
         $parsed = json_decode($clean, true);
 
         if (json_last_error() !== JSON_ERROR_NONE || !is_array($parsed)) {
-            // Fallback : on découpe le texte brut en sections
             return $this->parseFallbackText($articulation, $label, $content);
         }
 
         return [
             'articulation'           => $articulation,
             'label'                  => $label,
-            'traitements'            => $parsed['traitements']            ?? [],
-            'exercices_recuperation' => $parsed['exercices_recuperation'] ?? [],
-            'conseils_nutrition'     => $parsed['conseils_nutrition']     ?? [],
-            'quand_consulter'        => $parsed['quand_consulter']        ?? '',
-            'duree_recuperation'     => $parsed['duree_recuperation']     ?? '',
+            'traitements'            => array_map('strval', (array) ($parsed['traitements']            ?? [])),
+            'exercices_recuperation' => array_map('strval', (array) ($parsed['exercices_recuperation'] ?? [])),
+            'conseils_nutrition'     => array_map('strval', (array) ($parsed['conseils_nutrition']     ?? [])),
+            'quand_consulter'        => (string) ($parsed['quand_consulter']    ?? ''),
+            'duree_recuperation'     => (string) ($parsed['duree_recuperation'] ?? ''),
             'raw'                    => $content,
         ];
     }
 
+    /**
+     * Fallback quand le JSON brut ne peut pas être parsé.
+     *
+     * @return array{
+     *   articulation: string,
+     *   label: string,
+     *   traitements: array<string>,
+     *   exercices_recuperation: array<string>,
+     *   conseils_nutrition: array<string>,
+     *   quand_consulter: string,
+     *   duree_recuperation: string,
+     *   raw: string
+     * }
+     */
     private function parseFallbackText(string $articulation, string $label, string $content): array
     {
         return [
@@ -167,6 +186,20 @@ class BlessureService
         ];
     }
 
+    /**
+     * Conseils de secours quand l'API Groq est indisponible.
+     *
+     * @return array{
+     *   articulation: string,
+     *   label: string,
+     *   traitements: array<string>,
+     *   exercices_recuperation: array<string>,
+     *   conseils_nutrition: array<string>,
+     *   quand_consulter: string,
+     *   duree_recuperation: string,
+     *   raw: string
+     * }
+     */
     private function getFallbackAdvice(string $articulation, string $label, string $errorMsg): array
     {
         return [
@@ -198,27 +231,27 @@ class BlessureService
     private function getLabel(string $articulation): string
     {
         return match ($articulation) {
-            'tete'           => 'tête / nuque',
-            'cou'            => 'cou / cervicales',
-            'epaule_gauche'  => 'épaule gauche',
-            'epaule_droite'  => 'épaule droite',
-            'coude_gauche'   => 'coude gauche',
-            'coude_droit'    => 'coude droit',
-            'poignet_gauche' => 'poignet gauche',
-            'poignet_droit'  => 'poignet droit',
-            'dos_haut'       => 'haut du dos / dorsales',
-            'dos_bas'        => 'bas du dos / lombaires',
-            'thorax'         => 'thorax / côtes',
-            'abdomen'        => 'abdomen / core',
-            'hanche_gauche'  => 'hanche gauche',
-            'hanche_droite'  => 'hanche droite',
-            'genou_gauche'   => 'genou gauche',
-            'genou_droit'    => 'genou droit',
-            'cheville_gauche'=> 'cheville gauche',
-            'cheville_droite'=> 'cheville droite',
-            'pied_gauche'    => 'pied gauche',
-            'pied_droit'     => 'pied droit',
-            default          => str_replace('_', ' ', $articulation),
+            'tete'            => 'tête / nuque',
+            'cou'             => 'cou / cervicales',
+            'epaule_gauche'   => 'épaule gauche',
+            'epaule_droite'   => 'épaule droite',
+            'coude_gauche'    => 'coude gauche',
+            'coude_droit'     => 'coude droit',
+            'poignet_gauche'  => 'poignet gauche',
+            'poignet_droit'   => 'poignet droit',
+            'dos_haut'        => 'haut du dos / dorsales',
+            'dos_bas'         => 'bas du dos / lombaires',
+            'thorax'          => 'thorax / côtes',
+            'abdomen'         => 'abdomen / core',
+            'hanche_gauche'   => 'hanche gauche',
+            'hanche_droite'   => 'hanche droite',
+            'genou_gauche'    => 'genou gauche',
+            'genou_droit'     => 'genou droit',
+            'cheville_gauche' => 'cheville gauche',
+            'cheville_droite' => 'cheville droite',
+            'pied_gauche'     => 'pied gauche',
+            'pied_droit'      => 'pied droit',
+            default           => str_replace('_', ' ', $articulation),
         };
     }
 }

@@ -13,6 +13,7 @@ class Activite
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(name: 'id_activite')]
+    /** @phpstan-ignore property.unusedType */
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: Exercice::class)]

@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Activite;
+use App\Entity\Exercice;
 use App\Entity\User;
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -42,13 +43,23 @@ class ActivitesController extends AbstractController
         return $user;
     }
 
+    /**
+     * Retourne l'ID de l'utilisateur authentifié sous forme d'int garanti.
+     * getId() sur notre entité User est toujours défini après flush,
+     * mais PHPStan voit int|null — on force int ici une seule fois.
+     */
+    private function getAuthenticatedUserId(): int
+    {
+        return (int) $this->getAuthenticatedUser()->getId();
+    }
+
     // ─── Main page ──────────────────────────────────────────────────
     #[Route('', name: 'activites', methods: ['GET'])]
     public function index(
         ExerciceRepository $exerciceRepo,
         ActiviteRepository $activiteRepo
     ): Response {
-        $userId    = $this->getAuthenticatedUser()->getId();
+        $userId    = $this->getAuthenticatedUserId();
         $exercices = $exerciceRepo->findAllOrdered();
         $grouped   = $activiteRepo->findByUserGroupedByDate($userId);
         $stats     = [
@@ -69,7 +80,7 @@ class ActivitesController extends AbstractController
     #[Route('/api/list', name: 'activites_api_list', methods: ['GET'])]
     public function apiList(ActiviteRepository $repo): JsonResponse
     {
-        $userId  = $this->getAuthenticatedUser()->getId();
+        $userId  = $this->getAuthenticatedUserId();
         $grouped = $repo->findByUserGroupedByDate($userId);
         $result  = [];
 
@@ -114,14 +125,14 @@ class ActivitesController extends AbstractController
             return new JsonResponse(['success' => false, 'errors' => $errors], 422);
         }
 
-        $exercice = $exerciceRepo->find((int)$data['exercice_id']);
-        if (!$exercice) {
+        $exerciceObj = $exerciceRepo->find((int)$data['exercice_id']);
+        if (!$exerciceObj instanceof Exercice) {
             return new JsonResponse(['success' => false, 'errors' => ['exercice' => 'Exercice introuvable.']], 404);
         }
 
         $activite = new Activite();
-        $activite->setExercice($exercice);
-        $activite->setUserId($this->getAuthenticatedUser()->getId());
+        $activite->setExercice($exerciceObj);
+        $activite->setUserId($this->getAuthenticatedUserId());
         $activite->setDateActivite(new \DateTime($data['date_activite']));
         $activite->setDureeMinutes((int)$data['duree_minutes']);
         $activite->setCaloriesBrulees(!empty($data['calories_brulees']) ? (int)$data['calories_brulees'] : null);
@@ -133,7 +144,7 @@ class ActivitesController extends AbstractController
         $em->persist($activite);
         $em->flush();
 
-        $userId  = $this->getAuthenticatedUser()->getId();
+        $userId  = $this->getAuthenticatedUserId();
         $grouped = $activiteRepo->findByUserGroupedByDate($userId);
         $stats   = [
             'sessions' => count($grouped),
@@ -157,7 +168,7 @@ class ActivitesController extends AbstractController
         ActiviteRepository $activiteRepo
     ): JsonResponse {
         $activite = $activiteRepo->find($id);
-        if (!$activite || $activite->getUserId() !== $this->getAuthenticatedUser()->getId()) {
+        if (!$activite instanceof Activite || $activite->getUserId() !== $this->getAuthenticatedUserId()) {
             return new JsonResponse(['success' => false, 'message' => 'Activité introuvable.'], 404);
         }
 
@@ -180,7 +191,7 @@ class ActivitesController extends AbstractController
 
         $em->flush();
 
-        $userId  = $this->getAuthenticatedUser()->getId();
+        $userId  = $this->getAuthenticatedUserId();
         $grouped = $activiteRepo->findByUserGroupedByDate($userId);
         $stats   = [
             'sessions' => count($grouped),
@@ -203,14 +214,14 @@ class ActivitesController extends AbstractController
         ActiviteRepository $activiteRepo
     ): JsonResponse {
         $activite = $activiteRepo->find($id);
-        if (!$activite || $activite->getUserId() !== $this->getAuthenticatedUser()->getId()) {
+        if (!$activite instanceof Activite || $activite->getUserId() !== $this->getAuthenticatedUserId()) {
             return new JsonResponse(['success' => false, 'message' => 'Activité introuvable.'], 404);
         }
 
         $em->remove($activite);
         $em->flush();
 
-        $userId  = $this->getAuthenticatedUser()->getId();
+        $userId  = $this->getAuthenticatedUserId();
         $grouped = $activiteRepo->findByUserGroupedByDate($userId);
         $stats   = [
             'sessions' => count($grouped),
@@ -230,9 +241,7 @@ class ActivitesController extends AbstractController
         QrCodeService $qrCodeService
     ): JsonResponse {
         try {
-            // Ici on utilise getAuthenticatedUser() — protégé par #[IsGranted('ROLE_USER')]
-            // La vérification manuelle de null est donc redondante mais conservée pour clarté.
-            $userId = $this->getAuthenticatedUser()->getId();
+            $userId = $this->getAuthenticatedUserId();
 
             $dateObj = \DateTime::createFromFormat('Y-m-d', $date);
             if (!$dateObj) {
@@ -272,7 +281,7 @@ class ActivitesController extends AbstractController
             ];
             $dateLabel = $dateObj->format('j') . ' ' . $months[(int)$dateObj->format('n')] . ' ' . $dateObj->format('Y');
 
-            $projectDir = $this->getParameter('kernel.project_dir');
+            $projectDir = (string) $this->getParameter('kernel.project_dir');
             $logoCandidates = [
                 $projectDir . '/public/image/logo.png',
                 $projectDir . '/public/images/logo.png',
@@ -324,42 +333,16 @@ class ActivitesController extends AbstractController
     // ═══════════════════════════════════════════════════════════════
     // BILAN PDF — KnpSnappyBundle
     // ═══════════════════════════════════════════════════════════════
-    //
-    // CORRECTIONS APPORTÉES DANS CETTE MÉTHODE :
-    //
-    //  1. VÉRIFICATION DU BINAIRE AVANT APPEL :
-    //     On vérifie que le fichier wkhtmltopdf existe réellement sur
-    //     le disque avant de passer la main à KnpSnappy. Cela donne un
-    //     message d'erreur clair ("binaire introuvable") plutôt que
-    //     l'erreur cryptique "exit code 1 / chemin spécifié introuvable".
-    //
-    //  2. TRY-CATCH AMÉLIORÉ :
-    //     Capture \Exception (pas seulement \RuntimeException) pour
-    //     attraper toutes les exceptions possibles de KnpSnappy.
-    //
-    //  3. RÉSOLUTION DU CHEMIN PUBLIC :
-    //     On passe le chemin absolu du dossier public à Twig pour que
-    //     les ressources (CSS, images) soient accessibles par wkhtmltopdf
-    //     via file:// — nécessaire avec enable-local-file-access.
-    //
-    //  4. OPTIONS PDF NETTOYÉES :
-    //     - 'lowquality' supprimé (était doublon avec knp_snappy.yaml)
-    //     - Marges cohérentes avec le design du template
-    //
-    // ═══════════════════════════════════════════════════════════════
     #[Route('/bilan/pdf', name: 'activites_bilan_pdf', methods: ['GET'])]
     public function bilanPdf(
         ActiviteRepository $activiteRepo,
         Pdf $pdf
     ): Response {
         // ── 1. Vérification préalable du binaire wkhtmltopdf ──────────────
-        // CORRECTION PHPStan : $_ENV retourne string, pas null — on utilise
-        // array_key_exists() pour éviter l'avertissement "not nullable".
         $wkhtmltopdfBinary = array_key_exists('WKHTMLTOPDF_PATH', $_ENV)
             ? (string) $_ENV['WKHTMLTOPDF_PATH']
             : (string) (getenv('WKHTMLTOPDF_PATH') ?: '');
 
-        // Normalisation du chemin (Windows : / → \)
         $wkhtmltopdfBinary = str_replace('/', DIRECTORY_SEPARATOR, $wkhtmltopdfBinary);
 
         if (empty($wkhtmltopdfBinary)) {
@@ -370,7 +353,6 @@ class ActivitesController extends AbstractController
             return $this->generateBilanWithDompdf($activiteRepo);
         }
 
-        // Sur macOS/Linux, un .exe (Windows) n'est pas exécutable nativement.
         if (DIRECTORY_SEPARATOR === '/' && str_ends_with(strtolower($wkhtmltopdfBinary), '.exe')) {
             return $this->generateBilanWithDompdf($activiteRepo);
         }
@@ -380,7 +362,7 @@ class ActivitesController extends AbstractController
         }
 
         // ── 2. Récupération des données de l'utilisateur ──────────────────
-        $userId  = $this->getAuthenticatedUser()->getId();
+        $userId  = $this->getAuthenticatedUserId();
         $grouped = $activiteRepo->findByUserGroupedByDate($userId);
         $stats   = [
             'sessions' => count($grouped),
@@ -389,9 +371,6 @@ class ActivitesController extends AbstractController
         ];
 
         // ── 3. Conversion des entités Activite en tableaux simples ─────────
-        // KnpSnappy appelle renderView() en dehors du contexte Doctrine,
-        // donc on convertit les entités en arrays pour éviter les erreurs
-        // de lazy loading.
         $groupedData = [];
         foreach ($grouped as $date => $acts) {
             $exs = [];
@@ -402,9 +381,8 @@ class ActivitesController extends AbstractController
         }
 
         // ── 4. Rendu du template Twig → HTML string ────────────────────────
-        // On passe publicDir pour que le template puisse construire des
-        // chemins file:// vers les assets CSS/images locaux.
-        $publicDir = $this->getParameter('kernel.project_dir') . '/public';
+        $projectDirForPdf = (string) $this->getParameter('kernel.project_dir');
+        $publicDir = $projectDirForPdf . '/public';
 
         $html = $this->renderView('activites/bilan_pdf.html.twig', [
             'grouped'    => $groupedData,
@@ -425,7 +403,6 @@ class ActivitesController extends AbstractController
                 'enable-local-file-access' => true,
                 'no-outline'               => true,
                 'print-media-type'         => true,
-                // 'lowquality' SUPPRIMÉ → meilleur rendu pour document officiel
             ]);
         } catch (\Exception $e) {
             return $this->renderWkhtmlError(
@@ -451,7 +428,7 @@ class ActivitesController extends AbstractController
      */
     private function generateBilanWithDompdf(ActiviteRepository $activiteRepo): Response
     {
-        $userId  = $this->getAuthenticatedUser()->getId();
+        $userId  = $this->getAuthenticatedUserId();
         $grouped = $activiteRepo->findByUserGroupedByDate($userId);
         $stats   = [
             'sessions' => count($grouped),
@@ -468,7 +445,8 @@ class ActivitesController extends AbstractController
             $groupedData[$date] = $exs;
         }
 
-        $publicDir = $this->getParameter('kernel.project_dir') . '/public';
+        $projectDirDompdf = (string) $this->getParameter('kernel.project_dir');
+        $publicDir = $projectDirDompdf . '/public';
 
         $html = $this->renderView('activites/bilan_pdf.html.twig', [
             'grouped'    => $groupedData,
@@ -496,10 +474,6 @@ class ActivitesController extends AbstractController
     }
 
     // ─── Helper : page d'erreur wkhtmltopdf ─────────────────────────
-    /**
-     * Retourne une page HTML d'erreur lisible pour les problèmes wkhtmltopdf.
-     * Uniquement affichée en mode dev (APP_ENV=dev).
-     */
     private function renderWkhtmlError(string $message, string $detail = ''): Response
     {
         $isDev = $this->getParameter('kernel.environment') === 'dev';
@@ -535,6 +509,9 @@ class ActivitesController extends AbstractController
     }
 
     // ─── Helper : entité → tableau ────────────────────────────────
+    /**
+     * @return array<string, mixed>
+     */
     private function activiteToArray(Activite $a): array
     {
         return [

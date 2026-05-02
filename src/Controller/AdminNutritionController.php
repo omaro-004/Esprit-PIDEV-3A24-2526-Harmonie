@@ -34,18 +34,18 @@ class AdminNutritionController extends AbstractController
     {
         // ── Lecture des filtres depuis la requête GET ─────────────────
         $filters = [
-            'search'    => $request->query->get('search',    ''),
-            'cal_min'   => $request->query->get('cal_min',   ''),
-            'cal_max'   => $request->query->get('cal_max',   ''),
-            'prot_min'  => $request->query->get('prot_min',  ''),
-            'prot_max'  => $request->query->get('prot_max',  ''),
-            'id_from'   => $request->query->get('id_from',   ''),
-            'id_to'     => $request->query->get('id_to',     ''),
-            'sort'      => $request->query->get('orderby',   'nomAliment'),
-            'direction' => $request->query->get('orderdir',  'ASC'),
+            'search'    => (string) $request->query->get('search',    ''),
+            'cal_min'   => (string) $request->query->get('cal_min',   ''),
+            'cal_max'   => (string) $request->query->get('cal_max',   ''),
+            'prot_min'  => (string) $request->query->get('prot_min',  ''),
+            'prot_max'  => (string) $request->query->get('prot_max',  ''),
+            'id_from'   => (string) $request->query->get('id_from',   ''),
+            'id_to'     => (string) $request->query->get('id_to',     ''),
+            'sort'      => (string) $request->query->get('orderby',   'nomAliment'),
+            'direction' => (string) $request->query->get('orderdir',  'ASC'),
         ];
 
-        // Validation de la direction pour éviter les injections
+        // Fix PHPStan :49 — strtoupper() attend string, $filters['direction'] est déjà string ici
         if (!in_array(strtoupper($filters['direction']), ['ASC', 'DESC'])) {
             $filters['direction'] = 'ASC';
         }
@@ -80,25 +80,23 @@ class AdminNutritionController extends AbstractController
         $qb = $this->repo->createFilteredQueryBuilder($filters);
 
         // ── Pagination manuelle (sans KnpPaginator) ──────────────────
-        $limit = max(5, min(100, (int)$request->query->get('limit', 20)));
-        $page = max(1, (int)$request->query->get('page', 1));
+        $limit = max(5, min(100, (int) $request->query->get('limit', 20)));
+        $page  = max(1, (int) $request->query->get('page', 1));
 
-        // Appliquer la pagination manuellement
         $qb->setMaxResults($limit);
         $qb->setFirstResult(($page - 1) * $limit);
 
         $aliments = $qb->getQuery()->getResult();
 
-        // Créer un objet pagination simple
         $totalItems = $this->repo->countFiltered($filters);
         $totalPages = ceil($totalItems / $limit);
 
         $pagination = (object) [
-            'items' => $aliments,
-            'currentPageNumber' => $page,
-            'pageCount' => $totalPages,
-            'numItemsPerPage' => $limit,
-            'totalItemCount' => $totalItems,
+            'items'              => $aliments,
+            'currentPageNumber'  => $page,
+            'pageCount'          => $totalPages,
+            'numItemsPerPage'    => $limit,
+            'totalItemCount'     => $totalItems,
         ];
 
         // ── Stats globales pour les placeholders des filtres ──────────
@@ -125,17 +123,6 @@ class AdminNutritionController extends AbstractController
     }
 
     // ── EXPORT EXCEL ─────────────────────────────────────────────────
-    /**
-     * Génère et télécharge un fichier Excel (.xlsx) contenant
-     * tous les aliments de la base de données, avec :
-     *   - Le logo Harmony en haut à gauche (A1)
-     *   - Un titre centré en ligne 1-2
-     *   - Les en-têtes en gras sur fond violet (ligne 3)
-     *   - La première ligne d'en-tête figée (freeze pane)
-     *   - Les données triées par nom
-     *   - Un formatage alterné des lignes pour la lisibilité
-     *   - Les largeurs de colonnes ajustées automatiquement
-     */
     #[Route('/export', name: 'admin_nutrition_export', methods: ['GET'])]
     public function export(): StreamedResponse
     {
@@ -157,14 +144,10 @@ class AdminNutritionController extends AbstractController
             ->setKeywords('nutrition aliments calories protéines')
             ->setCategory('Nutrition');
 
-        // ── 4. Insertion des lignes de titre (2 lignes réservées + 1 pour en-têtes) ──
-        // Ligne 1 : Logo  |  Titre principal
-        // Ligne 2 : vide  |  Sous-titre / date
-        // Ligne 3 : EN-TÊTES (figée)
-        // Ligne 4+ : données
-
         // ── 5. Logo Harmony (A1) ──────────────────────────────────────
-        $logoPath = $this->getParameter('kernel.project_dir') . '/public/image/logo.png';
+        // Fix PHPStan :167 — getParameter() retourne mixed, on assert is_string
+        $projectDir = (string) $this->getParameter('kernel.project_dir');
+        $logoPath = $projectDir . '/public/image/logo.png';
 
         if (file_exists($logoPath)) {
             $drawing = new Drawing();
@@ -172,7 +155,6 @@ class AdminNutritionController extends AbstractController
             $drawing->setDescription('Logo Harmony');
             $drawing->setPath($logoPath);
             $drawing->setCoordinates('A1');
-            // Hauteur de 2 lignes (≈ 80 px) pour occuper les lignes 1 et 2
             $drawing->setWidth(80);
             $drawing->setHeight(70);
             $drawing->setOffsetX(6);
@@ -187,7 +169,7 @@ class AdminNutritionController extends AbstractController
             'font' => [
                 'bold'  => true,
                 'size'  => 16,
-                'color' => ['rgb' => '4C1D95'],   // violet très foncé
+                'color' => ['rgb' => '4C1D95'],
             ],
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_LEFT,
@@ -226,7 +208,6 @@ class AdminNutritionController extends AbstractController
             $sheet->setCellValue($cell, $label);
         }
 
-        // Style des en-têtes : fond violet, texte blanc, gras
         $headerStyle = [
             'font' => [
                 'bold'  => true,
@@ -235,7 +216,7 @@ class AdminNutritionController extends AbstractController
             ],
             'fill' => [
                 'fillType'   => Fill::FILL_SOLID,
-                'startColor' => ['rgb' => '7C3AED'],  // violet Harmony
+                'startColor' => ['rgb' => '7C3AED'],
             ],
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
@@ -252,11 +233,9 @@ class AdminNutritionController extends AbstractController
         $sheet->getRowDimension(3)->setRowHeight(24);
 
         // ── 9. Figer la ligne 3 (en-têtes) ───────────────────────────
-        // freezePane('A4') → lignes 1-3 figées (logo + titre + en-têtes)
         $sheet->freezePane('A4');
 
         // ── 10. Données ───────────────────────────────────────────────
-        // Styles alternés pour les lignes paires / impaires
         $styleOdd = [
             'fill' => [
                 'fillType'   => Fill::FILL_SOLID,
@@ -273,7 +252,7 @@ class AdminNutritionController extends AbstractController
         $styleEven = [
             'fill' => [
                 'fillType'   => Fill::FILL_SOLID,
-                'startColor' => ['rgb' => 'F5F3FF'],   // violet très pâle
+                'startColor' => ['rgb' => 'F5F3FF'],
             ],
             'borders' => [
                 'allBorders' => [
@@ -284,19 +263,16 @@ class AdminNutritionController extends AbstractController
             'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
         ];
 
-        // Style spécial pour la colonne calories (orange)
         $calStyle = [
             'font' => ['bold' => true, 'color' => ['rgb' => 'D97706']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
         ];
 
-        // Style pour les macros (centré)
         $macroStyle = [
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
             'numberFormat' => ['formatCode' => '0.0'],
         ];
 
-        // Style pour ID (centré, gris)
         $idStyle = [
             'font'      => ['color' => ['rgb' => '6B7280'], 'size' => 10],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
@@ -313,10 +289,7 @@ class AdminNutritionController extends AbstractController
             $sheet->setCellValue("E{$rowIndex}", $aliment->getLipides());
             $sheet->setCellValue("F{$rowIndex}", $aliment->getGlucides());
 
-            // Fond alterné
             $sheet->getStyle("A{$rowIndex}:F{$rowIndex}")->applyFromArray($isEven ? $styleEven : $styleOdd);
-
-            // Styles spécifiques par colonne
             $sheet->getStyle("A{$rowIndex}")->applyFromArray($idStyle);
             $sheet->getStyle("C{$rowIndex}")->applyFromArray($calStyle);
             $sheet->getStyle("D{$rowIndex}:F{$rowIndex}")->applyFromArray($macroStyle);
@@ -329,7 +302,6 @@ class AdminNutritionController extends AbstractController
         foreach (['A', 'B', 'C', 'D', 'E', 'F'] as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
-        // Largeur minimale pour la colonne A (logo)
         $sheet->getColumnDimension('A')->setWidth(max(10, 10));
 
         // ── 12. Bordure extérieure du tableau de données ──────────────
@@ -376,15 +348,15 @@ class AdminNutritionController extends AbstractController
     public function list(Request $request): JsonResponse
     {
         $filters = [
-            'search'    => $request->query->get('search',    ''),
-            'cal_min'   => $request->query->get('cal_min',   ''),
-            'cal_max'   => $request->query->get('cal_max',   ''),
-            'prot_min'  => $request->query->get('prot_min',  ''),
-            'prot_max'  => $request->query->get('prot_max',  ''),
-            'id_from'   => $request->query->get('id_from',   ''),
-            'id_to'     => $request->query->get('id_to',     ''),
-            'sort'      => $request->query->get('orderby',   'nomAliment'),
-            'direction' => $request->query->get('orderdir',  'ASC'),
+            'search'    => (string) $request->query->get('search',    ''),
+            'cal_min'   => (string) $request->query->get('cal_min',   ''),
+            'cal_max'   => (string) $request->query->get('cal_max',   ''),
+            'prot_min'  => (string) $request->query->get('prot_min',  ''),
+            'prot_max'  => (string) $request->query->get('prot_max',  ''),
+            'id_from'   => (string) $request->query->get('id_from',   ''),
+            'id_to'     => (string) $request->query->get('id_to',     ''),
+            'sort'      => (string) $request->query->get('orderby',   'nomAliment'),
+            'direction' => (string) $request->query->get('orderdir',  'ASC'),
         ];
 
         $aliments = $this->repo->createFilteredQueryBuilder($filters)->getQuery()->getResult();
@@ -415,8 +387,9 @@ class AdminNutritionController extends AbstractController
     #[Route('/api/update/{id}', name: 'admin_nutrition_update', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function update(int $id, Request $request): JsonResponse
     {
+        // Fix PHPStan :429 — repo->find() retourne object|null, on vérifie instanceof Aliment
         $aliment = $this->repo->find($id);
-        if (!$aliment) {
+        if (!$aliment instanceof Aliment) {
             return $this->json(['error' => 'Aliment introuvable'], 404);
         }
 
@@ -437,7 +410,7 @@ class AdminNutritionController extends AbstractController
     public function delete(int $id): JsonResponse
     {
         $aliment = $this->repo->find($id);
-        if (!$aliment) {
+        if (!$aliment instanceof Aliment) {
             return $this->json(['error' => 'Aliment introuvable'], 404);
         }
         $this->em->remove($aliment);
@@ -447,15 +420,22 @@ class AdminNutritionController extends AbstractController
     }
 
     // ── HELPERS ─────────────────────────────────────────────────────
+
+    /**
+     * @param array<string, mixed> $data
+     */
     private function hydrate(Aliment $aliment, array $data): void
     {
-        $aliment->setNomAliment(trim($data['nomAliment']));
-        $aliment->setCaloriesPour100g((int) round((float) $data['calories']));
-        $aliment->setProteines((float) $data['proteines']);
-        $aliment->setLipides((float) $data['lipides']);
-        $aliment->setGlucides((float) $data['glucides']);
+        $aliment->setNomAliment(trim((string) ($data['nomAliment'] ?? '')));
+        $aliment->setCaloriesPour100g((int) round((float) ($data['calories'] ?? 0)));
+        $aliment->setProteines((float) ($data['proteines'] ?? 0));
+        $aliment->setLipides((float) ($data['lipides'] ?? 0));
+        $aliment->setGlucides((float) ($data['glucides'] ?? 0));
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function serialize(Aliment $a): array
     {
         return [
@@ -468,12 +448,15 @@ class AdminNutritionController extends AbstractController
         ];
     }
 
+    /**
+     * @param array<string, mixed>|null $data
+     */
     private function validateData(?array $data): ?string
     {
         if (!$data) {
             return 'Aucune donnée reçue.';
         }
-        if (empty(trim($data['nomAliment'] ?? ''))) {
+        if (empty(trim((string) ($data['nomAliment'] ?? '')))) {
             return 'Le nom est obligatoire.';
         }
         foreach (['calories', 'proteines', 'lipides', 'glucides'] as $f) {
@@ -482,11 +465,11 @@ class AdminNutritionController extends AbstractController
                 return "Valeur invalide pour le champ « $f ».";
             }
         }
-        if ((float) $data['calories'] > 9000) {
+        if ((float) ($data['calories'] ?? 0) > 9000) {
             return 'Calories trop élevées (max 9000).';
         }
         foreach (['proteines', 'lipides', 'glucides'] as $f) {
-            if ((float) $data[$f] > 100) {
+            if ((float) ($data[$f] ?? 0) > 100) {
                 return "Valeur trop élevée pour « $f » (max 100g/100g).";
             }
         }
