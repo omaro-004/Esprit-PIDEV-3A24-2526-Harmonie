@@ -6,6 +6,7 @@ use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
+/** @extends ServiceEntityRepository<User> */
 class UserRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -13,7 +14,9 @@ class UserRepository extends ServiceEntityRepository
         parent::__construct($registry, User::class);
     }
 
-    /** Recherche live par nom ou prénom ou email */
+    /** Recherche live par nom ou prénom ou email
+     * @return User[]
+     */
     public function searchByName(string $q): array
     {
         return $this->createQueryBuilder('u')
@@ -26,7 +29,9 @@ class UserRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    /** Tous les étudiants actifs */
+    /** Tous les étudiants actifs
+     * @return User[]
+     */
     public function findActiveStudents(): array
     {
         return $this->createQueryBuilder('u')
@@ -37,7 +42,9 @@ class UserRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    /** Tous les étudiants suspendus */
+    /** Tous les étudiants suspendus
+     * @return User[]
+     */
     public function findSuspendedStudents(): array
     {
         return $this->createQueryBuilder('u')
@@ -48,7 +55,9 @@ class UserRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    /** Tous les étudiants (actifs + suspendus) */
+    /** Tous les étudiants (actifs + suspendus)
+     * @return User[]
+     */
     public function findAllStudents(): array
     {
         return $this->createQueryBuilder('u')

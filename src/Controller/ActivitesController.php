@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Activite;
+use App\Entity\User;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use App\Repository\ActiviteRepository;
@@ -26,6 +27,20 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[Route('/activites')]
 class ActivitesController extends AbstractController
 {
+    // ─── Helper : récupère l'utilisateur authentifié typé App\Entity\User ──
+    /**
+     * Retourne l'utilisateur connecté en tant qu'instance de User.
+     *
+     * PHPStan : getUser() retourne UserInterface|null.
+     * Ici on est protégé par #[IsGranted('ROLE_USER')], donc l'utilisateur
+     * est toujours connecté ET toujours une instance de notre entité User.
+     */
+    private function getAuthenticatedUser(): User
+    {
+        $user = $this->getUser();
+        assert($user instanceof User);
+        return $user;
+    }
 
     // ─── Main page ──────────────────────────────────────────────────
     #[Route('', name: 'activites', methods: ['GET'])]
@@ -33,7 +48,7 @@ class ActivitesController extends AbstractController
         ExerciceRepository $exerciceRepo,
         ActiviteRepository $activiteRepo
     ): Response {
-        $userId    = $this->getUser()->getId();
+        $userId    = $this->getAuthenticatedUser()->getId();
         $exercices = $exerciceRepo->findAllOrdered();
         $grouped   = $activiteRepo->findByUserGroupedByDate($userId);
         $stats     = [
@@ -54,7 +69,7 @@ class ActivitesController extends AbstractController
     #[Route('/api/list', name: 'activites_api_list', methods: ['GET'])]
     public function apiList(ActiviteRepository $repo): JsonResponse
     {
-        $userId  = $this->getUser()->getId();
+        $userId  = $this->getAuthenticatedUser()->getId();
         $grouped = $repo->findByUserGroupedByDate($userId);
         $result  = [];
 
@@ -106,7 +121,7 @@ class ActivitesController extends AbstractController
 
         $activite = new Activite();
         $activite->setExercice($exercice);
-        $activite->setUserId($this->getUser()->getId());
+        $activite->setUserId($this->getAuthenticatedUser()->getId());
         $activite->setDateActivite(new \DateTime($data['date_activite']));
         $activite->setDureeMinutes((int)$data['duree_minutes']);
         $activite->setCaloriesBrulees(!empty($data['calories_brulees']) ? (int)$data['calories_brulees'] : null);
@@ -118,7 +133,7 @@ class ActivitesController extends AbstractController
         $em->persist($activite);
         $em->flush();
 
-        $userId  = $this->getUser()->getId();
+        $userId  = $this->getAuthenticatedUser()->getId();
         $grouped = $activiteRepo->findByUserGroupedByDate($userId);
         $stats   = [
             'sessions' => count($grouped),
@@ -142,7 +157,7 @@ class ActivitesController extends AbstractController
         ActiviteRepository $activiteRepo
     ): JsonResponse {
         $activite = $activiteRepo->find($id);
-        if (!$activite || $activite->getUserId() !== $this->getUser()->getId()) {
+        if (!$activite || $activite->getUserId() !== $this->getAuthenticatedUser()->getId()) {
             return new JsonResponse(['success' => false, 'message' => 'Activité introuvable.'], 404);
         }
 
@@ -165,7 +180,7 @@ class ActivitesController extends AbstractController
 
         $em->flush();
 
-        $userId  = $this->getUser()->getId();
+        $userId  = $this->getAuthenticatedUser()->getId();
         $grouped = $activiteRepo->findByUserGroupedByDate($userId);
         $stats   = [
             'sessions' => count($grouped),
@@ -188,14 +203,14 @@ class ActivitesController extends AbstractController
         ActiviteRepository $activiteRepo
     ): JsonResponse {
         $activite = $activiteRepo->find($id);
-        if (!$activite || $activite->getUserId() !== $this->getUser()->getId()) {
+        if (!$activite || $activite->getUserId() !== $this->getAuthenticatedUser()->getId()) {
             return new JsonResponse(['success' => false, 'message' => 'Activité introuvable.'], 404);
         }
 
         $em->remove($activite);
         $em->flush();
 
-        $userId  = $this->getUser()->getId();
+        $userId  = $this->getAuthenticatedUser()->getId();
         $grouped = $activiteRepo->findByUserGroupedByDate($userId);
         $stats   = [
             'sessions' => count($grouped),
@@ -215,14 +230,9 @@ class ActivitesController extends AbstractController
         QrCodeService $qrCodeService
     ): JsonResponse {
         try {
-            $user = $this->getUser();
-            if (!$user) {
-                return new JsonResponse([
-                    'success' => false,
-                    'message' => 'Utilisateur non connecté.',
-                ], 401);
-            }
-            $userId = $user->getId();
+            // Ici on utilise getAuthenticatedUser() — protégé par #[IsGranted('ROLE_USER')]
+            // La vérification manuelle de null est donc redondante mais conservée pour clarté.
+            $userId = $this->getAuthenticatedUser()->getId();
 
             $dateObj = \DateTime::createFromFormat('Y-m-d', $date);
             if (!$dateObj) {
@@ -343,9 +353,11 @@ class ActivitesController extends AbstractController
         Pdf $pdf
     ): Response {
         // ── 1. Vérification préalable du binaire wkhtmltopdf ──────────────
-        // CORRECTION CRITIQUE : on résout la variable d'env nous-mêmes pour
-        // afficher un message d'erreur clair si le chemin est mauvais.
-        $wkhtmltopdfBinary = $_ENV['WKHTMLTOPDF_PATH'] ?? getenv('WKHTMLTOPDF_PATH') ?? '';
+        // CORRECTION PHPStan : $_ENV retourne string, pas null — on utilise
+        // array_key_exists() pour éviter l'avertissement "not nullable".
+        $wkhtmltopdfBinary = array_key_exists('WKHTMLTOPDF_PATH', $_ENV)
+            ? (string) $_ENV['WKHTMLTOPDF_PATH']
+            : (string) (getenv('WKHTMLTOPDF_PATH') ?: '');
 
         // Normalisation du chemin (Windows : / → \)
         $wkhtmltopdfBinary = str_replace('/', DIRECTORY_SEPARATOR, $wkhtmltopdfBinary);
@@ -368,7 +380,7 @@ class ActivitesController extends AbstractController
         }
 
         // ── 2. Récupération des données de l'utilisateur ──────────────────
-        $userId  = $this->getUser()->getId();
+        $userId  = $this->getAuthenticatedUser()->getId();
         $grouped = $activiteRepo->findByUserGroupedByDate($userId);
         $stats   = [
             'sessions' => count($grouped),
@@ -439,7 +451,7 @@ class ActivitesController extends AbstractController
      */
     private function generateBilanWithDompdf(ActiviteRepository $activiteRepo): Response
     {
-        $userId  = $this->getUser()->getId();
+        $userId  = $this->getAuthenticatedUser()->getId();
         $grouped = $activiteRepo->findByUserGroupedByDate($userId);
         $stats   = [
             'sessions' => count($grouped),

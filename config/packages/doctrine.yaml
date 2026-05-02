@@ -7,6 +7,9 @@ doctrine:
         server_version: '10.4.32-MariaDB'
         schema_filter: '/^(user|conversation|message)$/'
         profiling_collect_backtrace: '%kernel.debug%'
+        # Ensure profiler collects queries in dev.
+        logging: '%kernel.debug%'
+        profiling: '%kernel.debug%'
         use_savepoints: true
     orm:
         auto_generate_proxy_classes: true
@@ -29,6 +32,11 @@ when@test:
     doctrine:
         dbal:
             dbname_suffix: '_test%env(default::TEST_TOKEN)%'
+
+when@dev:
+    doctrine:
+        dbal:
+            profiling_collect_schema_errors: true
 
 when@prod:
     doctrine:

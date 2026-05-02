@@ -280,8 +280,8 @@ class MessagingController extends AbstractController
         $b64url = static fn(string $data): string =>
         rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
 
-        $header  = $b64url(json_encode(['alg' => 'HS256', 'typ' => 'JWT']));
-        $payload = $b64url(json_encode([
+        $header  = $b64url((string) json_encode(['alg' => 'HS256', 'typ' => 'JWT']));
+        $payload = $b64url((string) json_encode([
             'mercure' => ['subscribe' => ['user/' . $me->getUserId() . '/messages']]
         ]));
         $sig = $b64url(hash_hmac('sha256', "$header.$payload", $key, true));

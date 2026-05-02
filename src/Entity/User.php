@@ -18,6 +18,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(name: 'user_id', type: Types::INTEGER)]
+    /** @phpstan-ignore-next-line ORM assigns id at runtime */
     private ?int $userId = null;
 
     #[ORM\Column(name: 'user_nom', type: Types::STRING, length: 50)]

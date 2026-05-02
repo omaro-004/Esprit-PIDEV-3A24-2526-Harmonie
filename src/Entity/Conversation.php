@@ -15,6 +15,7 @@ class Conversation
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(name: 'id', type: 'integer')]
+    /** @phpstan-ignore-next-line ORM assigns id at runtime */
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: User::class)]
@@ -28,7 +29,8 @@ class Conversation
     #[ORM\Column(name: 'updated_at', type: 'datetime')]
     private \DateTime $updatedAt;
 
-    #[ORM\OneToMany(mappedBy: 'conversation', targetEntity: Message::class, cascade: ['persist', 'remove'])]
+    /** @var Collection<int, Message> */
+    #[ORM\OneToMany(mappedBy: 'conversation', targetEntity: Message::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[ORM\OrderBy(['sentAt' => 'ASC'])]
     private Collection $messages;
 
@@ -49,6 +51,7 @@ class Conversation
     public function getUpdatedAt(): \DateTime { return $this->updatedAt; }
     public function setUpdatedAt(\DateTime $d): self { $this->updatedAt = $d; return $this; }
 
+    /** @return Collection<int, Message> */
     public function getMessages(): Collection { return $this->messages; }
 
     public function getOtherUser(User $me): User
