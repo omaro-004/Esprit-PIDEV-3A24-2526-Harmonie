@@ -30,10 +30,12 @@ use App\Service\MistralService;
 
 use App\Repository\PostRepository;
 use App\Service\SentimentService;
+
+use App\Service\FactCheckService;
+
 class ForumController extends AbstractController
 {
-    // Vérification automatique du post
-    #[Route('/forum/post/{id}/factcheck', name: 'forum_fact_check', methods: ['POST'])]
+   #[Route('/forum/post/{id}/factcheck', name: 'forum_fact_check', methods: ['POST'])]
     public function factCheck(
         int $id,
         PostRepository $postRepo,
@@ -46,11 +48,9 @@ class ForumController extends AbstractController
             $post->getTitre(),
             $post->getContenu()
         );
-
         return new JsonResponse($result);
     }
 
-    // Chat contextuel sur le post
     #[Route('/forum/post/{id}/factcheck-chat', name: 'forum_fact_check_chat', methods: ['POST'])]
     public function factCheckChat(
         int $id,
@@ -75,7 +75,6 @@ class ForumController extends AbstractController
             $question,
             $commentaires
         );
-
         return new JsonResponse(['response' => $response]);
     }
 
