@@ -51,6 +51,16 @@
         .form-group textarea{resize:vertical;}
         .form-group ul{list-style:none;padding:0;margin:4px 0 0;}
         .form-group ul li{color:#E05252;font-size:12px;font-weight:500;}
+
+        .avatar-chooser {margin-bottom:20px;}
+        .avatar-chooser-label {display:block;font-size:13px;font-weight:600;color:var(--text-mid);margin-bottom:6px;}
+        .avatar-chooser-row {display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+        .avatar-chooser-row button {padding:10px 18px;border-radius:10px;border:1px solid var(--border);background:var(--purple-pale);color:var(--purple);font-size:14px;font-weight:600;cursor:pointer;}
+        .avatar-chooser-row button:hover {background:var(--purple);color:#fff;border-color:transparent;}
+        .avatar-status {font-size:13px;color:var(--text-muted);}
+        .avatar-preview {display:none;align-items:center;gap:12px;margin-top:16px;padding:14px;border:1px solid var(--border);border-radius:14px;background:var(--purple-ghost);}
+        .avatar-preview img {width:72px;height:72px;border-radius:18px;object-fit:cover;}
+        .avatar-preview-label {font-size:13px;color:var(--text);font-weight:600;}
         .form-actions{display:flex;gap:12px;margin-top:24px;}
         .btn-submit{padding:10px 24px;border-radius:10px;border:none;background:var(--purple);color:white;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font-body);}
         .btn-submit:hover{background:var(--purple-dark);}
@@ -136,6 +146,19 @@
                 {{ form_errors(form.contenu) }}
             </div>
 
+            <div class="avatar-chooser">
+                <div class="avatar-chooser-label">Avatar de l'entrée</div>
+                <div class="avatar-chooser-row">
+                    <a href="{{ path('avatar_creation', {'returnUrl': path('journal_new')}) }}" class="btn-cancel" id="openAvatarCreator">🎨 Créer mon avatar</a>
+                    <span class="avatar-status" id="avatarStatus">Aucun avatar sélectionné</span>
+                </div>
+                {{ form_widget(form.avatarImageUrl) }}
+                <div class="avatar-preview" id="avatarPreview">
+                    <img id="avatarPreviewImage" src="" alt="Avatar sélectionné">
+                    <div class="avatar-preview-label">Avatar sélectionné</div>
+                </div>
+            </div>
+
             <div class="form-actions">
                 <button type="submit" class="btn-submit">✅ Enregistrer</button>
                 <a href="{{ path('journal') }}" class="btn-cancel">Annuler</a>
@@ -150,6 +173,17 @@
         const drop = document.getElementById('profileDropdown');
         btn.addEventListener('click', e => { e.stopPropagation(); drop.classList.toggle('open'); });
         document.addEventListener('click', () => drop.classList.remove('open'));
+
+        const avatarInput = document.getElementById('{{ form.avatarImageUrl.vars.id }}');
+        const avatarStatus = document.getElementById('avatarStatus');
+        const avatarPreview = document.getElementById('avatarPreview');
+        const avatarPreviewImage = document.getElementById('avatarPreviewImage');
+
+        if (avatarInput && avatarInput.value) {
+            avatarPreviewImage.src = avatarInput.value;
+            avatarPreview.style.display = 'flex';
+            avatarStatus.textContent = 'Avatar chargé';
+        }
     </script>
 
     <script>
