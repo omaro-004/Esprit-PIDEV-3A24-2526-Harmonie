@@ -14,6 +14,7 @@ use Symfony\Component\Validator\Constraints\File;
 use Symfony\Component\Validator\Constraints\LessThanOrEqual;
 use Symfony\Component\Validator\Constraints\GreaterThanOrEqual;
 
+/** @extends AbstractType<User> */
 class RegistrationStep2FormType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void

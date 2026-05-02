@@ -59,6 +59,13 @@ services:
             $groqSttUrl:    '%env(GROQ_STT_URL)%'
             $groqChatModel: '%env(GROQ_CHAT_MODEL)%'
             $groqSttModel:  '%env(GROQ_STT_MODEL)%'
+    # ── Blessure & Récupération (nouveau module) ──────────────────────────────
+    # Utilise le même Groq pour les conseils de récupération des blessures sportives.
+    App\Service\BlessureService:
+        arguments:
+            $groqApiKey:    '%env(GROQ_API_KEY)%'
+            $groqChatUrl:   '%env(GROQ_CHAT_URL)%'
+            $groqChatModel: '%env(GROQ_CHAT_MODEL)%'
 
     App\Service\Github\GithubIssueService:
         arguments:

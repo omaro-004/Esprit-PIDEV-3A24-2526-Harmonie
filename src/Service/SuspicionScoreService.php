@@ -24,7 +24,11 @@ class SuspicionScoreService
         return array_sum(array_column($this->getBreakdown($user), 'points'));
     }
 
-    /** Retourne le détail de chaque critère avec son score partiel */
+    /**
+     * Retourne le détail de chaque critère avec son score partiel.
+     *
+     * @return array<int, array{critere: string, points: int, detail: string, flag: bool}>
+     */
     public function getBreakdown(User $user): array
     {
         $breakdown = [];
@@ -119,9 +123,13 @@ class SuspicionScoreService
         return $breakdown;
     }
 
+    /**
+     * @param array<int, User> $users
+     * @return array<int, User>
+     */
     public function sortBySuspicion(array $users): array
     {
-        usort($users, fn($a, $b) => $this->compute($b) <=> $this->compute($a));
+        usort($users, fn(User $a, User $b) => $this->compute($b) <=> $this->compute($a));
         return $users;
     }
 

@@ -7,10 +7,6 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * Service Spoonacular – intégration de l'API de recherche de recettes.
- *
- * Points d'entrée utilisés :
- *   • GET /recipes/findByIngredients  → recettes à partir d'une liste d'ingrédients
- *   • GET /recipes/{id}/information   → détails complets d'une recette (nutrition incluse)
  */
 class SpoonacularService
 {
@@ -31,7 +27,7 @@ class SpoonacularService
      * @param string $ingredients  Liste séparée par des virgules : "apple,oats,milk"
      * @param int    $number       Nombre de résultats maximum (défaut : 8)
      *
-     * @return array  Tableau de recettes tel que retourné par Spoonacular
+     * @return array<mixed>
      *
      * @throws \RuntimeException si l'API retourne une erreur
      */
@@ -42,8 +38,8 @@ class SpoonacularService
                 'query' => [
                     'ingredients'  => $ingredients,
                     'number'       => $number,
-                    'ranking'      => 2,        // Minimise les ingrédients manquants
-                    'ignorePantry' => 'true',   // Ignore sel/eau/huile de base
+                    'ranking'      => 2,
+                    'ignorePantry' => 'true',
                     'apiKey'       => $this->spoonacularApiKey,
                 ],
                 'timeout' => 10,
@@ -77,7 +73,7 @@ class SpoonacularService
      *
      * @param int $id  Identifiant Spoonacular de la recette
      *
-     * @return array  Données brutes de la recette avec nutrition
+     * @return array<mixed>
      *
      * @throws \RuntimeException si l'API retourne une erreur
      */
@@ -118,17 +114,26 @@ class SpoonacularService
     /**
      * Extrait la valeur d'un nutriment précis depuis le tableau nutrition de la recette.
      *
-     * @param array  $recipeData  Données retournées par getRecipeDetails()
-     * @param string $name        Nom anglais du nutriment : "Calories", "Protein", "Fat"…
+     * @param array<mixed> $recipeData  Données retournées par getRecipeDetails()
+     * @param string       $name        Nom anglais du nutriment : "Calories", "Protein", "Fat"…
      *
      * @return float  Valeur arrondie à 1 décimale (0.0 si absent)
      */
     public function getNutrient(array $recipeData, string $name): float
     {
-        $nutrients = $recipeData['nutrition']['nutrients'] ?? [];
+        $rawNutrients = $recipeData['nutrition']['nutrients'] ?? [];
 
-        foreach ($nutrients as $nutrient) {
-            if (strcasecmp($nutrient['name'] ?? '', $name) === 0) {
+        // Fix PHPStan — $rawNutrients est mixed, on s'assure que c'est un tableau
+        if (!is_array($rawNutrients)) {
+            return 0.0;
+        }
+
+        foreach ($rawNutrients as $nutrient) {
+            // Chaque élément peut être mixed ; on ne travaille qu'avec des tableaux
+            if (!is_array($nutrient)) {
+                continue;
+            }
+            if (strcasecmp((string) ($nutrient['name'] ?? ''), $name) === 0) {
                 return round((float) ($nutrient['amount'] ?? 0), 1);
             }
         }
@@ -143,8 +148,8 @@ class SpoonacularService
     /**
      * Construit un tableau résumé des macros principaux d'une recette.
      *
-     * @param array $recipeData  Données retournées par getRecipeDetails()
-     * @return array{calories:float, proteines:float, glucides:float, lipides:float}
+     * @param array<mixed> $recipeData  Données retournées par getRecipeDetails()
+     * @return array{calories: float, proteines: float, glucides: float, lipides: float}
      */
     public function extractMacros(array $recipeData): array
     {

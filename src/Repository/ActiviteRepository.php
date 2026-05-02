@@ -6,6 +6,9 @@ use App\Entity\Activite;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
+/**
+ * @extends ServiceEntityRepository<Activite>
+ */
 class ActiviteRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -15,6 +18,8 @@ class ActiviteRepository extends ServiceEntityRepository
 
     /**
      * Get all activités for a given user, ordered by date DESC.
+     *
+     * @return Activite[]
      */
     public function findByUserOrderByDate(int $userId): array
     {
@@ -30,18 +35,28 @@ class ActiviteRepository extends ServiceEntityRepository
     /**
      * Get activités for a user grouped by date (sessions).
      * Returns an associative array keyed by date string.
+     *
+     * @return array<string, Activite[]>
      */
     public function findByUserGroupedByDate(int $userId): array
     {
         $activites = $this->findByUserOrderByDate($userId);
-        $grouped = [];
+        $grouped   = [];
+
         foreach ($activites as $activite) {
-            $date = $activite->getDateActivite()->format('Y-m-d');
+            // Fix PHPStan :46 — getDateActivite() retourne DateTimeInterface|null,
+            // on vérifie null avant d'appeler format()
+            $dateObj = $activite->getDateActivite();
+            if ($dateObj === null) {
+                continue;
+            }
+            $date = $dateObj->format('Y-m-d');
             if (!isset($grouped[$date])) {
                 $grouped[$date] = [];
             }
             $grouped[$date][] = $activite;
         }
+
         return $grouped;
     }
 
@@ -56,6 +71,7 @@ class ActiviteRepository extends ServiceEntityRepository
             ->setParameter('uid', $userId)
             ->getQuery()
             ->getSingleScalarResult();
+
         return (int) $result;
     }
 
@@ -70,6 +86,7 @@ class ActiviteRepository extends ServiceEntityRepository
             ->setParameter('uid', $userId)
             ->getQuery()
             ->getSingleScalarResult();
+
         return (int) $result;
     }
 
@@ -84,6 +101,7 @@ class ActiviteRepository extends ServiceEntityRepository
             ->setParameter('uid', $userId)
             ->getQuery()
             ->getSingleScalarResult();
+
         return (int) $result;
     }
 }

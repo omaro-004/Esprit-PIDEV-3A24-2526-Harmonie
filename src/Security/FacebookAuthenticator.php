@@ -46,6 +46,7 @@ class FacebookAuthenticator extends OAuth2Authenticator
                 $email      = $fbUser->getEmail();
 
                 // 1. Compte déjà lié à Facebook ?
+                /** @var User|null $user */
                 $user = $this->userRepo->findOneBy(['facebookId' => $facebookId]);
                 if ($user) {
                     return $user;
@@ -53,6 +54,7 @@ class FacebookAuthenticator extends OAuth2Authenticator
 
                 // 2. Compte existant avec cet email ?
                 if ($email) {
+                    /** @var User|null $user */
                     $user = $this->userRepo->findOneBy(['userEmail' => $email]);
                     if ($user) {
                         $user->setFacebookId($facebookId);
@@ -99,7 +101,9 @@ class FacebookAuthenticator extends OAuth2Authenticator
 
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
     {
-        $request->getSession()->getFlashBag()->add(
+        /** @var \Symfony\Component\HttpFoundation\Session\Session $session */
+        $session = $request->getSession();
+        $session->getFlashBag()->add(
             'error',
             'Connexion Facebook échouée : ' . strtr($exception->getMessageKey(), $exception->getMessageData())
         );
