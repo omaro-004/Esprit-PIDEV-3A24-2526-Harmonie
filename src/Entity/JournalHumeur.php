@@ -40,6 +40,9 @@ class JournalHumeur
     )]
     private string $contenu = '';
 
+    #[ORM\Column(name: 'avatar_image_url', type: Types::STRING, length: 500, nullable: true)]
+    private ?string $avatarImageUrl = null;
+
     #[ORM\Column(name: 'is_read_by_admin', type: Types::BOOLEAN, options: ['default' => false])]
     private bool $isReadByAdmin = false;
 
@@ -74,6 +77,9 @@ class JournalHumeur
 
     public function getContenu(): ?string { return $this->contenu; }
     public function setContenu(?string $contenu): self { $this->contenu = $contenu ?? ''; return $this; }
+
+    public function getAvatarImageUrl(): ?string { return $this->avatarImageUrl; }
+    public function setAvatarImageUrl(?string $avatarImageUrl): self { $this->avatarImageUrl = $avatarImageUrl; return $this; }
 
     public function isReadByAdmin(): bool { return $this->isReadByAdmin; }
     public function setIsReadByAdmin(bool $v): self { $this->isReadByAdmin = $v; return $this; }

@@ -256,6 +256,9 @@ html,body { font-family:var(--font-body); background:var(--purple-ghost); color:
             {% for e in entries %}
             <div class="post-card">
                 <div class="post-head">
+                    {% if e.avatarImageUrl %}
+                    <div class="entry-avatar"><img src="{{ e.avatarImageUrl }}" alt="Avatar de l'entrée"></div>
+                    {% endif %}
                     <div class="post-avatar">{{ app.user ? app.user.firstName|first|upper : 'E' }}</div>
                     <div class="post-meta">
                         <div class="post-name">{{ app.user ? app.user.firstName ~ ' ' ~ app.user.lastName : 'Moi' }}</div>
@@ -369,6 +372,7 @@ html,body { font-family:var(--font-body); background:var(--purple-ghost); color:
                 feedList.innerHTML = data.map(e => `
                     <div class="post-card">
                         <div class="post-head">
+                            ${e.avatarImageUrl ? `<div class="entry-avatar"><img src="${esc(e.avatarImageUrl)}" alt="Avatar de l'entrée"></div>` : ''}
                             <div class="post-avatar">${esc('{{ app.user ? app.user.firstName|first|upper : "E" }}')}</div>
                             <div class="post-meta">
                                 <div class="post-name">${esc('{{ app.user ? app.user.firstName ~ " " ~ app.user.lastName : "Moi" }}')}</div>
