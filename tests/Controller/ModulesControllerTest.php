@@ -2,14 +2,37 @@
 
 namespace App\Tests\Controller;
 
+use App\Entity\User;
+use App\Repository\UserRepository;
+use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class ModulesControllerTest extends WebTestCase
 {
+    private KernelBrowser $client;
+
+    protected function setUp(): void
+    {
+        $this->client = static::createClient();
+
+        $userRepository = static::getContainer()->get(UserRepository::class);
+        $testUser = $userRepository->findOneBy(['userEmail' => 'test@example.com']);
+
+        if (!$testUser instanceof User) {
+            $testUser = (new User())
+                ->setUserEmail('test@example.com')
+                ->setUserNom('Test')
+                ->setUserPrenom('User')
+                ->setUserPassword('password')
+                ->setDateInscription('2026-05-03')
+                ->setTypeUtilisateur('ADMIN');
+        }
+
+        $this->client->loginUser($testUser);
+    }
+
     public function testAllModulePagesLoad(): void
     {
-        $client = static::createClient();
-
         // Test all module routes
         $routes = [
             '/activites' => 'Activités - Harmony',
@@ -23,7 +46,7 @@ class ModulesControllerTest extends WebTestCase
         ];
 
         foreach ($routes as $route => $expectedTitle) {
-            $crawler = $client->request('GET', $route);
+            $crawler = $this->client->request('GET', $route);
 
             $this->assertResponseIsSuccessful(sprintf('Route %s should be successful', $route));
             $this->assertSelectorTextContains('title', $expectedTitle, sprintf('Route %s should have correct title', $route));
@@ -35,8 +58,7 @@ class ModulesControllerTest extends WebTestCase
 
     public function testNavigationLinksFromHomepage(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/');
+        $crawler = $this->client->request('GET', '/');
 
         $this->assertResponseIsSuccessful();
 
@@ -53,15 +75,13 @@ class ModulesControllerTest extends WebTestCase
 
     public function testBackLinksWork(): void
     {
-        $client = static::createClient();
-
         // Test back link from one of the module pages
-        $crawler = $client->request('GET', '/activites');
+        $crawler = $this->client->request('GET', '/activites');
         $this->assertResponseIsSuccessful();
 
         // Click the back link
         $link = $crawler->selectLink('← Retour à l\'accueil')->link();
-        $crawler = $client->click($link);
+        $crawler = $this->client->click($link);
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('title', 'Accueil Étudiant - Harmony');
