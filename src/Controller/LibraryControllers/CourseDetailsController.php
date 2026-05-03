@@ -993,9 +993,7 @@ SYS;
             $parser = new PdfParser();
             $pdf    = $parser->parseContent($data);
             $text   = $pdf->getText() ?: '';
-            file_put_contents('D:/web/pdf_debug.txt', 'Length: ' . strlen($text) . "\n" . substr($text, 0, 500));
         } catch (\Throwable $e) {
-            file_put_contents('D:/web/pdf_debug.txt', 'ERROR: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             return ['error' => 'empty'];
         }
 
