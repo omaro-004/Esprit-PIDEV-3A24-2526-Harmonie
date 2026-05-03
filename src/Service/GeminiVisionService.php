@@ -11,7 +11,6 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 class GeminiVisionService
 {
-    // MODÈLE LÉGER ET STABLE (recommandé quand le flash normal est surchargé)
     private const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
 
     public function __construct(
@@ -19,6 +18,26 @@ class GeminiVisionService
         private readonly string $geminiApiKey
     ) {}
 
+    /**
+     * Analyse une photo de repas et retourne les données nutritionnelles estimées.
+     *
+     * @param  string $base64Image Image encodée en base64
+     * @param  string $mimeType   Type MIME de l'image (ex : 'image/jpeg')
+     * @param  string $repasType  Type de repas (ex : 'Déjeuner')
+     *
+     * @return array{
+     *   plats_detectes: array<mixed>,
+     *   calories_totales: int,
+     *   proteines_g: float,
+     *   glucides_g: float,
+     *   lipides_g: float,
+     *   score_equilibre: int,
+     *   suggestions: array<mixed>,
+     *   note_nutritionnelle: string
+     * }
+     *
+     * @throws \RuntimeException
+     */
     public function analyzeMealPhoto(
         string $base64Image,
         string $mimeType = 'image/jpeg',
@@ -63,8 +82,8 @@ PROMPT;
                     'contents' => [[
                         'parts' => [
                             ['inlineData' => ['mimeType' => $mimeType, 'data' => $base64Image]],
-                            ['text' => $prompt]
-                        ]
+                            ['text' => $prompt],
+                        ],
                     ]],
                     'generationConfig' => [
                         'temperature'     => 0.3,
@@ -80,26 +99,44 @@ PROMPT;
 
             if ($statusCode !== 200) {
                 $err = json_decode($bodyRaw, true);
-                $msg = $err['error']['message'] ?? 'Erreur inconnue';
+                $msg = is_array($err) ? ($err['error']['message'] ?? 'Erreur inconnue') : 'Erreur inconnue';
                 throw new \RuntimeException("Erreur Gemini (HTTP {$statusCode}) : {$msg}");
             }
 
-            $data = json_decode($bodyRaw, true);
-            $textContent = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
+            $data        = json_decode($bodyRaw, true);
+            $textContent = '';
+            if (is_array($data)) {
+                $textContent = (string) ($data['candidates'][0]['content']['parts'][0]['text'] ?? '');
+            }
 
             return $this->parseGeminiResponse($textContent);
 
         } catch (TransportExceptionInterface $e) {
-            throw new \RuntimeException('Impossible de contacter l’API Gemini (erreur réseau)');
+            throw new \RuntimeException('Impossible de contacter l\'API Gemini (erreur réseau)');
         } catch (\Throwable $e) {
             throw new \RuntimeException($e->getMessage());
         }
     }
 
+    /**
+     * @return array{
+     *   plats_detectes: array<mixed>,
+     *   calories_totales: int,
+     *   proteines_g: float,
+     *   glucides_g: float,
+     *   lipides_g: float,
+     *   score_equilibre: int,
+     *   suggestions: array<mixed>,
+     *   note_nutritionnelle: string
+     * }
+     */
     private function parseGeminiResponse(string $text): array
     {
-        $text = preg_replace('/^```(?:json)?\s*/m', '', $text);
-        $text = preg_replace('/\s*```\s*$/m', '', $text);
+        // Fix PHPStan :102 — preg_replace retourne string|null, on coalesce pour garder string
+        $text = preg_replace('/^```(?:json)?\s*/m', '', $text) ?? $text;
+        // Fix PHPStan :103 — même protection null coalescing
+        $text = preg_replace('/\s*```\s*$/m', '', $text) ?? $text;
+        // trim() reçoit maintenant un string garanti
         $text = trim($text);
 
         if (!str_starts_with($text, '{')) {
@@ -113,7 +150,7 @@ PROMPT;
         $result = json_decode($text, true);
 
         if (!is_array($result)) {
-            throw new \RuntimeException('Gemini n’a pas renvoyé un JSON valide. Essaie avec une photo plus nette.');
+            throw new \RuntimeException('Gemini n\'a pas renvoyé un JSON valide. Essaie avec une photo plus nette.');
         }
 
         return [

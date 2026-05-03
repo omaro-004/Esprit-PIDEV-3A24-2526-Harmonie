@@ -147,7 +147,9 @@ class AdminUserController extends AbstractController
     #[Route('/{id}/toggle', name: 'admin_users_toggle', methods: ['POST'])]
     public function toggle(User $user, Request $request): Response
     {
-        if ($this->isCsrfTokenValid('toggle' . $user->getUserId(), $request->request->get('_token'))) {
+        $token = $request->request->get('_token');
+        $token = $token !== null ? (string) $token : null;
+        if ($this->isCsrfTokenValid('toggle' . $user->getUserId(), $token)) {
             $user->setIsActive(!$user->isActive());
             $this->em->flush();
             $action = $user->isActive() ? 'réactivé' : 'suspendu';

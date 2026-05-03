@@ -7,6 +7,9 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
+/**
+ * @extends ServiceEntityRepository<Aliment>
+ */
 class AlimentRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -16,6 +19,8 @@ class AlimentRepository extends ServiceEntityRepository
 
     /**
      * Tous les aliments triés par nom.
+     *
+     * @return Aliment[]
      */
     public function findAllOrdered(): array
     {
@@ -27,6 +32,8 @@ class AlimentRepository extends ServiceEntityRepository
 
     /**
      * Recherche par nom (insensible à la casse).
+     *
+     * @return Aliment[]
      */
     public function search(string $q): array
     {
@@ -63,6 +70,8 @@ class AlimentRepository extends ServiceEntityRepository
      *   - id_to       : id_aliment <= X  (proxy « ajouté avant »)
      *   - sort        : champ de tri  (nomAliment | caloriesPour100g | proteines | glucides | lipides)
      *   - direction   : ASC | DESC
+     *
+     * @param array<string, mixed> $filters
      */
     public function createFilteredQueryBuilder(array $filters = []): QueryBuilder
     {
@@ -102,8 +111,6 @@ class AlimentRepository extends ServiceEntityRepository
         }
 
         // ── Filtre par plage d'ID (proxy date d'ajout) ──────────────
-        // La table `aliment` n'a pas de colonne created_at ;
-        // l'id auto-incrémenté est un proxy fiable de l'ordre d'insertion.
         $idFrom = $filters['id_from'] ?? null;
         $idTo   = $filters['id_to']   ?? null;
 
@@ -126,8 +133,8 @@ class AlimentRepository extends ServiceEntityRepository
             'id'               => 'a.id',
         ];
 
-        $sortField = $filters['sort'] ?? 'nomAliment';
-        $direction = strtoupper($filters['direction'] ?? 'ASC') === 'DESC' ? 'DESC' : 'ASC';
+        $sortField = (string) ($filters['sort'] ?? 'nomAliment');
+        $direction = strtoupper((string) ($filters['direction'] ?? 'ASC')) === 'DESC' ? 'DESC' : 'ASC';
 
         $sortDql = $allowedSorts[$sortField] ?? 'a.nomAliment';
         $qb->orderBy($sortDql, $direction);
@@ -142,6 +149,8 @@ class AlimentRepository extends ServiceEntityRepository
 
     /**
      * Compte total (pour affichage stats) avec les mêmes filtres.
+     *
+     * @param array<string, mixed> $filters
      */
     public function countFiltered(array $filters = []): int
     {
@@ -153,6 +162,8 @@ class AlimentRepository extends ServiceEntityRepository
 
     /**
      * Statistiques globales rapides (min/max/avg) — utiles pour les sliders du filtre.
+     *
+     * @return array<string, mixed>
      */
     public function getGlobalStats(): array
     {

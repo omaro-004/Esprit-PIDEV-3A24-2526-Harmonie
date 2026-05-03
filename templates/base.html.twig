@@ -56,6 +56,99 @@ html,body{font-family:var(--font-body);background:var(--purple-ghost);color:var(
         {% block body %}{% endblock %}
         {% block body_javascripts %}{% endblock %}
         {% if app.user %}
+            <script>
+                (function () {
+                    const harmonyUser = {{ {
+                        avatar: app.user.userImagePath ? asset(app.user.userImagePath) : '',
+                        fullName: (app.user.userPrenom ~ ' ' ~ app.user.userNom)|trim,
+                        email: app.user.userEmail,
+                        profileUrl: path('app_profile_settings'),
+                        logoutUrl: path('app_logout')
+                    }|json_encode|raw }};
+
+                    function ensureAvatarImage(el) {
+                        if (!el || !harmonyUser.avatar) {
+                            return;
+                        }
+                        if (el.querySelector('img')) {
+                            return;
+                        }
+                        el.innerHTML = '<img src="' + harmonyUser.avatar + '" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+                    }
+
+                    function wireProfileBubbles() {
+                        document.querySelectorAll('#avatarBtn, .avatar-topbar').forEach(function (avatarBtn) {
+                            ensureAvatarImage(avatarBtn);
+
+                            if (avatarBtn.dataset.harmonyProfileWired === '1') {
+                                return;
+                            }
+                            avatarBtn.dataset.harmonyProfileWired = '1';
+
+                            avatarBtn.addEventListener('dblclick', function (e) {
+                                e.preventDefault();
+                                window.location.href = harmonyUser.profileUrl;
+                            });
+
+                            const dropdown = avatarBtn.parentElement ? avatarBtn.parentElement.querySelector('#profileDropdown') : null;
+                            if (!dropdown || avatarBtn.dataset.harmonyDropdownWired === '1') {
+                                return;
+                            }
+
+                            avatarBtn.dataset.harmonyDropdownWired = '1';
+
+                            const nameEl = dropdown.querySelector('.pd-name');
+                            const emailEl = dropdown.querySelector('.pd-email');
+                            if (nameEl && harmonyUser.fullName) {
+                                nameEl.textContent = harmonyUser.fullName;
+                            }
+                            if (emailEl && harmonyUser.email) {
+                                emailEl.textContent = harmonyUser.email;
+                            }
+
+                            avatarBtn.addEventListener('click', function (e) {
+                                e.stopPropagation();
+                                dropdown.classList.toggle('open');
+                            });
+
+                            document.addEventListener('click', function () {
+                                dropdown.classList.remove('open');
+                            });
+                        });
+                    }
+
+                    function wireLogoutButtons() {
+                        document.querySelectorAll('.logout-btn').forEach(function (btn) {
+                            if (btn.tagName === 'A') {
+                                return;
+                            }
+                            if (btn.closest('form')) {
+                                return;
+                            }
+                            if (btn.dataset.harmonyLogoutWired === '1') {
+                                return;
+                            }
+
+                            btn.dataset.harmonyLogoutWired = '1';
+                            btn.addEventListener('click', function (e) {
+                                e.preventDefault();
+                                window.location.href = harmonyUser.logoutUrl;
+                            });
+                        });
+                    }
+
+                    function initTopbarEnhancements() {
+                        wireProfileBubbles();
+                        wireLogoutButtons();
+                    }
+
+                    document.addEventListener('DOMContentLoaded', initTopbarEnhancements);
+                    document.addEventListener('turbo:load', initTopbarEnhancements);
+                    initTopbarEnhancements();
+                })();
+            </script>
+        {% endif %}
+        {% if app.user %}
             {% include 'messaging/bubble.html.twig' %}
         {% endif %}
     </body>

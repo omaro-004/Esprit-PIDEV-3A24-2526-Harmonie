@@ -15,6 +15,7 @@ class SentimentService
     ) {}
 
 
+    /** @return array{sentiment: string, emoji: string, score: int} */
     public function analyze(string $texte): array
     {
         $response = $this->httpClient->request('POST',

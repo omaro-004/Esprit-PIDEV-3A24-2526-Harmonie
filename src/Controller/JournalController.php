@@ -29,11 +29,13 @@ class JournalController extends AbstractController
     #[Route('', name: 'journal', methods: ['GET'])]
     public function index(): Response
     {
-        $entries = $this->repo->findByUser($this->getUser());
+        /** @var \App\Entity\User $user */
+        $user    = $this->getUser();
+        $entries = $this->repo->findByUser($user);
         $humeurs = Humeur::cases();
-        $stats   = $this->repo->moodStats($this->getUser());
-        $trend   = $this->repo->scoreTrend($this->getUser(), 30);
-        $dist    = $this->repo->moodDistribution($this->getUser());
+        $stats   = $this->repo->moodStats($user);
+        $trend   = $this->repo->scoreTrend($user, 30);
+        $dist    = $this->repo->moodDistribution($user);
 
         return $this->render('journal/index.html.twig', compact('entries', 'humeurs', 'stats', 'trend', 'dist'));
     }
@@ -41,32 +43,37 @@ class JournalController extends AbstractController
     #[Route('/search', name: 'journal_search', methods: ['GET'])]
     public function search(Request $request): JsonResponse
     {
-        $q      = $request->query->get('q', '');
-        $humeur = $request->query->get('humeur', '');
+        $q      = (string) $request->query->get('q', '');
+        $humeur = (string) $request->query->get('humeur', '');
 
-        $entries = $this->repo->searchByUser($this->getUser(), $q, $humeur);
+        /** @var \App\Entity\User $user */
+        $user    = $this->getUser();
+        $entries = $this->repo->searchByUser($user, $q, $humeur);
 
         $data = array_map(fn(JournalHumeur $j) => [
-            'id'          => $j->getId(),
-            'date'        => $j->getDateJournal()->format('d/m/Y'),
-            'humeur'      => $j->getHumeur()->value,
-            'humeurLabel' => $j->getHumeur()->label(),
-            'humeurEmoji' => $j->getHumeur()->emoji(),
-            'score'       => $j->getScore(),
-            'contenu'     => $j->getContenu(),
+            'id'             => $j->getId(),
+            'date'           => $j->getDateJournal()?->format('d/m/Y'),
+            'humeur'         => $j->getHumeur()?->value,
+            'humeurLabel'    => $j->getHumeur()?->label(),
+            'humeurEmoji'    => $j->getHumeur()?->emoji(),
+            'score'          => $j->getScore(),
+            'contenu'        => $j->getContenu(),
+            'avatarImageUrl' => $j->getAvatarImageUrl(),
         ], $entries);
 
-        return $this->json($data);
+        return new JsonResponse($data);
     }
 
     #[Route('/stats', name: 'journal_stats', methods: ['GET'])]
     public function stats(): JsonResponse
     {
-        $stats = $this->repo->moodStats($this->getUser());
-        $trend = $this->repo->scoreTrend($this->getUser(), 30);
-        $dist  = $this->repo->moodDistribution($this->getUser());
+        /** @var \App\Entity\User $user */
+        $user  = $this->getUser();
+        $stats = $this->repo->moodStats($user);
+        $trend = $this->repo->scoreTrend($user, 30);
+        $dist  = $this->repo->moodDistribution($user);
 
-        return $this->json([
+        return new JsonResponse([
             'stats' => $stats,
             'trend' => $trend,
             'dist'  => $dist,
@@ -78,7 +85,7 @@ class JournalController extends AbstractController
     {
         $file = $request->files->get('audio');
         if (!$file) {
-            return $this->json(['error' => 'Aucun fichier audio reçu.'], 400);
+            return new JsonResponse(['error' => 'Aucun fichier audio reçu.'], 400);
         }
 
         $tmpPath = sys_get_temp_dir() . '/groq_audio_' . uniqid() . '.webm';
@@ -89,14 +96,14 @@ class JournalController extends AbstractController
             $today         = (new \DateTime())->format('Y-m-d');
             $parsed        = $this->groq->parseJournalFromSpeech($transcription, $today);
 
-            return $this->json([
+            return new JsonResponse([
                 'transcription' => $transcription,
                 'date'          => $parsed['date'],
                 'humeur'        => $parsed['humeur'],
                 'contenu'       => $parsed['contenu'],
             ]);
         } catch (\Throwable $e) {
-            return $this->json(['error' => 'Erreur de transcription : ' . $e->getMessage()], 500);
+            return new JsonResponse(['error' => 'Erreur de transcription : ' . $e->getMessage()], 500);
         } finally {
             if (file_exists($tmpPath)) {
                 unlink($tmpPath);
@@ -108,11 +115,18 @@ class JournalController extends AbstractController
     public function new(Request $request): Response
     {
         $entry = new JournalHumeur();
+        $avatarUrl = $request->query->get('avatarUrl');
+        if ($avatarUrl !== null) {
+            $entry->setAvatarImageUrl((string) $avatarUrl);
+        }
+
         $form  = $this->createForm(JournalHumeurType::class, $entry);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $entry->setUser($this->getUser());
+            /** @var \App\Entity\User $user */
+            $user = $this->getUser();
+            $entry->setUser($user);
             $this->em->persist($entry);
             $this->em->flush();
 
@@ -155,7 +169,7 @@ class JournalController extends AbstractController
             throw new AccessDeniedException('Vous ne pouvez pas supprimer cette entrée.');
         }
 
-        if ($this->isCsrfTokenValid('delete' . $entry->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete' . $entry->getId(), (string) $request->request->get('_token'))) {
             $this->em->remove($entry);
             $this->em->flush();
             $this->addFlash('success', 'Entrée supprimée avec succès.');

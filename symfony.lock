@@ -1,15 +1,12 @@
 {
     "ahmed-bhs/doctrine-doctor": {
-        "version": "1.1",
+        "version": "1.0",
         "recipe": {
             "repo": "github.com/symfony/recipes-contrib",
             "branch": "main",
             "version": "0.1",
             "ref": "0a0c0e3972f784e628c4f759d2fb446e9eeb4959"
-        },
-        "files": [
-            "./config/packages/doctrine_doctor.yaml"
-        ]
+        }
     },
     "doctrine/deprecations": {
         "version": "1.1",
@@ -32,18 +29,6 @@
             "./config/packages/doctrine.yaml",
             "./src/Entity/.gitignore",
             "./src/Repository/.gitignore"
-        ]
-    },
-    "doctrine/doctrine-fixtures-bundle": {
-        "version": "4.3",
-        "recipe": {
-            "repo": "github.com/symfony/recipes",
-            "branch": "main",
-            "version": "3.0",
-            "ref": "1f5514cfa15b947298df4d771e694e578d4c204d"
-        },
-        "files": [
-            "./src/DataFixtures/AppFixtures.php"
         ]
     },
     "doctrine/doctrine-migrations-bundle": {

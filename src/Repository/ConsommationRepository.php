@@ -6,6 +6,9 @@ use App\Entity\Consommation;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
+/**
+ * @extends ServiceEntityRepository<Consommation>
+ */
 class ConsommationRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -15,6 +18,8 @@ class ConsommationRepository extends ServiceEntityRepository
 
     /**
      * Toutes les consommations d'un utilisateur pour une date donnée.
+     *
+     * @return Consommation[]
      */
     public function findByUserAndDate(int $userId, \DateTime $date): array
     {
@@ -128,6 +133,8 @@ class ConsommationRepository extends ServiceEntityRepository
 
     /**
      * Historique des 7 derniers jours (pour graphique).
+     *
+     * @return Consommation[]
      */
     public function findLast7Days(int $userId): array
     {

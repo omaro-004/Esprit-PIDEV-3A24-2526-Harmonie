@@ -12,6 +12,7 @@ class Aliment
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(name: 'id_aliment', type: 'integer')]
+    /** @phpstan-ignore property.unusedType */
     private ?int $id = null;
 
     #[ORM\Column(name: 'nom_aliment', length: 100)]

@@ -13,6 +13,7 @@ class Consommation
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(name: 'id_consommation', type: 'integer')]
+    /** @phpstan-ignore property.unusedType */
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: Aliment::class)]
@@ -111,9 +112,6 @@ class Consommation
         return $this;
     }
 
-    /**
-     * Calcule les calories de cette consommation en fonction du poids et de l'aliment.
-     */
     public function getCalories(): float
     {
         if ($this->aliment === null || $this->poidsGrammes === null) {

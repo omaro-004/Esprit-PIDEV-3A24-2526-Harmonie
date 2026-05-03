@@ -1,0 +1,744 @@
+{# templates/blessure/index.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Blessures & Récupération – Modèle Corporel Interactif{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   BLESSURE – MODÈLE CORPOREL INTERACTIF
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  --color-primary:   #4f46e5;
+  --color-primary-l: #6366f1;
+  --color-danger:    #ef4444;
+  --color-warning:   #f59e0b;
+  --color-success:   #10b981;
+  --color-bg:        #0f172a;
+  --color-card:      #1e293b;
+  --color-border:    #334155;
+  --color-text:      #f1f5f9;
+  --color-muted:     #94a3b8;
+}
+
+body { background: var(--color-bg); color: var(--color-text); }
+
+/* ─── Layout ─── */
+.blessure-wrapper {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 2rem;
+  max-width: 1300px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+@media (max-width: 900px) {
+  .blessure-wrapper { grid-template-columns: 1fr; }
+}
+
+/* ─── Header ─── */
+.blessure-header {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 1.5rem 1rem;
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  border-radius: 16px;
+  border: 1px solid var(--color-border);
+}
+.blessure-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  background: linear-gradient(to right, #818cf8, #6ee7b7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0 0 .4rem;
+}
+.blessure-header p { color: var(--color-muted); margin: 0; font-size: .95rem; }
+
+/* ─── Panel Gauche : Silhouette ─── */
+.body-panel {
+  background: var(--color-card);
+  border-radius: 16px;
+  border: 1px solid var(--color-border);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+.body-panel h2 { font-size: 1.1rem; color: var(--color-muted); margin: 0; letter-spacing: .05em; }
+
+/* Contexte utilisateur */
+.context-bar {
+  display: flex;
+  gap: .75rem;
+  width: 100%;
+  flex-wrap: wrap;
+}
+.context-bar select {
+  flex: 1;
+  min-width: 120px;
+  background: #0f172a;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  border-radius: 8px;
+  padding: .45rem .75rem;
+  font-size: .85rem;
+}
+.context-bar select:focus { outline: none; border-color: var(--color-primary); }
+
+/* SVG silhouette wrapper */
+.silhouette-container {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+}
+.silhouette-container svg { width: 100%; height: auto; display: block; }
+
+/* Zones cliquables */
+.body-zone {
+  cursor: pointer;
+  transition: opacity .2s, filter .2s;
+}
+.body-zone:hover { opacity: .8; filter: brightness(1.3); }
+.body-zone.active { filter: drop-shadow(0 0 8px #f59e0b); }
+.body-zone.selected { opacity: 1; filter: drop-shadow(0 0 10px #4f46e5); }
+
+/* Légende */
+.legend {
+  display: flex;
+  gap: 1rem;
+  font-size: .78rem;
+  color: var(--color-muted);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.legend-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: .3rem;
+  vertical-align: middle;
+}
+
+/* Tooltip */
+#zone-tooltip {
+  position: absolute;
+  background: rgba(15,23,42,.95);
+  color: #fff;
+  padding: .35rem .7rem;
+  border-radius: 6px;
+  font-size: .8rem;
+  pointer-events: none;
+  display: none;
+  border: 1px solid var(--color-primary);
+  white-space: nowrap;
+  z-index: 100;
+}
+
+/* ─── Panel Droit : Conseils ─── */
+.conseils-panel {
+  background: var(--color-card);
+  border-radius: 16px;
+  border: 1px solid var(--color-border);
+  padding: 1.5rem;
+  overflow-y: auto;
+  max-height: 780px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  color: var(--color-muted);
+  text-align: center;
+  gap: 1rem;
+}
+.empty-state svg { opacity: .4; }
+.empty-state p { font-size: .9rem; line-height: 1.6; max-width: 260px; }
+
+/* Loader */
+.loader {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  gap: 1rem;
+  color: var(--color-muted);
+}
+.spinner {
+  width: 48px; height: 48px;
+  border: 4px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Résultat */
+.result-header {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: .75rem;
+  border-bottom: 1px solid var(--color-border);
+}
+.result-icon {
+  width: 44px; height: 44px;
+  background: rgba(79,70,229,.2);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+.result-title { font-size: 1.15rem; font-weight: 700; margin: 0 0 .2rem; }
+.result-subtitle { font-size: .8rem; color: var(--color-muted); margin: 0; }
+
+/* Cartes de conseils */
+.advice-section { margin-bottom: 1.25rem; }
+.advice-section-title {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: .85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--color-muted);
+  margin-bottom: .6rem;
+}
+.advice-section-title .icon { font-size: 1rem; }
+
+.advice-list {
+  list-style: none;
+  padding: 0; margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: .45rem;
+}
+.advice-list li {
+  background: rgba(255,255,255,.04);
+  border-left: 3px solid var(--color-primary);
+  padding: .55rem .75rem;
+  border-radius: 0 8px 8px 0;
+  font-size: .875rem;
+  line-height: 1.5;
+}
+.advice-list li:before { content: '→ '; color: var(--color-primary); font-weight: 700; }
+
+.advice-list.danger li { border-left-color: var(--color-danger); }
+.advice-list.danger li:before { color: var(--color-danger); }
+
+.advice-list.success li { border-left-color: var(--color-success); }
+.advice-list.success li:before { color: var(--color-success); }
+
+.advice-list.warning li { border-left-color: var(--color-warning); }
+.advice-list.warning li:before { color: var(--color-warning); }
+
+/* Badge durée */
+.duree-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  background: rgba(245,158,11,.15);
+  border: 1px solid rgba(245,158,11,.4);
+  color: #fbbf24;
+  padding: .5rem 1rem;
+  border-radius: 999px;
+  font-size: .85rem;
+  font-weight: 600;
+  margin-top: .5rem;
+}
+
+/* Alerte médicale */
+.medical-alert {
+  background: rgba(239,68,68,.08);
+  border: 1px solid rgba(239,68,68,.3);
+  border-radius: 10px;
+  padding: .75rem 1rem;
+  font-size: .85rem;
+  line-height: 1.6;
+  color: #fca5a5;
+}
+
+/* Bouton retour */
+.btn-reset {
+  width: 100%;
+  margin-top: 1rem;
+  padding: .6rem;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-muted);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: .85rem;
+  transition: all .2s;
+}
+.btn-reset:hover { border-color: var(--color-primary); color: var(--color-text); }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="blessure-wrapper">
+
+  {# ─── HEADER ─── #}
+  <div class="blessure-header">
+    <h1>🩻 Modèle Corporel Interactif</h1>
+    <p>Cliquez sur une zone du corps pour obtenir des conseils de récupération personnalisés par l'IA</p>
+  </div>
+
+  {# ─── PANNEAU GAUCHE : SILHOUETTE ─── #}
+  <div class="body-panel">
+    <h2>SÉLECTIONNEZ UNE ZONE</h2>
+
+    {# Contexte activité #}
+    <div class="context-bar">
+      <select id="sel-activite">
+        {% for t in typesActivite %}
+          <option value="{{ t }}">{{ t|capitalize }}</option>
+        {% endfor %}
+      </select>
+      <select id="sel-intensite">
+        <option value="légère">Intensité légère</option>
+        <option value="modérée" selected>Intensité modérée</option>
+        <option value="intense">Intensité intense</option>
+      </select>
+    </div>
+
+    {# Silhouette SVG interactive #}
+    <div class="silhouette-container">
+      <div id="zone-tooltip"></div>
+
+      <svg viewBox="0 0 200 520" xmlns="http://www.w3.org/2000/svg" id="body-svg">
+
+        {# ── Fond (corps de base) ── #}
+        <!-- Corps principal - fond -->
+        <ellipse cx="100" cy="88" rx="22" ry="26" fill="#374151"/>
+        <rect x="70" y="110" width="60" height="95" rx="8" fill="#374151"/>
+        <!-- Bras gauche -->
+        <rect x="40" y="112" width="28" height="75" rx="10" fill="#374151"/>
+        <!-- Bras droit -->
+        <rect x="132" y="112" width="28" height="75" rx="10" fill="#374151"/>
+        <!-- Avant-bras gauche -->
+        <rect x="36" y="182" width="26" height="60" rx="10" fill="#374151"/>
+        <!-- Avant-bras droit -->
+        <rect x="138" y="182" width="26" height="60" rx="10" fill="#374151"/>
+        <!-- Jambe gauche -->
+        <rect x="72" y="205" width="26" height="110" rx="8" fill="#374151"/>
+        <!-- Jambe droite -->
+        <rect x="102" y="205" width="26" height="110" rx="8" fill="#374151"/>
+        <!-- Tibia gauche -->
+        <rect x="72" y="312" width="26" height="100" rx="8" fill="#374151"/>
+        <!-- Tibia droit -->
+        <rect x="102" y="312" width="26" height="100" rx="8" fill="#374151"/>
+        <!-- Pied gauche -->
+        <ellipse cx="85" cy="416" rx="18" ry="9" fill="#374151"/>
+        <!-- Pied droit -->
+        <ellipse cx="115" cy="416" rx="18" ry="9" fill="#374151"/>
+
+        {# ── ZONES CLIQUABLES ── #}
+
+        <!-- TÊTE -->
+        <ellipse class="body-zone" id="z-tete"
+          cx="100" cy="65" rx="22" ry="24"
+          fill="#6366f1" opacity="0.7"
+          data-zone="tete" data-label="Tête / Nuque"/>
+
+        <!-- COU -->
+        <rect class="body-zone" id="z-cou"
+          x="88" y="88" width="24" height="22" rx="6"
+          fill="#818cf8" opacity="0.75"
+          data-zone="cou" data-label="Cou / Cervicales"/>
+
+        <!-- ÉPAULE GAUCHE -->
+        <ellipse class="body-zone" id="z-epaule-gauche"
+          cx="62" cy="120" rx="18" ry="14"
+          fill="#a78bfa" opacity="0.8"
+          data-zone="epaule_gauche" data-label="Épaule gauche"/>
+
+        <!-- ÉPAULE DROITE -->
+        <ellipse class="body-zone" id="z-epaule-droite"
+          cx="138" cy="120" rx="18" ry="14"
+          fill="#a78bfa" opacity="0.8"
+          data-zone="epaule_droite" data-label="Épaule droite"/>
+
+        <!-- THORAX / PECTORAUX -->
+        <rect class="body-zone" id="z-thorax"
+          x="78" y="112" width="44" height="40" rx="6"
+          fill="#60a5fa" opacity="0.65"
+          data-zone="thorax" data-label="Thorax / Pectoraux"/>
+
+        <!-- ABDOMEN -->
+        <rect class="body-zone" id="z-abdomen"
+          x="80" y="152" width="40" height="40" rx="6"
+          fill="#34d399" opacity="0.55"
+          data-zone="abdomen" data-label="Abdomen / Core"/>
+
+        <!-- DOS HAUT (affiché par-dessus le thorax pour la perception) -->
+        <!-- (même zone que thorax mais légèrement transparente – indiqué dans la légende) -->
+
+        <!-- DOS BAS / LOMBAIRES -->
+        <rect class="body-zone" id="z-dos-bas"
+          x="80" y="192" width="40" height="15" rx="5"
+          fill="#fb923c" opacity="0.7"
+          data-zone="dos_bas" data-label="Bas du dos / Lombaires"/>
+
+        <!-- COUDE GAUCHE -->
+        <ellipse class="body-zone" id="z-coude-gauche"
+          cx="49" cy="187" rx="13" ry="11"
+          fill="#f472b6" opacity="0.8"
+          data-zone="coude_gauche" data-label="Coude gauche"/>
+
+        <!-- COUDE DROIT -->
+        <ellipse class="body-zone" id="z-coude-droit"
+          cx="151" cy="187" rx="13" ry="11"
+          fill="#f472b6" opacity="0.8"
+          data-zone="coude_droit" data-label="Coude droit"/>
+
+        <!-- POIGNET GAUCHE -->
+        <ellipse class="body-zone" id="z-poignet-gauche"
+          cx="49" cy="237" rx="11" ry="9"
+          fill="#c084fc" opacity="0.85"
+          data-zone="poignet_gauche" data-label="Poignet gauche"/>
+
+        <!-- POIGNET DROIT -->
+        <ellipse class="body-zone" id="z-poignet-droit"
+          cx="151" cy="237" rx="11" ry="9"
+          fill="#c084fc" opacity="0.85"
+          data-zone="poignet_droit" data-label="Poignet droit"/>
+
+        <!-- HANCHE GAUCHE -->
+        <ellipse class="body-zone" id="z-hanche-gauche"
+          cx="81" cy="208" rx="16" ry="13"
+          fill="#fbbf24" opacity="0.75"
+          data-zone="hanche_gauche" data-label="Hanche gauche"/>
+
+        <!-- HANCHE DROITE -->
+        <ellipse class="body-zone" id="z-hanche-droite"
+          cx="119" cy="208" rx="16" ry="13"
+          fill="#fbbf24" opacity="0.75"
+          data-zone="hanche_droite" data-label="Hanche droite"/>
+
+        <!-- GENOU GAUCHE -->
+        <ellipse class="body-zone" id="z-genou-gauche"
+          cx="85" cy="316" rx="15" ry="13"
+          fill="#ef4444" opacity="0.8"
+          data-zone="genou_gauche" data-label="Genou gauche"/>
+
+        <!-- GENOU DROIT -->
+        <ellipse class="body-zone" id="z-genou-droit"
+          cx="115" cy="316" rx="15" ry="13"
+          fill="#ef4444" opacity="0.8"
+          data-zone="genou_droit" data-label="Genou droit"/>
+
+        <!-- CHEVILLE GAUCHE -->
+        <ellipse class="body-zone" id="z-cheville-gauche"
+          cx="85" cy="408" rx="13" ry="10"
+          fill="#10b981" opacity="0.85"
+          data-zone="cheville_gauche" data-label="Cheville gauche"/>
+
+        <!-- CHEVILLE DROITE -->
+        <ellipse class="body-zone" id="z-cheville-droite"
+          cx="115" cy="408" rx="13" ry="10"
+          fill="#10b981" opacity="0.85"
+          data-zone="cheville_droite" data-label="Cheville droite"/>
+
+        <!-- PIED GAUCHE -->
+        <ellipse class="body-zone" id="z-pied-gauche"
+          cx="85" cy="427" rx="16" ry="8"
+          fill="#14b8a6" opacity="0.8"
+          data-zone="pied_gauche" data-label="Pied gauche"/>
+
+        <!-- PIED DROIT -->
+        <ellipse class="body-zone" id="z-pied-droit"
+          cx="115" cy="427" rx="16" ry="8"
+          fill="#14b8a6" opacity="0.8"
+          data-zone="pied_droit" data-label="Pied droit"/>
+
+        {# Labels texte sur la silhouette #}
+        <text x="100" y="65" text-anchor="middle" fill="white" font-size="7" font-weight="600" pointer-events="none">Tête</text>
+        <text x="100" y="99" text-anchor="middle" fill="white" font-size="6.5" pointer-events="none">Cou</text>
+        <text x="62" y="123" text-anchor="middle" fill="white" font-size="5.5" pointer-events="none">Ép. G</text>
+        <text x="138" y="123" text-anchor="middle" fill="white" font-size="5.5" pointer-events="none">Ép. D</text>
+        <text x="100" y="133" text-anchor="middle" fill="white" font-size="5.5" pointer-events="none">Thorax</text>
+        <text x="100" y="172" text-anchor="middle" fill="white" font-size="5.5" pointer-events="none">Abdomen</text>
+        <text x="100" y="201" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Lombaires</text>
+        <text x="49" y="190" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Coude</text>
+        <text x="151" y="190" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Coude</text>
+        <text x="49" y="240" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Poignet</text>
+        <text x="151" y="240" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Poignet</text>
+        <text x="81" y="211" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Hanche</text>
+        <text x="119" y="211" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Hanche</text>
+        <text x="85" y="319" text-anchor="middle" fill="white" font-size="5.5" font-weight="600" pointer-events="none">Genou</text>
+        <text x="115" y="319" text-anchor="middle" fill="white" font-size="5.5" font-weight="600" pointer-events="none">Genou</text>
+        <text x="85" y="411" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Cheville</text>
+        <text x="115" y="411" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Cheville</text>
+        <text x="85" y="429" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Pied</text>
+        <text x="115" y="429" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Pied</text>
+
+      </svg>
+    </div>{# /silhouette-container #}
+
+    {# Légende #}
+    <div class="legend">
+      <span><span class="legend-dot" style="background:#6366f1"></span>Tête/Cou</span>
+      <span><span class="legend-dot" style="background:#60a5fa"></span>Torse</span>
+      <span><span class="legend-dot" style="background:#f472b6"></span>Bras</span>
+      <span><span class="legend-dot" style="background:#ef4444"></span>Genoux</span>
+      <span><span class="legend-dot" style="background:#10b981"></span>Jambes</span>
+    </div>
+  </div>{# /body-panel #}
+
+  {# ─── PANNEAU DROIT : CONSEILS IA ─── #}
+  <div class="conseils-panel" id="conseils-panel">
+
+    {# État vide #}
+    <div class="empty-state" id="empty-state">
+      <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.5">
+        <path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
+      </svg>
+      <p>
+        Sélectionnez une zone sur la silhouette pour obtenir<br>
+        <strong>des conseils de récupération personnalisés</strong><br>
+        générés par l'intelligence artificielle.
+      </p>
+    </div>
+
+    {# Loader #}
+    <div class="loader" id="loader">
+      <div class="spinner"></div>
+      <span>L'IA analyse votre blessure…</span>
+    </div>
+
+    {# Résultat #}
+    <div id="result-container" style="display:none">
+      <div class="result-header">
+        <div class="result-icon" id="res-icon">🦴</div>
+        <div>
+          <p class="result-title" id="res-title">Zone sélectionnée</p>
+          <p class="result-subtitle" id="res-subtitle">Conseils personnalisés par IA</p>
+        </div>
+      </div>
+
+      {# Traitements immédiats #}
+      <div class="advice-section">
+        <div class="advice-section-title">
+          <span class="icon">🧊</span> Traitements immédiats
+        </div>
+        <ul class="advice-list danger" id="res-traitements"></ul>
+      </div>
+
+      {# Exercices de récupération #}
+      <div class="advice-section">
+        <div class="advice-section-title">
+          <span class="icon">🏃</span> Exercices de récupération
+        </div>
+        <ul class="advice-list success" id="res-exercices"></ul>
+      </div>
+
+      {# Nutrition #}
+      <div class="advice-section">
+        <div class="advice-section-title">
+          <span class="icon">🥗</span> Nutrition anti-inflammatoire
+        </div>
+        <ul class="advice-list warning" id="res-nutrition"></ul>
+      </div>
+
+      {# Durée #}
+      <div class="advice-section">
+        <div class="advice-section-title">
+          <span class="icon">⏱️</span> Durée estimée de récupération
+        </div>
+        <span class="duree-badge">⌚ <span id="res-duree">–</span></span>
+      </div>
+
+      {# Quand consulter #}
+      <div class="advice-section">
+        <div class="advice-section-title">
+          <span class="icon">🚨</span> Quand consulter un médecin
+        </div>
+        <div class="medical-alert" id="res-consulter">–</div>
+      </div>
+
+      <button class="btn-reset" id="btn-reset">↩ Sélectionner une autre zone</button>
+    </div>{# /result-container #}
+
+  </div>{# /conseils-panel #}
+
+</div>{# /blessure-wrapper #}
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+  /* ── Éléments DOM ── */
+  const zones        = document.querySelectorAll('.body-zone');
+  const tooltip      = document.getElementById('zone-tooltip');
+  const emptyState   = document.getElementById('empty-state');
+  const loader       = document.getElementById('loader');
+  const resultCont   = document.getElementById('result-container');
+  const selActivite  = document.getElementById('sel-activite');
+  const selIntensite = document.getElementById('sel-intensite');
+  const btnReset     = document.getElementById('btn-reset');
+
+  // Champs résultat
+  const resIcon      = document.getElementById('res-icon');
+  const resTitle     = document.getElementById('res-title');
+  const resSubtitle  = document.getElementById('res-subtitle');
+  const resTrait     = document.getElementById('res-traitements');
+  const resExos      = document.getElementById('res-exercices');
+  const resNutr      = document.getElementById('res-nutrition');
+  const resDuree     = document.getElementById('res-duree');
+  const resConsulter = document.getElementById('res-consulter');
+
+  // Mapping zone → emoji
+  const icons = {
+    tete: '🧠', cou: '🦴',
+    epaule_gauche: '💪', epaule_droite: '💪',
+    coude_gauche: '🦾', coude_droit: '🦾',
+    poignet_gauche: '✋', poignet_droit: '✋',
+    dos_haut: '🔙', dos_bas: '🔙', thorax: '🫀', abdomen: '🫃',
+    hanche_gauche: '🦵', hanche_droite: '🦵',
+    genou_gauche: '🦿', genou_droit: '🦿',
+    cheville_gauche: '👟', cheville_droite: '👟',
+    pied_gauche: '🦶', pied_droit: '🦶',
+  };
+
+  /* ── Tooltip sur hover ── */
+  zones.forEach(zone => {
+    zone.addEventListener('mouseenter', e => {
+      const label = zone.dataset.label;
+      tooltip.textContent = label;
+      tooltip.style.display = 'block';
+      positionTooltip(e);
+    });
+    zone.addEventListener('mousemove', positionTooltip);
+    zone.addEventListener('mouseleave', () => {
+      tooltip.style.display = 'none';
+    });
+
+    /* ── Clic sur une zone ── */
+    zone.addEventListener('click', () => {
+      // Désélection précédente
+      zones.forEach(z => z.classList.remove('selected'));
+      zone.classList.add('selected');
+
+      fetchAdvice(zone.dataset.zone, zone.dataset.label);
+    });
+  });
+
+  function positionTooltip(e) {
+    const container = document.querySelector('.silhouette-container').getBoundingClientRect();
+    const svgEl     = document.getElementById('body-svg');
+    const svgRect   = svgEl.getBoundingClientRect();
+
+    // Positionnement relatif au conteneur
+    const x = e.clientX - container.left + 10;
+    const y = e.clientY - container.top - 30;
+    tooltip.style.left = x + 'px';
+    tooltip.style.top  = y + 'px';
+  }
+
+  /* ── Appel AJAX vers le contrôleur Symfony ── */
+  async function fetchAdvice(articulation, label) {
+    // Afficher le loader
+    emptyState.style.display   = 'none';
+    resultCont.style.display   = 'none';
+    loader.style.display       = 'flex';
+
+    const typeActivite = selActivite.value;
+    const intensite    = selIntensite.value;
+
+    try {
+      const response = await fetch('{{ path('blessure_conseil') }}', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ articulation, typeActivite, intensite }),
+      });
+
+      const json = await response.json();
+
+      if (!json.success) {
+        throw new Error(json.error || 'Erreur inconnue');
+      }
+
+      displayResult(json.data, label);
+
+    } catch (err) {
+      loader.style.display = 'none';
+      emptyState.style.display = 'flex';
+      showToast('⚠️ Erreur : ' + err.message, 'error');
+    }
+  }
+
+  /* ── Affichage du résultat ── */
+  function displayResult(data, label) {
+    loader.style.display = 'none';
+
+    // Icône et titre
+    resIcon.textContent    = icons[data.articulation] || '🩹';
+    resTitle.textContent   = data.label || label;
+    resSubtitle.textContent = selActivite.value.charAt(0).toUpperCase()
+                             + selActivite.value.slice(1)
+                             + ' – intensité ' + selIntensite.value;
+
+    // Listes
+    fillList(resTrait, data.traitements);
+    fillList(resExos,  data.exercices_recuperation);
+    fillList(resNutr,  data.conseils_nutrition);
+
+    resDuree.textContent     = data.duree_recuperation || '–';
+    resConsulter.textContent = data.quand_consulter    || '–';
+
+    resultCont.style.display = 'block';
+    // Scroll doux vers le résultat
+    resultCont.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function fillList(ulEl, items) {
+    ulEl.innerHTML = '';
+    if (!Array.isArray(items) || items.length === 0) {
+      ulEl.innerHTML = '<li>Aucune donnée disponible.</li>';
+      return;
+    }
+    items.forEach(item => {
+      const li = document.createElement('li');
+      li.textContent = item;
+      ulEl.appendChild(li);
+    });
+  }
+
+  /* ── Réinitialisation ── */
+  btnReset.addEventListener('click', () => {
+    zones.forEach(z => z.classList.remove('selected'));
+    resultCont.style.display   = 'none';
+    emptyState.style.display   = 'flex';
+  });
+
+  /* ── Toast notification ── */
+  function showToast(msg, type = 'info') {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+      position: fixed; bottom: 20px; right: 20px;
+      background: ${type === 'error' ? '#ef4444' : '#4f46e5'};
+      color: white; padding: .75rem 1.25rem; border-radius: 10px;
+      font-size: .9rem; z-index: 9999; animation: fadeIn .3s ease;
+      box-shadow: 0 4px 20px rgba(0,0,0,.4);
+    `;
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+  }
+});
+</script>
+{% endblock %}

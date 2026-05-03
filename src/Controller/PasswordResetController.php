@@ -35,13 +35,14 @@ class PasswordResetController extends AbstractController
     public function step1(Request $request): Response
     {
         if ($request->isMethod('POST')) {
-            $email = strtolower(trim($request->request->get('email', '')));
+            $email = strtolower(trim((string) $request->request->get('email', '')));
             $user  = $this->userRepo->findOneBy(['userEmail' => $email]);
 
             if ($user) {
                 // Générer un secret TOTP si l'utilisateur n'en a pas encore
                 $isNew = false;
-                if (!$user->getTotpSecret()) {
+                $secret = $user->getTotpSecret();
+                if ($secret === null) {
                     $secret = $this->totp->generateSecret();
                     $user->setTotpSecret($secret);
                     $this->em->flush();
@@ -56,7 +57,7 @@ class PasswordResetController extends AbstractController
                     'email'    => $email,
                     'isNew'    => $isNew,
                     'qrUri'    => $isNew
-                        ? $this->totp->getProvisioningUri($user->getTotpSecret(), $email)
+                        ? $this->totp->getProvisioningUri($secret, $email)
                         : null,
                 ]);
             }
@@ -83,13 +84,13 @@ class PasswordResetController extends AbstractController
     public function step2(Request $request): Response
     {
         $session = $request->getSession();
-        $email   = $session->get('reset_email');
+        $email   = (string) $session->get('reset_email', '');
 
-        if (!$email) {
+        if ($email === '') {
             return $this->redirectToRoute('app_forgot_password');
         }
 
-        $code = trim($request->request->get('totp_code', ''));
+        $code = trim((string) $request->request->get('totp_code', ''));
         $user = $this->userRepo->findOneBy(['userEmail' => $email]);
 
         if (!$user || !$user->getTotpSecret()) {
@@ -119,16 +120,16 @@ class PasswordResetController extends AbstractController
     public function step3(Request $request): Response
     {
         $session  = $request->getSession();
-        $email    = $session->get('reset_email');
-        $verified = $session->get('reset_verified', false);
+        $email    = (string) $session->get('reset_email', '');
+        $verified = (bool) $session->get('reset_verified', false);
 
-        if (!$email || !$verified) {
+        if ($email === '' || !$verified) {
             return $this->redirectToRoute('app_forgot_password');
         }
 
         if ($request->isMethod('POST')) {
-            $newPwd  = $request->request->get('new_password', '');
-            $confirm = $request->request->get('confirm_password', '');
+            $newPwd  = (string) $request->request->get('new_password', '');
+            $confirm = (string) $request->request->get('confirm_password', '');
             $errors  = [];
 
             if (strlen($newPwd) < 8) {

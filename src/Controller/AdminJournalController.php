@@ -47,14 +47,15 @@ class AdminJournalController extends AbstractController
         $this->journalRepo->markUnreadAsRead();
         $this->em->flush();
 
-        return $this->json(['success' => true]);
+        return new JsonResponse(['success' => true]);
     }
 
     #[Route('/students', name: 'admin_journal_students', methods: ['GET'])]
     public function students(): Response
     {
         $users    = $this->userRepo->findAll();
-        $userData = array_map(function (User $user) {
+        $userData = array_map(function (object $user) {
+            /** @var User $user */
             return [
                 'user'  => $user,
                 'stats' => $this->journalRepo->moodStats($user),

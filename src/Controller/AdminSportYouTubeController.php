@@ -47,7 +47,8 @@ class AdminSportYouTubeController extends AbstractController
     #[Route('/api/youtube-search', name: 'admin_sport_youtube_search', methods: ['GET'])]
     public function search(Request $request): JsonResponse
     {
-        $query = trim($request->query->get('q', ''));
+        // Fix PHPStan :50 — query->get() retourne bool|float|int|string|null, cast explicite en string avant trim
+        $query = trim((string) $request->query->get('q', ''));
 
         // ── Validation de l'entrée ──────────────────────────────────────────
         if ($query === '') {

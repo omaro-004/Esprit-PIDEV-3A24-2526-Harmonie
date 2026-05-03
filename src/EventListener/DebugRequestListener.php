@@ -39,7 +39,11 @@ class DebugRequestListener implements EventSubscriberInterface
         }
         error_log('=== MESSAGING SEND RESPONSE ===');
         error_log('Status: ' . $event->getResponse()->getStatusCode());
-        error_log('Content: ' . substr($event->getResponse()->getContent(), 0, 500));
+        $content = $event->getResponse()->getContent();
+        if ($content === false) {
+            $content = '';
+        }
+        error_log('Content: ' . substr($content, 0, 500));
     }
 
     public function onException(ExceptionEvent $event): void
