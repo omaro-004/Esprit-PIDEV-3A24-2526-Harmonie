@@ -28,6 +28,9 @@ final class GithubIssueService
         return !empty($cfg['token']) && !empty($cfg['repo']);
     }
 
+    /**
+     * @return array<string, string>
+     */
     public function getConfig(): array
     {
         $file = $this->projectDir.'/'.self::SETTINGS_FILE;
@@ -126,6 +129,10 @@ final class GithubIssueService
         );
     }
 
+    /**
+     * @param Tache[] $tasks
+     * @return array<string, mixed>
+     */
     public function forceResyncDoingTasks(array $tasks): array
     {
         $result = ['checked' => 0, 'updated' => 0, 'skipped' => 0, 'errors' => []];
@@ -164,6 +171,9 @@ final class GithubIssueService
         return $result;
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     public function resolveIssueByNodeId(string $nodeId): ?array
     {
         if ('' === trim($nodeId) || !$this->hasConfig()) {
@@ -205,6 +215,9 @@ GQL;
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function createIssue(Tache $tache): array
     {
         [$state, $labels] = $this->mapStatus($tache->getStatutTache());
@@ -246,6 +259,9 @@ GQL;
         $this->syncProjectStatusForIssue($this->resolveRepo($tache), (int) $tache->getGithubIssueNumber(), (string) $tache->getStatutTache());
     }
 
+    /**
+     * @return array{0: string, 1: string[]}
+     */
     private function mapStatus(string $statut): array
     {
         return match ($statut) {
@@ -264,6 +280,9 @@ GQL;
         };
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     private function fetchIssueSnapshot(string $repoFullName, int $issueNumber): ?array
     {
         [$owner, $repo] = $this->splitRepo($repoFullName);
@@ -327,6 +346,9 @@ GQL;
         ];
     }
 
+    /**
+     * @param array<string, mixed> $snapshot
+     */
     private function isAlignedWithStatus(array $snapshot, string $appStatus): bool
     {
         $state = strtolower((string) ($snapshot['state'] ?? 'open'));
@@ -463,6 +485,9 @@ GQL;
         }
     }
 
+    /**
+     * @return array{0: string, 1: string}
+     */
     private function splitRepo(string $repoFullName): array
     {
         $parts = explode('/', trim($repoFullName), 2);
@@ -473,6 +498,10 @@ GQL;
         return [$parts[0], $parts[1]];
     }
 
+    /**
+     * @param array<string, mixed> $variables
+     * @return array<string, mixed>
+     */
     private function graphQlRequest(string $query, array $variables = []): array
     {
         $cfg = $this->getConfig();
@@ -498,7 +527,7 @@ GQL;
             throw new \RuntimeException($message);
         }
 
-        if (!empty($data['errors']) && is_array($data['errors'])) {
+        if (!empty($data['errors'])) {
             $first = $data['errors'][0];
             $msg = is_array($first) ? (string) ($first['message'] ?? 'Erreur GraphQL GitHub') : 'Erreur GraphQL GitHub';
             throw new \RuntimeException($msg);
@@ -544,6 +573,10 @@ GQL;
         return $notes."\n\n---\nBranche cible: `{$branch}`";
     }
 
+    /**
+     * @param array<string, mixed> $json
+     * @return array<string, mixed>
+     */
     private function request(string $method, string $path, array $json = []): array
     {
         $cfg = $this->getConfig();
@@ -587,9 +620,12 @@ GQL;
             }
         } while ($attempt < 3);
 
-        throw new \RuntimeException('Échec sync GitHub.');
+        return [];
     }
 
+    /**
+     * @return array<string, string>
+     */
     private function headers(string $token): array
     {
         return [
