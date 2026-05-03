@@ -72,6 +72,4 @@ class ModulesControllerTest extends WebTestCase
         $this->assertSelectorExists('a[href="/journal"]');
         $this->assertSelectorExists('a[href="/library"]');
     }
-
-
 }

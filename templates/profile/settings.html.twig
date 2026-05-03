@@ -64,17 +64,33 @@
         .settings-card-sub { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
         .settings-card-body { padding: 28px; }
 
-        /* ── AVATAR UPLOADER ── */
-        .avatar-uploader { display: flex; align-items: center; gap: 20px; background: var(--purple-ghost); border: 1.5px dashed rgba(106,90,205,.3); border-radius: 16px; padding: 20px; margin-bottom: 24px; }
+        /* ── AVATAR SELECTOR (3 OPTIONS) ── */
+        .avatar-picker { background: var(--purple-ghost); border: 1.5px dashed rgba(106,90,205,.3); border-radius: 16px; padding: 18px; margin-bottom: 24px; }
+        .avatar-top-preview { display: flex; align-items: center; gap: 18px; margin-bottom: 14px; }
         .avatar-big { width: 84px; height: 84px; border-radius: 50%; background: var(--purple); display: grid; place-items: center; font-family: var(--font-head); font-size: 32px; font-weight: 800; color: #fff; border: 3px solid var(--white); overflow: hidden; flex-shrink: 0; box-shadow: 0 4px 16px rgba(106,90,205,.25); }
         .avatar-big img { width: 84px; height: 84px; border-radius: 50%; object-fit: cover; }
-        .avatar-uploader-info { flex: 1; }
-        .avatar-uploader-info h4 { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
-        .avatar-uploader-info p { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; }
-        .avatar-btns { display: flex; gap: 8px; flex-wrap: wrap; }
-        .btn-upload-avatar { padding: 8px 16px; background: var(--purple); color: #fff; border: none; border-radius: 9px; font-family: var(--font-body); font-size: 12.5px; font-weight: 600; cursor: pointer; transition: background .15s; }
-        .btn-upload-avatar:hover { background: var(--purple-dark); }
-        .avatar-filename { font-size: 11px; color: var(--text-muted); font-style: italic; margin-top: 6px; }
+        .avatar-preview-text { font-size: 12px; color: var(--text-muted); }
+        .avatar-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+        .avatar-tab-btn { padding: 8px 12px; background: #fff; color: var(--text-mid); border: 1.5px solid var(--border); border-radius: 9px; font-family: var(--font-body); font-size: 12.5px; font-weight: 600; cursor: pointer; transition: .15s; }
+        .avatar-tab-btn.active { background: var(--purple); border-color: var(--purple); color: #fff; }
+        .avatar-tab-content { display: none; background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+        .avatar-tab-content.active { display: block; }
+        .avatar-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+        .default-avatar-item { border: 2px solid transparent; border-radius: 10px; padding: 4px; background: #fff; cursor: pointer; transition: .15s; }
+        .default-avatar-item img { width: 100%; border-radius: 8px; display: block; }
+        .default-avatar-item:hover { border-color: var(--purple-soft); }
+        .default-avatar-item.selected { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(106,90,205,.12); }
+        #avatarFieldWrapperProfile { display: none; }
+        .avatar-upload-help { font-size: 12px; color: var(--text-muted); }
+        .ai-controls { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
+        .ai-input { width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 10px; font-family: var(--font-body); font-size: 13px; }
+        .ai-input:focus { outline: none; border-color: var(--purple); box-shadow: 0 0 0 3px rgba(106,90,205,.08); }
+        .btn-avatar-action { padding: 8px 14px; background: var(--purple); color: #fff; border: none; border-radius: 9px; font-family: var(--font-body); font-size: 12.5px; font-weight: 600; cursor: pointer; transition: .15s; }
+        .btn-avatar-action:hover { background: var(--purple-dark); }
+        .btn-avatar-action:disabled { opacity: .6; cursor: not-allowed; }
+        .avatar-loader { font-size: 12px; color: var(--text-muted); margin-top: 10px; }
+        .ai-result { margin-top: 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .ai-result img { width: 84px; height: 84px; border-radius: 12px; object-fit: cover; border: 1px solid var(--border); }
 
         /* ── FORM ── */
         .form-section-title { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); margin: 20px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 6px; }
@@ -232,27 +248,78 @@
                             'attr': {'enctype': 'multipart/form-data', 'novalidate': 'novalidate', 'id': 'profileForm'}
                         }) }}
 
-                        {# ── Avatar ── #}
-                        <div class="avatar-uploader">
-                            <div class="avatar-big" id="avatarPreview">
-                                {% if user.userImagePath %}
-                                    <img src="{{ asset(user.userImagePath) }}" alt="Avatar" id="avatarImg">
-                                {% else %}
-                                    <span id="avatarInitial">{{ user.userPrenom|first|upper }}</span>
-                                {% endif %}
-                            </div>
-                            <div class="avatar-uploader-info">
-                                <h4>Photo de profil</h4>
-                                <p>JPG, PNG, WebP ou GIF — max 2 Mo</p>
-                                <div class="avatar-btns">
-                                    <button type="button" class="btn-upload-avatar" id="pickAvatarBtn">
-                                        📁 Changer la photo
-                                    </button>
+                        {# ── Avatar (3 options) ── #}
+                        {% set currentAvatarPath = user.userImagePath ?? '' %}
+                        {% set currentDefaultSlug = '' %}
+                        {% set preSelectedValue = '' %}
+                        {% if currentAvatarPath starts with 'avatars/default/' %}
+                            {% set currentDefaultSlug = currentAvatarPath|replace({'avatars/default/': '', '.svg': ''}) %}
+                            {% set preSelectedValue = currentAvatarPath %}
+                        {% elseif currentAvatarPath starts with 'user_images/ai_avatar_' %}
+                            {% set preSelectedValue = currentAvatarPath %}
+                        {% endif %}
+
+                        <div class="avatar-picker">
+                            <input type="hidden" id="preSelectedAvatarPath" name="preSelectedAvatarPath" value="{{ preSelectedValue }}">
+
+                            <div class="avatar-top-preview">
+                                <div class="avatar-big" id="avatarPreview">
+                                    {% if user.userImagePath %}
+                                        <img src="{{ asset(user.userImagePath) }}" alt="Avatar" id="avatarImg">
+                                    {% else %}
+                                        <span id="avatarInitial">{{ user.userPrenom|first|upper }}</span>
+                                    {% endif %}
                                 </div>
-                                <div class="avatar-filename" id="avatarFilename"></div>
+                                <div class="avatar-preview-text" id="avatarHint">
+                                    {% if preSelectedValue %}
+                                        Avatar présélectionné prêt à être enregistré.
+                                    {% else %}
+                                        Choisissez un avatar par défaut, importez une image ou générez avec l'IA.
+                                    {% endif %}
+                                </div>
                             </div>
-                            <div style="display:none;" id="avatarWrapper">
+
+                            <div class="avatar-tabs">
+                                <button type="button" class="avatar-tab-btn active" data-tab="defaults">🎨 Avatars par défaut</button>
+                                <button type="button" class="avatar-tab-btn" data-tab="upload">📁 Importer une image</button>
+                                <button type="button" class="avatar-tab-btn" data-tab="ai">✨ Générer par IA</button>
+                            </div>
+
+                            <div class="avatar-tab-content active" data-content="defaults">
+                                <div class="avatar-grid" id="defaultAvatarGrid">
+                                    {% for i in 1..12 %}
+                                        {% set slug = 'avatar_' ~ '%02d'|format(i) %}
+                                        <button
+                                            type="button"
+                                            class="default-avatar-item {% if slug == currentDefaultSlug %}selected{% endif %}"
+                                            data-slug="{{ slug }}"
+                                            data-path="avatars/default/{{ slug }}.svg"
+                                        >
+                                            <img src="{{ asset('avatars/default/' ~ slug ~ '.svg') }}" alt="{{ slug }}">
+                                        </button>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <div class="avatar-tab-content avatar-upload-panel" data-content="upload">
+                                <div class="avatar-upload-help">Le sélecteur de fichiers s'ouvre automatiquement. Si besoin, recliquez sur l'onglet "📁 Importer une image".</div>
+                                <div class="avatar-preview-text" style="margin-top:8px;">Formats : JPG, PNG, WebP ou GIF — max 2 Mo</div>
+                            </div>
+
+                            <div id="avatarFieldWrapperProfile">
                                 {{ form_widget(profileForm.avatarFile) }}
+                            </div>
+
+                            <div class="avatar-tab-content" data-content="ai">
+                                <div class="ai-controls">
+                                    <input type="text" id="aiAvatarPrompt" class="ai-input" placeholder="Ex: étudiant astronaute flat design livre à la main">
+                                    <button type="button" class="btn-avatar-action" id="generateAiBtn">Générer</button>
+                                </div>
+                                <div class="avatar-loader" id="aiLoader" style="display:none">Génération en cours... (peut prendre 10-20s)</div>
+                                <div class="ai-result" id="aiResult" style="display:none">
+                                    <img id="aiResultImage" alt="Avatar IA">
+                                    <button type="button" class="btn-avatar-action" id="useAiBtn">Utiliser cet avatar</button>
+                                </div>
                             </div>
                         </div>
                         {% if form_errors(profileForm.avatarFile) %}
@@ -514,23 +581,189 @@
     </div>
 
     <script>
-        // ── Avatar preview ──────────────────────────────────────────────────────────
-        const avatarInput    = document.querySelector('#avatarWrapper input[type="file"]');
-        const avatarPreview  = document.getElementById('avatarPreview');
-        const avatarFilename = document.getElementById('avatarFilename');
-        const pickBtn        = document.getElementById('pickAvatarBtn');
+        const assetBase = '{{ asset('') }}';
+        const profileForm = document.getElementById('profileForm');
 
-        if (pickBtn && avatarInput) {
-            pickBtn.addEventListener('click', () => avatarInput.click());
-            avatarInput.addEventListener('change', function () {
-                if (this.files && this.files[0]) {
+        if (profileForm) {
+            const avatarInput = document.querySelector('#avatarFieldWrapperProfile input[type="file"]');
+            const avatarPreview = document.getElementById('avatarPreview');
+            const avatarHint = document.getElementById('avatarHint');
+            const preSelectedInput = document.getElementById('preSelectedAvatarPath');
+            const initiale = '{{ user.userPrenom|first|upper }}';
+
+            const tabButtons = profileForm.querySelectorAll('.avatar-tab-btn');
+            const tabContents = profileForm.querySelectorAll('.avatar-tab-content');
+            const defaultItems = profileForm.querySelectorAll('.default-avatar-item');
+            const aiPrompt = document.getElementById('aiAvatarPrompt');
+            const generateAiBtn = document.getElementById('generateAiBtn');
+            const aiLoader = document.getElementById('aiLoader');
+            const aiResult = document.getElementById('aiResult');
+            const aiResultImage = document.getElementById('aiResultImage');
+            const useAiBtn = document.getElementById('useAiBtn');
+
+            let generatedAiUrl = '';
+            let generatedAiPath = '';
+
+            async function parseJsonResponse(response) {
+                const raw = await response.text();
+                try {
+                    return { ok: response.ok, data: JSON.parse(raw) };
+                } catch (e) {
+                    return {
+                        ok: false,
+                        data: { error: 'Réponse serveur invalide. Vérifiez votre session et rechargez la page.' },
+                    };
+                }
+            }
+
+            function asAsset(path) {
+                return `${assetBase}${path}`;
+            }
+
+            function clearDefaultSelection() {
+                defaultItems.forEach(item => item.classList.remove('selected'));
+            }
+
+            function setPreview(src, text) {
+                avatarPreview.innerHTML = `<img src="${src}" alt="Avatar" style="width:84px;height:84px;border-radius:50%;object-fit:cover;">`;
+                avatarHint.textContent = text;
+            }
+
+            function resetPreview() {
+                avatarPreview.textContent = initiale;
+                avatarHint.textContent = 'Choisissez un avatar par défaut, importez une image ou générez avec l\'IA.';
+            }
+
+            tabButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tabName = btn.dataset.tab;
+                    tabButtons.forEach(b => b.classList.toggle('active', b === btn));
+                    tabContents.forEach(content => {
+                        content.classList.toggle('active', content.dataset.content === tabName);
+                    });
+
+                    if (tabName === 'upload' && avatarInput) {
+                        avatarInput.click();
+                    }
+                });
+            });
+
+            defaultItems.forEach(item => {
+                item.addEventListener('click', async () => {
+                    try {
+                        const response = await fetch('/api/avatar/set-default', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ avatarSlug: item.dataset.slug }),
+                        });
+
+                        const parsed = await parseJsonResponse(response);
+                        const data = parsed.data;
+                        if (!parsed.ok || !data.success) {
+                            throw new Error(data.error || 'Impossible de sélectionner cet avatar');
+                        }
+
+                        clearDefaultSelection();
+                        item.classList.add('selected');
+                        preSelectedInput.value = data.imagePath;
+                        if (avatarInput) {
+                            avatarInput.value = '';
+                        }
+                        setPreview(asAsset(data.imagePath), 'Avatar par défaut sélectionné');
+                    } catch (error) {
+                        alert(error.message);
+                    }
+                });
+            });
+
+            if (avatarInput) {
+                avatarInput.addEventListener('change', function () {
+                    if (!this.files || !this.files[0]) {
+                        return;
+                    }
+
                     const file = this.files[0];
+                    preSelectedInput.value = '';
+                    clearDefaultSelection();
+
                     const reader = new FileReader();
                     reader.onload = e => {
-                        avatarPreview.innerHTML = `<img src="${e.target.result}" style="width:84px;height:84px;border-radius:50%;object-fit:cover;" alt="preview">`;
-                        avatarFilename.textContent = '📎 ' + file.name;
+                        setPreview(e.target.result, `${file.name} (${(file.size / 1024).toFixed(0)} Ko)`);
                     };
                     reader.readAsDataURL(file);
+                });
+            }
+
+            if (generateAiBtn) {
+                generateAiBtn.addEventListener('click', async () => {
+                    const prompt = (aiPrompt.value || '').trim();
+                    if (!prompt) {
+                        alert('Veuillez saisir une description pour générer un avatar.');
+                        return;
+                    }
+
+                    const seed = Math.floor(Math.random() * 10000);
+                    generatedAiUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=512&height=512&nologo=true&seed=${seed}`;
+
+                    aiLoader.style.display = 'block';
+                    aiResult.style.display = 'none';
+                    generateAiBtn.disabled = true;
+
+                    try {
+                        const response = await fetch('/api/avatar/generate-from-url', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ imageUrl: generatedAiUrl }),
+                        });
+
+                        const parsed = await parseJsonResponse(response);
+                        const data = parsed.data;
+                        if (!parsed.ok || !data.success) {
+                            throw new Error(data.error || 'Generation IA indisponible pour le moment');
+                        }
+
+                        generatedAiPath = data.imagePath;
+                        aiResultImage.src = `${asAsset(generatedAiPath)}?v=${Date.now()}`;
+                        aiResult.style.display = 'flex';
+                    } catch (error) {
+                        alert(error.message);
+                    } finally {
+                        aiLoader.style.display = 'none';
+                        generateAiBtn.disabled = false;
+                    }
+                });
+            }
+
+            if (useAiBtn) {
+                useAiBtn.addEventListener('click', async () => {
+                    if (!generatedAiPath) {
+                        return;
+                    }
+
+                    useAiBtn.disabled = true;
+                    try {
+                        preSelectedInput.value = generatedAiPath;
+                        if (avatarInput) {
+                            avatarInput.value = '';
+                        }
+                        clearDefaultSelection();
+                        setPreview(asAsset(generatedAiPath), 'Avatar IA sélectionné');
+                    } catch (error) {
+                        alert(error.message);
+                    } finally {
+                        useAiBtn.disabled = false;
+                    }
+                });
+            }
+
+            profileForm.addEventListener('submit', () => {
+                const hasFile = avatarInput && avatarInput.files && avatarInput.files.length > 0;
+                if (hasFile) {
+                    preSelectedInput.value = '';
+                }
+
+                if (!hasFile && !preSelectedInput.value && !(avatarInput && avatarInput.value)) {
+                    resetPreview();
                 }
             });
         }

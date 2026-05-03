@@ -49,9 +49,10 @@ class CommentaireRepository extends ServiceEntityRepository
     // Pas de JOIN possible car pas d'association Doctrine
     // On récupère les commentaires triés, le post sera chargé séparément dans le controller
     return $this->createQueryBuilder('c')
-        ->orderBy('c.dateCommentaire', 'DESC')
-        ->getQuery()
-        ->getResult();
+    ->orderBy('c.dateCommentaire', 'DESC')
+    ->setMaxResults(100)
+    ->getQuery()
+    ->getResult();
 }
 
 }

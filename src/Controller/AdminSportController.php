@@ -34,10 +34,11 @@ class AdminSportController extends AbstractController
     #[Route('/api/list', name: 'admin_sport_list', methods: ['GET'])]
     public function list(Request $request): JsonResponse
     {
-        $search  = trim($request->query->get('search',  ''));
-        $type    = trim($request->query->get('type',    ''));
-        $section = strtolower(trim($request->query->get('section', '')));
-        $sort    = $request->query->get('sort', 'nom_asc');
+        // Fix PHPStan :37-39 — query->get() retourne string|null, trim/strtolower attendent string
+        $search  = trim((string) $request->query->get('search',  ''));
+        $type    = trim((string) $request->query->get('type',    ''));
+        $section = strtolower(trim((string) $request->query->get('section', '')));
+        $sort    = (string) $request->query->get('sort', 'nom_asc');
 
         // Valeurs autorisées pour le tri
         $allowedSorts = ['nom_asc', 'nom_desc', 'type_asc', 'type_desc'];
@@ -102,8 +103,9 @@ class AdminSportController extends AbstractController
     #[Route('/api/update/{id}', name: 'admin_sport_update', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function update(int $id, Request $request): JsonResponse
     {
+        // Fix PHPStan :116 — repo->find() retourne object|null, on vérifie instanceof Exercice
         $exercice = $this->repo->find($id);
-        if (!$exercice) {
+        if (!$exercice instanceof Exercice) {
             return $this->json(['error' => 'Exercice introuvable'], 404);
         }
 
@@ -124,7 +126,7 @@ class AdminSportController extends AbstractController
     public function delete(int $id): JsonResponse
     {
         $exercice = $this->repo->find($id);
-        if (!$exercice) {
+        if (!$exercice instanceof Exercice) {
             return $this->json(['error' => 'Exercice introuvable'], 404);
         }
         $this->em->remove($exercice);
@@ -133,13 +135,20 @@ class AdminSportController extends AbstractController
     }
 
     // ── HELPERS ─────────────────────────────────────────────────────
+
+    /**
+     * @param array<string, mixed> $data
+     */
     private function hydrate(Exercice $exercice, array $data): void
     {
-        $exercice->setNomExercice(trim($data['nomExercice']));
-        $exercice->setTypeExercice(!empty($data['typeExercice']) ? trim($data['typeExercice']) : null);
-        $exercice->setVideoExercice(!empty($data['videoExercice']) ? trim($data['videoExercice']) : null);
+        $exercice->setNomExercice(trim((string) ($data['nomExercice'] ?? '')));
+        $exercice->setTypeExercice(!empty($data['typeExercice']) ? trim((string) $data['typeExercice']) : null);
+        $exercice->setVideoExercice(!empty($data['videoExercice']) ? trim((string) $data['videoExercice']) : null);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function serialize(Exercice $e): array
     {
         return [
@@ -150,11 +159,14 @@ class AdminSportController extends AbstractController
         ];
     }
 
+    /**
+     * @param array<string, mixed>|null $data
+     */
     private function validateData(?array $data): ?string
     {
         if (!$data) return 'Aucune donnée reçue.';
-        if (empty(trim($data['nomExercice'] ?? ''))) return "Le nom de l'exercice est obligatoire.";
-        if (empty(trim($data['typeExercice'] ?? ''))) return "Le type d'exercice est obligatoire.";
+        if (empty(trim((string) ($data['nomExercice'] ?? '')))) return "Le nom de l'exercice est obligatoire.";
+        if (empty(trim((string) ($data['typeExercice'] ?? '')))) return "Le type d'exercice est obligatoire.";
         return null;
     }
 }

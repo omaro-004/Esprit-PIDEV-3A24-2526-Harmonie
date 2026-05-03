@@ -10,7 +10,7 @@ namespace App\Service;
 class TotpService
 {
     private const DIGITS = 6;
-    private const PERIOD = 20;
+    private const PERIOD = 30;
     private const ISSUER = 'Harmony';
 
     // ── Génération du secret ──────────────────────────────────────────────────

@@ -6,6 +6,9 @@ use App\Entity\Exercice;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
+/**
+ * @extends ServiceEntityRepository<Exercice>
+ */
 class ExerciceRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -15,6 +18,8 @@ class ExerciceRepository extends ServiceEntityRepository
 
     /**
      * Find all exercises ordered by type then name.
+     *
+     * @return Exercice[]
      */
     public function findAllOrdered(): array
     {
@@ -27,6 +32,8 @@ class ExerciceRepository extends ServiceEntityRepository
 
     /**
      * Find exercises by type.
+     *
+     * @return Exercice[]
      */
     public function findByType(string $type): array
     {
@@ -45,7 +52,7 @@ class ExerciceRepository extends ServiceEntityRepository
      * @param string $type     Filtre exact sur type_exercice ('' = tous)
      * @param string $section  'homme', 'femme', '' = tous
      * @param string $sort     'nom_asc' | 'nom_desc' | 'type_asc' | 'type_desc'
-     * @return array
+     * @return Exercice[]
      */
     public function searchAndFilter(
         string $search  = '',
@@ -68,7 +75,6 @@ class ExerciceRepository extends ServiceEntityRepository
         }
 
         // ── Filtre section (homme / femme) ──────────────────────────────────
-        // On cherche "_Homme" ou "_Femme" (insensible à la casse via LIKE)
         if ($section === 'homme') {
             $qb->andWhere('LOWER(e.typeExercice) LIKE :section')
                ->setParameter('section', '%_homme%');
@@ -89,7 +95,9 @@ class ExerciceRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find exercises by type (strict, for the form datalist suggestions).
+     * Find distinct exercise types (for the form datalist suggestions).
+     *
+     * @return string[]
      */
     public function findDistinctTypes(): array
     {

@@ -42,6 +42,7 @@ class CaptchaListener implements EventSubscriberInterface
             return;
         }
 
+        /** @var \Symfony\Component\HttpFoundation\Session\Session $session */
         $session   = $request->getSession();
         $submitted = (string) $request->request->get('captcha', '');
 

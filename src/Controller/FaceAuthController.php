@@ -54,6 +54,9 @@ class FaceAuthController extends AbstractController
         }
 
         $imageData = file_get_contents($faceImagePath);
+        if ($imageData === false) {
+            return new JsonResponse(['error' => 'Lecture image impossible'], 500);
+        }
         $base64    = 'data:image/png;base64,' . base64_encode($imageData);
 
         return new JsonResponse([

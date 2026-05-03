@@ -1,4 +1,8 @@
 parameters:
-    level: 5
+    level: 8
     paths:
-        - src
+        - src/Controller/ForumController.php
+        - src/Service/SummaryService.php
+        - src/Service/SentimentService.php
+        - src/Service/ModerationService.php
+        - src/Service/TranslationService.php

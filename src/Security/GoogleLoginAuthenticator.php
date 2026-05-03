@@ -50,6 +50,9 @@ class GoogleLoginAuthenticator extends OAuth2Authenticator
                 $googleUser = $client->fetchUserFromToken($accessToken);
 
                 $email = $googleUser->getEmail();
+                if ($email === null) {
+                    throw new AuthenticationException('Email Google manquant.');
+                }
                 $googleId = $googleUser->getId();
 
                 // 1) Si utilisateur existant par email → connexion directe + liaison googleId.
@@ -69,8 +72,12 @@ class GoogleLoginAuthenticator extends OAuth2Authenticator
                 }
 
                 // 2) Sinon création automatique du compte.
-                $nameParts = explode(' ', $googleUser->getName(), 2);
-                $prenom = $nameParts[0] ?: 'Google';
+                $name = (string) $googleUser->getName();
+                if ($name === '') {
+                    $name = 'Google User';
+                }
+                $nameParts = explode(' ', $name, 2);
+                $prenom = $nameParts[0];
                 $nom = $nameParts[1] ?? 'User';
                 $userEmail = $email ?? ('google_' . $googleId . '@noemail.harmony');
 

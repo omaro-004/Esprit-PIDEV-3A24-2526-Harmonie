@@ -46,6 +46,7 @@ class FacebookAuthenticator extends OAuth2Authenticator
                 $email      = $fbUser->getEmail();
 
                 // 1. Compte déjà lié à Facebook ?
+                /** @var User|null $user */
                 $user = $this->userRepo->findOneBy(['facebookId' => $facebookId]);
                 if ($user instanceof User) {
                     return $user;
@@ -53,6 +54,7 @@ class FacebookAuthenticator extends OAuth2Authenticator
 
                 // 2. Compte existant avec cet email ?
                 if ($email) {
+                    /** @var User|null $user */
                     $user = $this->userRepo->findOneBy(['userEmail' => $email]);
                     if ($user instanceof User) {
                         $user->setFacebookId($facebookId);

@@ -31,9 +31,9 @@ class AdminMeditationController extends AbstractController
     #[Route('', name: 'admin_meditation_index', methods: ['GET'])]
     public function index(Request $request): Response
     {
-        $q    = $request->query->get('q', '');
-        $sort = $request->query->get('sort', 'id');
-        $dir  = $request->query->get('dir', 'DESC');
+        $q    = (string) $request->query->get('q', '');
+        $sort = (string) $request->query->get('sort', 'id');
+        $dir  = (string) $request->query->get('dir', 'DESC');
 
         $sessions = $this->repo->searchAndSort($q, $sort, $dir);
 
@@ -43,9 +43,9 @@ class AdminMeditationController extends AbstractController
     #[Route('/search', name: 'admin_meditation_search', methods: ['GET'])]
     public function search(Request $request): JsonResponse
     {
-        $q    = $request->query->get('q', '');
-        $sort = $request->query->get('sort', 'id');
-        $dir  = $request->query->get('dir', 'DESC');
+        $q    = (string) $request->query->get('q', '');
+        $sort = (string) $request->query->get('sort', 'id');
+        $dir  = (string) $request->query->get('dir', 'DESC');
 
         $sessions = $this->repo->searchAndSort($q, $sort, $dir);
 
@@ -58,7 +58,7 @@ class AdminMeditationController extends AbstractController
             'conseilsCount' => $s->getConseils()->count(),
         ], $sessions);
 
-        return $this->json($data);
+        return new JsonResponse($data);
     }
 
     #[Route('/new', name: 'admin_meditation_new', methods: ['GET', 'POST'])]
@@ -69,10 +69,13 @@ class AdminMeditationController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $session->setUser($this->getUser());
+            $user = $this->getUser();
+            if ($user instanceof \App\Entity\User) {
+                $session->setUser($user);
+            }
             $this->em->persist($session);
 
-            $aiConseilsJson = $request->request->get('ai_conseils', '');
+            $aiConseilsJson = (string) $request->request->get('ai_conseils', '');
             if ($aiConseilsJson !== '') {
                 $aiConseils = json_decode($aiConseilsJson, true);
                 if (is_array($aiConseils)) {
@@ -127,7 +130,7 @@ class AdminMeditationController extends AbstractController
     #[Route('/{id}/delete', name: 'admin_meditation_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function delete(SessionMeditation $session, Request $request): Response
     {
-        if ($this->isCsrfTokenValid('delete' . $session->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete' . $session->getId(), (string) $request->request->get('_token'))) {
             $this->em->remove($session);
             $this->em->flush();
             $this->addFlash('success', 'Session supprimée avec succès.');
@@ -141,13 +144,13 @@ class AdminMeditationController extends AbstractController
     {
         $theme = trim((string) $request->request->get('theme', ''));
         if ($theme === '') {
-            return $this->json(['error' => 'Le thème est requis.'], 400);
+            return new JsonResponse(['error' => 'Le thème est requis.'], 400);
         }
 
         try {
-            return $this->json($this->groq->generateMeditation($theme));
+            return new JsonResponse($this->groq->generateMeditation($theme));
         } catch (\Throwable $e) {
-            return $this->json(['error' => 'Erreur IA : ' . $e->getMessage()], 500);
+            return new JsonResponse(['error' => 'Erreur IA : ' . $e->getMessage()], 500);
         }
     }
 
@@ -156,7 +159,7 @@ class AdminMeditationController extends AbstractController
     {
         try {
             $existing    = implode(' | ', $session->getConseils()->map(fn($c) => $c->getContenu())->toArray());
-            $newConseils = $this->groq->generateConseils($session->getTheme(), $existing);
+            $newConseils = $this->groq->generateConseils($session->getTheme() ?? '', $existing);
 
             foreach ($session->getConseils() as $old) {
                 $this->em->remove($old);
@@ -178,9 +181,9 @@ class AdminMeditationController extends AbstractController
                 'contenu' => $c->getContenu(),
             ])->toArray();
 
-            return $this->json(['conseils' => array_values($saved)]);
+            return new JsonResponse(['conseils' => array_values($saved)]);
         } catch (\Throwable $e) {
-            return $this->json(['error' => 'Erreur IA : ' . $e->getMessage()], 500);
+            return new JsonResponse(['error' => 'Erreur IA : ' . $e->getMessage()], 500);
         }
     }
 
@@ -188,7 +191,7 @@ class AdminMeditationController extends AbstractController
     public function regenerateSession(SessionMeditation $session): JsonResponse
     {
         try {
-            $data = $this->groq->generateMeditation($session->getTheme());
+            $data = $this->groq->generateMeditation($session->getTheme() ?? '');
 
             if (!empty($data['auteur']))   $session->setAuteur($data['auteur']);
             if (!empty($data['duree']))    $session->setDuree($data['duree']);
@@ -196,14 +199,14 @@ class AdminMeditationController extends AbstractController
 
             $this->em->flush();
 
-            return $this->json([
+            return new JsonResponse([
                 'auteur'      => $session->getAuteur(),
                 'duree'       => $session->getDuree(),
                 'audioUrl'    => $session->getAudioUrl(),
                 'searchQuery' => $data['searchQuery'] ?? '',
             ]);
         } catch (\Throwable $e) {
-            return $this->json(['error' => 'Erreur IA : ' . $e->getMessage()], 500);
+            return new JsonResponse(['error' => 'Erreur IA : ' . $e->getMessage()], 500);
         }
     }
 
@@ -240,7 +243,7 @@ class AdminMeditationController extends AbstractController
             $this->em->flush();
 
             $this->addFlash('success', 'Conseil modifié avec succès.');
-            return $this->redirectToRoute('admin_meditation_show', ['id' => $conseil->getSession()->getId()]);
+            return $this->redirectToRoute('admin_meditation_show', ['id' => $conseil->getSession()?->getId()]);
         }
 
         return $this->render('meditation/admin/conseil_form.html.twig', [
@@ -253,9 +256,9 @@ class AdminMeditationController extends AbstractController
     #[Route('/conseil/{id}/delete', name: 'admin_conseil_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function deleteConseil(Conseil $conseil, Request $request): Response
     {
-        $sessionId = $conseil->getSession()->getId();
+        $sessionId = $conseil->getSession()?->getId();
 
-        if ($this->isCsrfTokenValid('delete' . $conseil->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete' . $conseil->getId(), (string) $request->request->get('_token'))) {
             $this->em->remove($conseil);
             $this->em->flush();
             $this->addFlash('success', 'Conseil supprimé avec succès.');

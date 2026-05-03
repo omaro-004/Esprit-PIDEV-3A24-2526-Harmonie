@@ -44,3 +44,5 @@ class HomepageControllerTest extends WebTestCase
         $this->assertSelectorTextContains('p', 'Votre espace étudiant centralisé');
     }
 }
+
+ 

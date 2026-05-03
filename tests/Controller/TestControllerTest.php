@@ -38,6 +38,6 @@ final class TestControllerTest extends WebTestCase
     {
         $this->client->request('GET', '/');
 
-        self::assertResponseIsSuccessful();
-    }
+         self::assertResponseIsSuccessful();
+     }
 }

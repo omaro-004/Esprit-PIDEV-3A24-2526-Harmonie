@@ -1,0 +1,190 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Créer mon avatar — Harmony{% endblock %}
+
+{% block stylesheets %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --purple:#6A5ACD;--purple-dark:#4B3B9E;--purple-soft:#8B7FD4;
+            --purple-pale:#EDE8FA;--purple-ghost:#F7F5FD;
+            --text:#1C1733;--text-mid:#4A4570;--text-muted:#9590B8;
+            --border:rgba(106,90,205,.12);--white:#FFFFFF;
+            --font-head:'Syne',sans-serif;--font-body:'Inter',sans-serif;
+        }
+        html,body{height:100%;font-family:var(--font-body);background:var(--purple-ghost);color:var(--text);}
+
+        .topbar{position:sticky;top:0;z-index:200;background:var(--white);border-bottom:1px solid var(--border);height:62px;display:flex;align-items:center;padding:0 40px;gap:8px;}
+        .topbar-logo{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:32px;}
+        .logo-mark{width:34px;height:34px;border-radius:10px;object-fit:contain;flex-shrink:0;}
+        .nav-links{display:flex;align-items:center;gap:2px;flex:1;flex-wrap:nowrap;overflow-x:auto;}
+        .nav-link{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:9px;font-size:13.5px;font-weight:500;color:var(--text-mid);text-decoration:none;white-space:nowrap;transition:background .15s,color .15s;}
+        .nav-link:hover{background:var(--purple-pale);color:var(--purple);}
+        .nav-link.active{background:var(--purple-pale);color:var(--purple);font-weight:600;}
+        .nav-link .nav-emoji{font-size:14px;}
+        .topbar-right{display:flex;align-items:center;gap:10px;margin-left:auto;flex-shrink:0;}
+        .logout-btn{padding:7px 16px;border-radius:9px;border:1.5px solid rgba(239,68,68,.2);background:transparent;color:#E05252;font-family:var(--font-body);font-size:13px;font-weight:500;cursor:pointer;transition:background .15s,border-color .15s;white-space:nowrap;text-decoration:none;}
+        .logout-btn:hover{background:#FEF2F2;border-color:#E05252;}
+        .profile-wrap{position:relative;}
+        .avatar{width:36px;height:36px;border-radius:50%;background:var(--purple);color:white;font-family:var(--font-head);font-weight:700;font-size:14px;display:grid;place-items:center;cursor:pointer;border:2px solid var(--purple-pale);transition:box-shadow .15s;}
+        .avatar:hover{box-shadow:0 0 0 3px rgba(106,90,205,.25);}
+        .profile-dropdown{position:absolute;top:calc(100% + 10px);right:0;width:220px;background:var(--white);border:1px solid var(--border);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.1);padding:16px;display:none;z-index:500;}
+        .profile-dropdown.open{display:block;}
+        .pd-name{font-size:14px;font-weight:600;color:var(--text);}
+        .pd-email{font-size:12px;color:var(--text-muted);margin-top:2px;}
+        .pd-divider{height:1px;background:var(--border);margin:12px 0;}
+        .pd-hint{font-size:11px;color:var(--text-muted);font-style:italic;}
+
+        .container{max-width:900px;margin:0 auto;padding:40px 40px 80px;}
+        .back-link{display:inline-flex;align-items:center;gap:6px;color:var(--text-muted);text-decoration:none;font-size:13px;margin-bottom:20px;}
+        .back-link:hover{color:var(--purple);}
+
+        .form-card{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:32px;margin-bottom:24px;}
+        .form-card h2{font-family:var(--font-head);font-size:24px;font-weight:700;margin-bottom:8px;color:var(--text);}
+        .form-card p{font-size:14px;color:var(--text-mid);margin-bottom:20px;line-height:1.6;}
+
+        .selector-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px;}
+        .selector-group label{display:block;font-size:13px;font-weight:600;color:var(--text-mid);margin-bottom:10px;}
+        .selector-group select,.selector-group input{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:12px;font-size:14px;font-family:var(--font-body);color:var(--text);background:var(--white);transition:border-color .15s;}
+        .selector-group select:focus,.selector-group input:focus{outline:none;border-color:var(--purple);}
+
+        .preview-shell{background:var(--white);border:1px solid var(--border);border-radius:18px;padding:24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;}
+        .preview-shell img{width:220px;height:220px;border-radius:24px;background:var(--purple-ghost);object-fit:cover;}
+        .preview-info{flex:1;min-width:240px;}
+        .preview-info h3{font-family:var(--font-head);font-size:20px;font-weight:700;margin-bottom:12px;color:var(--text);}
+        .preview-info p{font-size:14px;color:var(--text-mid);line-height:1.6;margin-bottom:18px;}
+        .preview-info small{display:block;font-size:12px;color:var(--text-muted);margin-top:8px;}
+
+        .button-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:22px;}
+        .btn{padding:12px 20px;border-radius:12px;border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:background .15s;}
+        .btn-primary{background:var(--purple);color:#fff;}
+        .btn-primary:hover{background:var(--purple-dark);}
+        .btn-secondary{background:var(--purple-pale);color:var(--purple);border:1px solid var(--border);}
+        .btn-secondary:hover{background:var(--purple);color:#fff;}
+
+        .status-note{font-size:13px;color:var(--text-muted);margin-top:12px;}
+
+        @media(max-width:720px){.topbar{padding:0 20px;}.nav-links{display:none;}.container{padding:24px 20px 60px;}.selector-grid{grid-template-columns:1fr;}.preview-shell{flex-direction:column;align-items:center;}.preview-shell img{width:100%;height:auto;}.preview-info{min-width:auto;}}
+    </style>
+{% endblock %}
+
+{% block body %}
+    <header class="topbar">
+        <a href="{{ path('homepage') }}" class="topbar-logo">
+            <img src="{{ asset('images/logo.png') }}" class="logo-mark" alt="Harmony">
+        </a>
+        <nav class="nav-links">
+            <a href="{{ path('activites') }}" class="nav-link"><span class="nav-emoji">🏋</span> Activités</a>
+            <a href="{{ path('forum') }}" class="nav-link"><span class="nav-emoji">💬</span> Forum</a>
+            <a href="{{ path('taches') }}" class="nav-link"><span class="nav-emoji">📚</span> Tâches</a>
+            <a href="{{ path('evenements') }}" class="nav-link"><span class="nav-emoji">📅</span> Événements</a>
+            <a href="{{ path('nutrition') }}" class="nav-link"><span class="nav-emoji">🥗</span> Nutrition</a>
+            <a href="{{ path('meditation') }}" class="nav-link"><span class="nav-emoji">🧘</span> Méditation</a>
+            <a href="{{ path('journal') }}" class="nav-link active"><span class="nav-emoji">📔</span> Journal</a>
+            <a href="{{ path('library') }}" class="nav-link"><span class="nav-emoji">📖</span> Library</a>
+        </nav>
+        <div class="topbar-right">
+            <a href="{{ path('app_logout') }}" class="logout-btn">🚪 Déconnexion</a>
+            <div class="profile-wrap">
+                <div class="avatar" id="avatarBtn">{{ app.user ? app.user.firstName|first|upper : 'E' }}</div>
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="pd-name">{{ app.user ? app.user.firstName ~ ' ' ~ app.user.lastName : 'Étudiant' }}</div>
+                    <div class="pd-email">{{ app.user ? app.user.email : 'email@exemple.com' }}</div>
+                    <div class="pd-divider"></div>
+                    <div class="pd-hint">Double-clic pour modifier</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <a href="{{ path('journal_new') }}" class="back-link">← Retour à la création d'entrée</a>
+
+        <div class="form-card">
+            <h2>🎨 Créez votre avatar Dicebear</h2>
+            <p>Personnalisez un avatar Dicebear puis utilisez-le sur votre entrée de journal.</p>
+
+            <div class="selector-grid">
+                <div class="selector-group">
+                    <label for="avatarStyle">Style d'avatar</label>
+                    <select id="avatarStyle">
+                        <option value="avataaars">Avatars</option>
+                        <option value="bottts">Bottts</option>
+                        <option value="pixel-art">Pixel Art</option>
+                        <option value="micah">Micah</option>
+                        <option value="identicon">Identicon</option>
+                    </select>
+                </div>
+                <div class="selector-group">
+                    <label for="avatarSeed">Nom / mot-clé</label>
+                    <input type="text" id="avatarSeed" placeholder="Entrez un nom ou un mot-clé" value="Utilisateur" />
+                </div>
+            </div>
+
+            <div class="preview-shell">
+                <img id="dicebearPreview" src="https://api.dicebear.com/6.x/avataaars/png?seed=Utilisateur&size=280&backgroundColor=ffffff" alt="Aperçu de l'avatar Dicebear" />
+                <div class="preview-info">
+                    <h3>Aperçu de l'avatar</h3>
+                    <p>Choisissez le style, saisissez un mot-clé, puis cliquez sur "Générer" pour actualiser l'aperçu.</p>
+                    <p class="status-note">Votre avatar est généré par Dicebear et peut être utilisé directement dans l'entrée.</p>
+                    <div class="button-row">
+                        <button type="button" id="generateAvatarBtn" class="btn btn-secondary">🎲 Générer</button>
+                        <button type="button" id="randomizeBtn" class="btn btn-secondary">🔀 Aléatoire</button>
+                        <button type="button" id="useAvatarBtn" class="btn btn-primary">✅ Utiliser cet avatar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const btn = document.getElementById('avatarBtn');
+        const drop = document.getElementById('profileDropdown');
+        btn.addEventListener('click', e => { e.stopPropagation(); drop.classList.toggle('open'); });
+        document.addEventListener('click', () => drop.classList.remove('open'));
+
+        const styleSelect = document.getElementById('avatarStyle');
+        const seedInput = document.getElementById('avatarSeed');
+        const previewImage = document.getElementById('dicebearPreview');
+        const generateBtn = document.getElementById('generateAvatarBtn');
+        const randomizeBtn = document.getElementById('randomizeBtn');
+        const useAvatarBtn = document.getElementById('useAvatarBtn');
+        const returnUrl = '{{ returnUrl }}';
+
+        const buildDicebearUrl = (style, seed) => {
+            const encodedSeed = encodeURIComponent(seed || 'Utilisateur');
+            return `https://api.dicebear.com/6.x/${style}/png?seed=${encodedSeed}&size=280&backgroundColor=ffffff`;
+        };
+
+        const refreshPreview = () => {
+            const url = buildDicebearUrl(styleSelect.value, seedInput.value.trim() || 'Utilisateur');
+            previewImage.src = url;
+            previewImage.alt = `Avatar ${styleSelect.value} pour ${seedInput.value || 'Utilisateur'}`;
+        };
+
+        generateBtn.addEventListener('click', refreshPreview);
+        randomizeBtn.addEventListener('click', () => {
+            const seed = Math.random().toString(36).substring(2, 10);
+            seedInput.value = seed;
+            refreshPreview();
+        });
+        useAvatarBtn.addEventListener('click', () => {
+            const url = previewImage.src;
+            if (!url) {
+                alert('Veuillez générer un avatar avant de l’utiliser.');
+                return;
+            }
+            window.location.href = `${returnUrl}?avatarUrl=${encodeURIComponent(url)}`;
+        });
+        seedInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                refreshPreview();
+            }
+        });
+    </script>
+{% endblock %}
+

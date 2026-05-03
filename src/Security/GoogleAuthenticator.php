@@ -47,6 +47,9 @@ class GoogleAuthenticator extends OAuth2Authenticator
 
                 $googleId = $googleUser->getId();
                 $email    = $googleUser->getEmail();
+                if ($email === null) {
+                    throw new AuthenticationException('Email Google manquant.');
+                }
 
                 // 1. L'utilisateur a déjà lié son compte Google ?
                 $user = $this->userRepo->findOneBy(['googleId' => $googleId]);
@@ -69,8 +72,12 @@ class GoogleAuthenticator extends OAuth2Authenticator
                 }
 
                 // 3. Aucun compte → créer un nouvel utilisateur
-                $nameParts = explode(' ', $googleUser->getName(), 2);
-                $prenom    = $nameParts[0] ?: 'Google';
+                $name = (string) $googleUser->getName();
+                if ($name === '') {
+                    $name = 'Google User';
+                }
+                $nameParts = explode(' ', $name, 2);
+                $prenom    = $nameParts[0];
                 $nom       = $nameParts[1] ?? 'User';
                 $userEmail = $email ?? ('google_' . $googleId . '@noemail.harmony');
 

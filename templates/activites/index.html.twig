@@ -847,6 +847,253 @@ textarea.finput{resize:vertical;min-height:72px;line-height:1.6}
   .log-steps{display:none}
   .hero-scroll-hint{bottom:80px}
 }
+
+/* ═══════════════════════════════════════════════════
+   BODY MODEL MINI CARD (sidebar)
+   ═══════════════════════════════════════════════════ */
+.bm-mini-card{
+  background:var(--white);border-radius:var(--card-r);overflow:hidden;
+  border:1px solid rgba(124,92,252,.08);
+  box-shadow:0 2px 20px rgba(124,92,252,.07);
+}
+.bm-mini-header{
+  padding:16px 20px 14px;
+  background:linear-gradient(135deg,#1E1050 0%,#3A1F8A 60%,#5B3FDB 100%);
+  position:relative;overflow:hidden;
+}
+.bm-mini-header::before{
+  content:'';position:absolute;right:-15px;top:-15px;width:90px;height:90px;
+  border-radius:50%;background:rgba(255,255,255,.07);
+}
+.bm-mini-title{
+  font-family:'Outfit',sans-serif;font-size:14px;font-weight:800;
+  color:white;display:flex;align-items:center;gap:8px;position:relative;z-index:1;
+}
+.bm-mini-sub{font-size:10.5px;color:rgba(255,255,255,.5);margin-top:3px;position:relative;z-index:1}
+
+.bm-mini-body{padding:14px 16px 16px;display:flex;flex-direction:column;align-items:center;gap:12px}
+
+/* Mini silhouette SVG */
+.bm-mini-svg-wrap{
+  position:relative;width:130px;height:auto;
+  filter:drop-shadow(0 4px 20px rgba(124,92,252,.2));
+}
+.bm-mini-svg-wrap svg{width:130px;display:block}
+
+/* Zones mini cliquables */
+.bm-zone-mini{
+  cursor:pointer;
+  transition:opacity .2s,filter .2s;
+}
+.bm-zone-mini:hover{opacity:.85;filter:brightness(1.3)}
+.bm-zone-mini.selected{filter:drop-shadow(0 0 7px #7C5CFC)}
+
+/* Anneaux pulsants */
+.bm-pulse{
+  animation:bmPulse 2.2s ease-in-out infinite;
+  transform-origin:center;pointer-events:none;
+}
+.bm-pulse:nth-child(2){animation-delay:.5s}
+.bm-pulse:nth-child(3){animation-delay:1s}
+@keyframes bmPulse{
+  0%,100%{opacity:.7;r:6px}
+  50%{opacity:0;r:14px}
+}
+
+/* Légende mini */
+.bm-mini-legend{
+  display:flex;gap:6px;flex-wrap:wrap;justify-content:center;
+}
+.bm-mini-legend-item{
+  font-size:9px;color:var(--tx-muted);display:flex;align-items:center;gap:3px;font-weight:600;
+}
+.bm-mini-dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+
+/* Bouton CTA */
+.btn-open-body-model{
+  width:100%;padding:13px 16px;border-radius:14px;border:none;
+  background:linear-gradient(135deg,#7C5CFC 0%,#9B7FFF 50%,#6366F1 100%);
+  color:white;font-family:'Outfit',sans-serif;font-size:13px;font-weight:800;
+  cursor:pointer;transition:all .22s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  box-shadow:0 6px 20px rgba(124,92,252,.38);position:relative;overflow:hidden;
+}
+.btn-open-body-model::after{
+  content:'';position:absolute;top:-50%;left:-80%;width:60%;height:200%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);
+  transform:skewX(-15deg);transition:left .5s;
+}
+.btn-open-body-model:hover::after{left:120%}
+.btn-open-body-model:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(124,92,252,.5)}
+.btn-open-body-model .bm-btn-icon{font-size:18px}
+.btn-open-body-model .bm-btn-text{display:flex;flex-direction:column;align-items:flex-start}
+.btn-open-body-model .bm-btn-main{font-size:13px;font-weight:800}
+.btn-open-body-model .bm-btn-hint{font-size:9.5px;opacity:.75;font-weight:500}
+
+/* Hint text */
+.bm-mini-hint{font-size:10.5px;color:var(--tx-muted);text-align:center;line-height:1.5}
+
+/* ═══════════════════════════════════════════════════
+   BODY MODEL MODAL (full screen)
+   ═══════════════════════════════════════════════════ */
+.bm-modal-overlay{
+  position:fixed;inset:0;background:rgba(18,10,46,.82);
+  backdrop-filter:blur(14px);z-index:2000;
+  display:none;align-items:center;justify-content:center;padding:16px;
+}
+.bm-modal-overlay.open{display:flex;animation:bmModalIn .3s ease}
+@keyframes bmModalIn{from{opacity:0}to{opacity:1}}
+
+.bm-modal-box{
+  background:#FFFFFF;border-radius:28px;width:100%;max-width:1000px;
+  max-height:92vh;overflow:hidden;display:flex;flex-direction:column;
+  box-shadow:0 32px 80px rgba(18,10,46,.45);
+  animation:slideUp .3s cubic-bezier(.34,1.56,.64,1);
+}
+
+.bm-modal-head{
+  padding:18px 26px;border-bottom:1px solid rgba(124,92,252,.1);
+  background:linear-gradient(135deg,#120A2E,#3A1F8A);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.bm-modal-title{
+  font-family:'Outfit',sans-serif;font-size:18px;font-weight:800;color:white;
+  display:flex;align-items:center;gap:10px;
+}
+.bm-modal-close{
+  width:34px;height:34px;border-radius:10px;border:none;
+  background:rgba(255,255,255,.15);cursor:pointer;font-size:16px;
+  display:grid;place-items:center;color:white;transition:all .15s;
+}
+.bm-modal-close:hover{background:rgba(255,255,255,.25)}
+
+.bm-modal-content{
+  display:grid;grid-template-columns:280px 1fr;
+  flex:1;overflow:hidden;
+}
+@media(max-width:700px){.bm-modal-content{grid-template-columns:1fr}}
+
+/* Left panel : silhouette */
+.bm-left-panel{
+  padding:18px 14px;border-right:1px solid rgba(124,92,252,.08);
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+  background:linear-gradient(180deg,#F5F2FF,#FFFFFF);
+  overflow-y:auto;
+}
+.bm-panel-title{
+  font-size:11px;font-weight:800;color:var(--tx-muted);
+  text-transform:uppercase;letter-spacing:.7px;
+}
+.bm-context-row{display:flex;gap:8px;width:100%;flex-wrap:wrap}
+.bm-select{
+  flex:1;min-width:100px;
+  padding:8px 10px;border-radius:10px;border:1.5px solid var(--border);
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:11.5px;
+  color:var(--tx);background:white;outline:none;transition:all .2s;cursor:pointer;
+}
+.bm-select:focus{border-color:var(--pu);box-shadow:0 0 0 3px rgba(124,92,252,.1)}
+
+.bm-svg-wrap{position:relative;width:100%;max-width:220px;margin:0 auto}
+.bm-svg-wrap svg{width:100%;display:block}
+
+/* Zones cliquables dans modal */
+.bm-zone{cursor:pointer;transition:opacity .18s,filter .18s}
+.bm-zone:hover{opacity:.82;filter:brightness(1.25)}
+.bm-zone.selected{filter:drop-shadow(0 0 9px #7C5CFC);opacity:1}
+
+/* Tooltip */
+#bmTooltip{
+  position:absolute;background:rgba(18,10,46,.92);
+  color:white;padding:4px 10px;border-radius:7px;font-size:11px;
+  pointer-events:none;display:none;border:1px solid #7C5CFC;
+  white-space:nowrap;z-index:100;
+}
+
+.bm-legend{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.bm-legend-item{font-size:9.5px;color:var(--tx-muted);display:flex;align-items:center;gap:3px;font-weight:600}
+.bm-legend-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+
+/* Right panel : results */
+.bm-right-panel{padding:18px 22px;overflow-y:auto;display:flex;flex-direction:column;gap:0}
+
+.bm-empty-state{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:100%;min-height:260px;color:var(--tx-muted);text-align:center;gap:12px;padding:20px;
+}
+.bm-empty-icon{font-size:48px;opacity:.35}
+.bm-empty-title{font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;color:var(--tx)}
+.bm-empty-sub{font-size:12px;line-height:1.6;max-width:260px}
+
+.bm-loader{
+  display:none;flex-direction:column;align-items:center;
+  justify-content:center;min-height:200px;gap:12px;color:var(--tx-muted);
+}
+.bm-spinner{
+  width:40px;height:40px;border-radius:50%;
+  border:4px solid rgba(124,92,252,.15);border-top-color:var(--pu);
+  animation:spin 1s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.bm-loader-text{font-size:12px;font-weight:600}
+
+.bm-result{display:none;flex-direction:column;gap:14px}
+
+.bm-result-header{
+  display:flex;align-items:center;gap:12px;padding-bottom:14px;
+  border-bottom:1px solid var(--border);
+}
+.bm-result-icon{
+  width:46px;height:46px;border-radius:14px;
+  background:linear-gradient(135deg,var(--pu-pale),var(--pu-ghost));
+  display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;
+  box-shadow:0 4px 14px rgba(124,92,252,.2);
+}
+.bm-result-zone{font-family:'Outfit',sans-serif;font-size:16px;font-weight:800;color:var(--tx);margin:0}
+.bm-result-ctx{font-size:11px;color:var(--tx-muted);margin:0}
+
+.bm-advice-section{background:var(--pu-ghost);border-radius:14px;padding:12px 14px}
+.bm-advice-label{
+  font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;
+  color:var(--tx-muted);margin-bottom:8px;display:flex;align-items:center;gap:5px;
+}
+.bm-advice-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:5px}
+.bm-advice-list li{
+  padding:7px 10px;border-radius:9px;font-size:12px;line-height:1.5;
+  background:white;border-left:3px solid var(--pu);color:var(--tx);
+}
+.bm-advice-list li::before{content:'→ ';color:var(--pu);font-weight:700}
+.bm-advice-list.danger li{border-left-color:#EF4444}
+.bm-advice-list.danger li::before{color:#EF4444}
+.bm-advice-list.success li{border-left-color:#10B981}
+.bm-advice-list.success li::before{color:#10B981}
+.bm-advice-list.warn li{border-left-color:#F59E0B}
+.bm-advice-list.warn li::before{color:#F59E0B}
+
+.bm-duree-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:#FFFBEB;border:1.5px solid rgba(245,158,11,.3);
+  color:#D97706;padding:6px 14px;border-radius:99px;
+  font-size:12px;font-weight:700;
+}
+.bm-alert{
+  background:#FEF2F2;border:1.5px solid rgba(239,68,68,.2);
+  border-radius:12px;padding:10px 14px;font-size:12px;line-height:1.6;color:#7F1D1D;
+}
+.btn-bm-reset{
+  padding:10px 16px;border-radius:11px;border:1.5px solid var(--border);
+  background:var(--white);color:var(--tx-muted);font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;width:100%;margin-top:4px;
+}
+.btn-bm-reset:hover{border-color:var(--pu);color:var(--pu);background:var(--pu-ghost)}
+
+/* QR button mini */
+.btn-qr-session{
+  padding:5px 12px;border-radius:10px;border:1.5px solid rgba(124,92,252,.22);
+  background:transparent;color:var(--pu);font-size:11px;font-weight:700;
+  font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:all .18s;
+  display:flex;align-items:center;gap:5px;
+}
+.btn-qr-session:hover{background:var(--pu-pale);border-color:var(--pu)}
 </style>
 {% endblock %}
 
@@ -1242,6 +1489,112 @@ textarea.finput{resize:vertical;min-height:72px;line-height:1.6}
     </div>
   </div>
 
+  {# ══════════════════════════════════════════════
+     MINI MODÈLE CORPOREL — Blessures & Récupération
+     ══════════════════════════════════════════════ #}
+  <div class="bm-mini-card fade d1">
+    <div class="bm-mini-header">
+      <div class="bm-mini-title">🩻 Récupération & Blessures</div>
+      <div class="bm-mini-sub">IA médicale · Conseils personnalisés</div>
+    </div>
+    <div class="bm-mini-body">
+      <p class="bm-mini-hint">Cliquez sur une zone ou utilisez le bouton pour obtenir des conseils de récupération générés par l'IA Groq.</p>
+
+      {# ── Silhouette SVG mini interactive avec anneaux pulsants ── #}
+      <div class="bm-mini-svg-wrap">
+        <svg viewBox="0 0 200 500" xmlns="http://www.w3.org/2000/svg">
+          {# Corps de base #}
+          <ellipse cx="100" cy="62" rx="21" ry="25" fill="#E8E3FF"/>
+          <rect x="72" y="84" width="56" height="90" rx="8" fill="#E8E3FF"/>
+          <rect x="42" y="86" width="28" height="72" rx="10" fill="#E8E3FF"/>
+          <rect x="130" y="86" width="28" height="72" rx="10" fill="#E8E3FF"/>
+          <rect x="38" y="154" width="26" height="58" rx="10" fill="#E8E3FF"/>
+          <rect x="136" y="154" width="26" height="58" rx="10" fill="#E8E3FF"/>
+          <rect x="74" y="174" width="24" height="100" rx="8" fill="#E8E3FF"/>
+          <rect x="102" y="174" width="24" height="100" rx="8" fill="#E8E3FF"/>
+          <rect x="74" y="272" width="24" height="96" rx="8" fill="#E8E3FF"/>
+          <rect x="102" y="272" width="24" height="96" rx="8" fill="#E8E3FF"/>
+          <ellipse cx="86" cy="374" rx="17" ry="8" fill="#E8E3FF"/>
+          <ellipse cx="114" cy="374" rx="17" ry="8" fill="#E8E3FF"/>
+
+          {# Zones cliquables mini #}
+          <ellipse class="bm-zone-mini" cx="100" cy="60" rx="21" ry="23"
+            fill="#6366f1" opacity="0.72"
+            data-zone="tete" data-label="Tête / Nuque" onclick="quickZoneSelect(this)"/>
+          <ellipse class="bm-zone-mini" cx="63" cy="95" rx="17" ry="13"
+            fill="#a78bfa" opacity="0.78"
+            data-zone="epaule_gauche" data-label="Épaule gauche" onclick="quickZoneSelect(this)"/>
+          <ellipse class="bm-zone-mini" cx="137" cy="95" rx="17" ry="13"
+            fill="#a78bfa" opacity="0.78"
+            data-zone="epaule_droite" data-label="Épaule droite" onclick="quickZoneSelect(this)"/>
+          <rect class="bm-zone-mini" x="80" y="86" width="40" height="38" rx="6"
+            fill="#60a5fa" opacity="0.65"
+            data-zone="thorax" data-label="Thorax" onclick="quickZoneSelect(this)"/>
+          <rect class="bm-zone-mini" x="82" y="124" width="36" height="36" rx="6"
+            fill="#34d399" opacity="0.58"
+            data-zone="abdomen" data-label="Abdomen / Core" onclick="quickZoneSelect(this)"/>
+          <rect class="bm-zone-mini" x="82" y="160" width="36" height="14" rx="5"
+            fill="#fb923c" opacity="0.72"
+            data-zone="dos_bas" data-label="Lombaires" onclick="quickZoneSelect(this)"/>
+          <ellipse class="bm-zone-mini" cx="51" cy="161" rx="13" ry="11"
+            fill="#f472b6" opacity="0.8"
+            data-zone="coude_gauche" data-label="Coude gauche" onclick="quickZoneSelect(this)"/>
+          <ellipse class="bm-zone-mini" cx="149" cy="161" rx="13" ry="11"
+            fill="#f472b6" opacity="0.8"
+            data-zone="coude_droit" data-label="Coude droit" onclick="quickZoneSelect(this)"/>
+          <ellipse class="bm-zone-mini" cx="83" cy="183" rx="15" ry="12"
+            fill="#fbbf24" opacity="0.75"
+            data-zone="hanche_gauche" data-label="Hanche gauche" onclick="quickZoneSelect(this)"/>
+          <ellipse class="bm-zone-mini" cx="117" cy="183" rx="15" ry="12"
+            fill="#fbbf24" opacity="0.75"
+            data-zone="hanche_droite" data-label="Hanche droite" onclick="quickZoneSelect(this)"/>
+          <ellipse class="bm-zone-mini" cx="86" cy="278" rx="14" ry="12"
+            fill="#ef4444" opacity="0.82"
+            data-zone="genou_gauche" data-label="Genou gauche" onclick="quickZoneSelect(this)"/>
+          <ellipse class="bm-zone-mini" cx="114" cy="278" rx="14" ry="12"
+            fill="#ef4444" opacity="0.82"
+            data-zone="genou_droit" data-label="Genou droit" onclick="quickZoneSelect(this)"/>
+          <ellipse class="bm-zone-mini" cx="86" cy="368" rx="12" ry="9"
+            fill="#10b981" opacity="0.85"
+            data-zone="cheville_gauche" data-label="Cheville gauche" onclick="quickZoneSelect(this)"/>
+          <ellipse class="bm-zone-mini" cx="114" cy="368" rx="12" ry="9"
+            fill="#10b981" opacity="0.85"
+            data-zone="cheville_droite" data-label="Cheville droite" onclick="quickZoneSelect(this)"/>
+
+          {# Anneaux pulsants sur les zones sensibles #}
+          <circle class="bm-pulse" cx="100" cy="60" r="6" fill="none" stroke="#6366f1" stroke-width="2" opacity="0.7"/>
+          <circle class="bm-pulse" cx="86" cy="278" r="6" fill="none" stroke="#ef4444" stroke-width="2" opacity="0.7"/>
+          <circle class="bm-pulse" cx="114" cy="278" r="6" fill="none" stroke="#ef4444" stroke-width="2" opacity="0.7"/>
+          <circle class="bm-pulse" cx="83" cy="161" r="5" fill="none" stroke="#fb923c" stroke-width="2" opacity="0.65"/>
+          <circle class="bm-pulse" cx="100" cy="95" r="5" fill="none" stroke="#60a5fa" stroke-width="1.5" opacity="0.55"/>
+
+          {# Labels mini #}
+          <text x="100" y="63" text-anchor="middle" fill="white" font-size="7" font-weight="700" pointer-events="none">Tête</text>
+          <text x="100" y="108" text-anchor="middle" fill="white" font-size="5.5" pointer-events="none">Thorax</text>
+          <text x="86" y="281" text-anchor="middle" fill="white" font-size="5" font-weight="700" pointer-events="none">Genou</text>
+          <text x="114" y="281" text-anchor="middle" fill="white" font-size="5" font-weight="700" pointer-events="none">Genou</text>
+        </svg>
+      </div>
+
+      {# Légende #}
+      <div class="bm-mini-legend">
+        <span class="bm-mini-legend-item"><span class="bm-mini-dot" style="background:#6366f1"></span>Tête</span>
+        <span class="bm-mini-legend-item"><span class="bm-mini-dot" style="background:#60a5fa"></span>Torse</span>
+        <span class="bm-mini-legend-item"><span class="bm-mini-dot" style="background:#ef4444"></span>Genoux</span>
+        <span class="bm-mini-legend-item"><span class="bm-mini-dot" style="background:#10b981"></span>Chevilles</span>
+      </div>
+
+      {# Bouton principal #}
+      <button class="btn-open-body-model" onclick="openBodyModel()">
+        <span class="bm-btn-icon">🩻</span>
+        <div class="bm-btn-text">
+          <span class="bm-btn-main">Consulter le modèle corporel</span>
+          <span class="bm-btn-hint">20 zones · Conseils IA Groq</span>
+        </div>
+      </button>
+    </div>
+  </div>{# /bm-mini-card #}
+
   {# ── FAVORIS REDESIGNÉS ── #}
   <div class="fav-card fade d1">
     <div class="fav-card-header">
@@ -1375,6 +1728,198 @@ textarea.finput{resize:vertical;min-height:72px;line-height:1.6}
           <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M11.999 2c-5.514 0-9.999 4.486-9.999 10 0 1.76.463 3.413 1.27 4.855L2 22l5.293-1.254C8.66 21.527 10.297 22 11.999 22c5.514 0 10-4.486 10-10s-4.486-10-10-10zm0 18c-1.567 0-3.05-.432-4.33-1.185l-.31-.184-3.143.744.776-3.044-.202-.319C3.9 14.906 3.5 13.492 3.5 12 3.5 7.81 6.811 4.5 11.999 4.5S20.5 7.81 20.5 12c0 4.192-3.311 7.5-7.501 7.5z"/></svg>
           Ouvrir sur WhatsApp
         </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{# ══════════════════════════════════════════════════════════
+   BODY MODEL MODAL COMPLET — 20 zones · Conseils IA Groq
+   ══════════════════════════════════════════════════════════ #}
+<div class="bm-modal-overlay" id="bmModalOverlay">
+  <div class="bm-modal-box">
+
+    {# Header #}
+    <div class="bm-modal-head">
+      <div class="bm-modal-title">
+        🩻 Modèle Corporel Interactif — Récupération &amp; Blessures
+      </div>
+      <button class="bm-modal-close" onclick="closeBodyModel()">✕</button>
+    </div>
+
+    {# Content : 2 colonnes #}
+    <div class="bm-modal-content">
+
+      {# ── Panneau gauche : silhouette ── #}
+      <div class="bm-left-panel">
+        <div class="bm-panel-title">🦾 Sélectionnez une zone</div>
+
+        {# Contexte #}
+        <div class="bm-context-row">
+          <select class="bm-select" id="bmTypeActivite">
+            <option value="musculation">Musculation</option>
+            <option value="cardio">Cardio</option>
+            <option value="yoga">Yoga</option>
+            <option value="natation">Natation</option>
+            <option value="course à pied">Course à pied</option>
+            <option value="cyclisme">Cyclisme</option>
+            <option value="football">Football</option>
+            <option value="basketball">Basketball</option>
+            <option value="tennis">Tennis</option>
+            <option value="arts martiaux">Arts martiaux</option>
+            <option value="crossfit">CrossFit</option>
+            <option value="général" selected>Général</option>
+          </select>
+          <select class="bm-select" id="bmIntensite">
+            <option value="légère">Légère</option>
+            <option value="modérée" selected>Modérée</option>
+            <option value="intense">Intense</option>
+          </select>
+        </div>
+
+        {# SVG grande silhouette anatomique #}
+        <div class="bm-svg-wrap">
+          <div id="bmTooltip"></div>
+          <svg viewBox="0 0 200 520" xmlns="http://www.w3.org/2000/svg" id="bmBodySvg">
+
+            <ellipse cx="100" cy="88" rx="22" ry="26" fill="#CBD5E1"/>
+            <rect x="70" y="110" width="60" height="95" rx="8" fill="#CBD5E1"/>
+            <rect x="40" y="112" width="28" height="75" rx="10" fill="#CBD5E1"/>
+            <rect x="132" y="112" width="28" height="75" rx="10" fill="#CBD5E1"/>
+            <rect x="36" y="182" width="26" height="60" rx="10" fill="#CBD5E1"/>
+            <rect x="138" y="182" width="26" height="60" rx="10" fill="#CBD5E1"/>
+            <rect x="72" y="205" width="26" height="110" rx="8" fill="#CBD5E1"/>
+            <rect x="102" y="205" width="26" height="110" rx="8" fill="#CBD5E1"/>
+            <rect x="72" y="312" width="26" height="100" rx="8" fill="#CBD5E1"/>
+            <rect x="102" y="312" width="26" height="100" rx="8" fill="#CBD5E1"/>
+            <ellipse cx="85" cy="416" rx="18" ry="9" fill="#CBD5E1"/>
+            <ellipse cx="115" cy="416" rx="18" ry="9" fill="#CBD5E1"/>
+
+            <ellipse class="bm-zone" cx="100" cy="65" rx="22" ry="24" fill="#6366f1" opacity="0.72" data-zone="tete" data-label="Tête / Nuque"/>
+            <circle cx="100" cy="65" r="7" fill="none" stroke="#818cf8" stroke-width="2" opacity="0.8" class="bm-pulse"/>
+            <text x="100" y="68" text-anchor="middle" fill="white" font-size="7" font-weight="700" pointer-events="none">Tête</text>
+
+            <rect class="bm-zone" x="88" y="88" width="24" height="22" rx="6" fill="#818cf8" opacity="0.75" data-zone="cou" data-label="Cou / Cervicales"/>
+            <text x="100" y="101" text-anchor="middle" fill="white" font-size="6.5" pointer-events="none">Cou</text>
+
+            <ellipse class="bm-zone" cx="62" cy="120" rx="18" ry="14" fill="#a78bfa" opacity="0.8" data-zone="epaule_gauche" data-label="Épaule gauche"/>
+            <text x="62" y="123" text-anchor="middle" fill="white" font-size="5.5" pointer-events="none">Ép.G</text>
+
+            <ellipse class="bm-zone" cx="138" cy="120" rx="18" ry="14" fill="#a78bfa" opacity="0.8" data-zone="epaule_droite" data-label="Épaule droite"/>
+            <text x="138" y="123" text-anchor="middle" fill="white" font-size="5.5" pointer-events="none">Ép.D</text>
+
+            <rect class="bm-zone" x="78" y="112" width="44" height="40" rx="6" fill="#60a5fa" opacity="0.65" data-zone="thorax" data-label="Thorax / Pectoraux"/>
+            <text x="100" y="134" text-anchor="middle" fill="white" font-size="5.5" pointer-events="none">Thorax</text>
+
+            <rect class="bm-zone" x="80" y="152" width="40" height="40" rx="6" fill="#34d399" opacity="0.55" data-zone="abdomen" data-label="Abdomen / Core"/>
+            <text x="100" y="174" text-anchor="middle" fill="white" font-size="5.5" pointer-events="none">Abdomen</text>
+
+            <rect class="bm-zone" x="80" y="192" width="40" height="15" rx="5" fill="#fb923c" opacity="0.72" data-zone="dos_bas" data-label="Lombaires"/>
+            <circle cx="100" cy="199" r="5" fill="none" stroke="#fb923c" stroke-width="2" opacity="0.8" class="bm-pulse"/>
+            <text x="100" y="202" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Lombaires</text>
+
+            <ellipse class="bm-zone" cx="49" cy="187" rx="13" ry="11" fill="#f472b6" opacity="0.8" data-zone="coude_gauche" data-label="Coude gauche"/>
+            <text x="49" y="190" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Coude</text>
+
+            <ellipse class="bm-zone" cx="151" cy="187" rx="13" ry="11" fill="#f472b6" opacity="0.8" data-zone="coude_droit" data-label="Coude droit"/>
+            <text x="151" y="190" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Coude</text>
+
+            <ellipse class="bm-zone" cx="49" cy="237" rx="11" ry="9" fill="#c084fc" opacity="0.85" data-zone="poignet_gauche" data-label="Poignet gauche"/>
+            <text x="49" y="240" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Poignet</text>
+
+            <ellipse class="bm-zone" cx="151" cy="237" rx="11" ry="9" fill="#c084fc" opacity="0.85" data-zone="poignet_droit" data-label="Poignet droit"/>
+            <text x="151" y="240" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Poignet</text>
+
+            <ellipse class="bm-zone" cx="81" cy="208" rx="16" ry="13" fill="#fbbf24" opacity="0.75" data-zone="hanche_gauche" data-label="Hanche gauche"/>
+            <text x="81" y="211" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Hanche</text>
+
+            <ellipse class="bm-zone" cx="119" cy="208" rx="16" ry="13" fill="#fbbf24" opacity="0.75" data-zone="hanche_droite" data-label="Hanche droite"/>
+            <text x="119" y="211" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Hanche</text>
+
+            <ellipse class="bm-zone" cx="85" cy="316" rx="15" ry="13" fill="#ef4444" opacity="0.82" data-zone="genou_gauche" data-label="Genou gauche"/>
+            <circle cx="85" cy="316" r="7" fill="none" stroke="#ef4444" stroke-width="2" opacity="0.8" class="bm-pulse"/>
+            <text x="85" y="319" text-anchor="middle" fill="white" font-size="5.5" font-weight="700" pointer-events="none">Genou</text>
+
+            <ellipse class="bm-zone" cx="115" cy="316" rx="15" ry="13" fill="#ef4444" opacity="0.82" data-zone="genou_droit" data-label="Genou droit"/>
+            <circle cx="115" cy="316" r="7" fill="none" stroke="#ef4444" stroke-width="2" opacity="0.8" class="bm-pulse" style="animation-delay:.6s"/>
+            <text x="115" y="319" text-anchor="middle" fill="white" font-size="5.5" font-weight="700" pointer-events="none">Genou</text>
+
+            <ellipse class="bm-zone" cx="85" cy="408" rx="13" ry="10" fill="#10b981" opacity="0.85" data-zone="cheville_gauche" data-label="Cheville gauche"/>
+            <text x="85" y="411" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Cheville</text>
+
+            <ellipse class="bm-zone" cx="115" cy="408" rx="13" ry="10" fill="#10b981" opacity="0.85" data-zone="cheville_droite" data-label="Cheville droite"/>
+            <text x="115" y="411" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Cheville</text>
+
+            <ellipse class="bm-zone" cx="85" cy="427" rx="16" ry="8" fill="#14b8a6" opacity="0.8" data-zone="pied_gauche" data-label="Pied gauche"/>
+            <text x="85" y="429" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Pied</text>
+
+            <ellipse class="bm-zone" cx="115" cy="427" rx="16" ry="8" fill="#14b8a6" opacity="0.8" data-zone="pied_droit" data-label="Pied droit"/>
+            <text x="115" y="429" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Pied</text>
+
+          </svg>
+        </div>
+
+        <div class="bm-legend">
+          <span class="bm-legend-item"><span class="bm-legend-dot" style="background:#6366f1"></span>Tête/Cou</span>
+          <span class="bm-legend-item"><span class="bm-legend-dot" style="background:#60a5fa"></span>Torse</span>
+          <span class="bm-legend-item"><span class="bm-legend-dot" style="background:#f472b6"></span>Bras</span>
+          <span class="bm-legend-item"><span class="bm-legend-dot" style="background:#ef4444"></span>Genoux</span>
+          <span class="bm-legend-item"><span class="bm-legend-dot" style="background:#10b981"></span>Jambes</span>
+        </div>
+      </div>
+
+      {# ── Panneau droit : conseils IA ── #}
+      <div class="bm-right-panel" id="bmRightPanel">
+
+        <div class="bm-empty-state" id="bmEmptyState">
+          <div class="bm-empty-icon">🩺</div>
+          <div class="bm-empty-title">Aucune zone sélectionnée</div>
+          <div class="bm-empty-sub">Cliquez sur une zone colorée de la silhouette pour recevoir des conseils de récupération personnalisés par l'IA Groq (LLaMA-3).</div>
+        </div>
+
+        <div class="bm-loader" id="bmLoader">
+          <div class="bm-spinner"></div>
+          <div class="bm-loader-text">L'IA analyse votre blessure…</div>
+        </div>
+
+        <div class="bm-result" id="bmResult">
+          <div class="bm-result-header">
+            <div class="bm-result-icon" id="bmResIcon">🦴</div>
+            <div>
+              <p class="bm-result-zone" id="bmResZone">Zone</p>
+              <p class="bm-result-ctx"  id="bmResCtx">Contexte</p>
+            </div>
+          </div>
+
+          <div class="bm-advice-section">
+            <div class="bm-advice-label">🧊 Traitements immédiats</div>
+            <ul class="bm-advice-list danger" id="bmResTrait"></ul>
+          </div>
+
+          <div class="bm-advice-section">
+            <div class="bm-advice-label">🏃 Exercices de récupération</div>
+            <ul class="bm-advice-list success" id="bmResExos"></ul>
+          </div>
+
+          <div class="bm-advice-section">
+            <div class="bm-advice-label">🥗 Nutrition anti-inflammatoire</div>
+            <ul class="bm-advice-list warn" id="bmResNutr"></ul>
+          </div>
+
+          <div class="bm-advice-section">
+            <div class="bm-advice-label">⏱ Durée estimée de récupération</div>
+            <div class="bm-duree-badge">⌚ <span id="bmResDuree">–</span></div>
+          </div>
+
+          <div class="bm-advice-section">
+            <div class="bm-advice-label">🚨 Quand consulter un médecin</div>
+            <div class="bm-alert" id="bmResConsulter">–</div>
+          </div>
+
+          <button class="btn-bm-reset" id="btnBmReset">↩ Sélectionner une autre zone</button>
+        </div>
+
       </div>
     </div>
   </div>
@@ -2014,5 +2559,169 @@ function showToast(type,msg) {
   t.className='toast '+type; t.textContent=msg; t.classList.add('show');
   clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),3500);
 }
+
+
+// ══════════════════════════════════════════════════════
+// BODY MODEL — MODÈLE CORPOREL INTERACTIF
+// ══════════════════════════════════════════════════════
+
+// Mapping zone → emoji
+const BM_ICONS = {
+  tete:'🧠',cou:'🦴',
+  epaule_gauche:'💪',epaule_droite:'💪',
+  coude_gauche:'🦾',coude_droit:'🦾',
+  poignet_gauche:'✋',poignet_droit:'✋',
+  dos_haut:'🔙',dos_bas:'🔙',thorax:'🫀',abdomen:'🫃',
+  hanche_gauche:'🦵',hanche_droite:'🦵',
+  genou_gauche:'🦿',genou_droit:'🦿',
+  cheville_gauche:'👟',cheville_droite:'👟',
+  pied_gauche:'🦶',pied_droit:'🦶',
+};
+
+// Ouvrir le modal du modèle corporel
+function openBodyModel() {
+  document.getElementById('bmModalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  initBmZones();
+}
+
+// Fermer le modal
+function closeBodyModel() {
+  document.getElementById('bmModalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// Clic depuis le mini SVG dans la sidebar → ouvre le modal + lance la zone
+function quickZoneSelect(el) {
+  openBodyModel();
+  // Attendre que le modal soit rendu puis lancer
+  setTimeout(() => {
+    const zone  = el.dataset.zone;
+    const label = el.dataset.label;
+    // Activer la zone dans la grande silhouette
+    const target = document.querySelector('#bmBodySvg .bm-zone[data-zone="' + zone + '"]');
+    if (target) {
+      document.querySelectorAll('#bmBodySvg .bm-zone').forEach(z => z.classList.remove('selected'));
+      target.classList.add('selected');
+    }
+    fetchBmAdvice(zone, label);
+  }, 80);
+}
+
+// Initialiser les zones cliquables + tooltip dans le modal
+function initBmZones() {
+  const zones   = document.querySelectorAll('#bmBodySvg .bm-zone');
+  const tooltip = document.getElementById('bmTooltip');
+
+  zones.forEach(zone => {
+    // Ne pas ré-attacher si déjà initialisé
+    if (zone._bmInited) return;
+    zone._bmInited = true;
+
+    zone.addEventListener('mouseenter', e => {
+      tooltip.textContent = zone.dataset.label;
+      tooltip.style.display = 'block';
+      positionBmTooltip(e, tooltip);
+    });
+    zone.addEventListener('mousemove', e => positionBmTooltip(e, tooltip));
+    zone.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+    zone.addEventListener('click', () => {
+      zones.forEach(z => z.classList.remove('selected'));
+      zone.classList.add('selected');
+      fetchBmAdvice(zone.dataset.zone, zone.dataset.label);
+    });
+  });
+
+  // Fermer en cliquant hors du modal
+  const overlay = document.getElementById('bmModalOverlay');
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) closeBodyModel();
+  });
+}
+
+function positionBmTooltip(e, tooltip) {
+  const wrap = document.querySelector('.bm-svg-wrap');
+  if (!wrap) return;
+  const rect = wrap.getBoundingClientRect();
+  tooltip.style.left = (e.clientX - rect.left + 12) + 'px';
+  tooltip.style.top  = (e.clientY - rect.top  - 32) + 'px';
+}
+
+// Appel AJAX vers BlessureController
+async function fetchBmAdvice(articulation, label) {
+  const emptyState = document.getElementById('bmEmptyState');
+  const loader     = document.getElementById('bmLoader');
+  const result     = document.getElementById('bmResult');
+
+  emptyState.style.display = 'none';
+  result.style.display     = 'none';
+  loader.style.display     = 'flex';
+
+  const typeActivite = document.getElementById('bmTypeActivite')?.value || 'général';
+  const intensite    = document.getElementById('bmIntensite')?.value    || 'modérée';
+
+  try {
+    const res = await fetch('{{ path("blessure_conseil") }}', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ articulation, typeActivite, intensite }),
+    });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.error || 'Erreur inconnue');
+    displayBmResult(json.data, label);
+  } catch (err) {
+    loader.style.display     = 'none';
+    emptyState.style.display = 'flex';
+    showToast('error', '⚠ ' + err.message);
+  }
+}
+
+function displayBmResult(data, label) {
+  document.getElementById('bmLoader').style.display = 'none';
+
+  document.getElementById('bmResIcon').textContent = BM_ICONS[data.articulation] || '🩹';
+  document.getElementById('bmResZone').textContent = data.label || label;
+
+  const typeActivite = document.getElementById('bmTypeActivite')?.value || 'général';
+  const intensite    = document.getElementById('bmIntensite')?.value    || 'modérée';
+  document.getElementById('bmResCtx').textContent  =
+    typeActivite.charAt(0).toUpperCase() + typeActivite.slice(1) + ' · Intensité ' + intensite;
+
+  bmFillList('bmResTrait',  data.traitements);
+  bmFillList('bmResExos',   data.exercices_recuperation);
+  bmFillList('bmResNutr',   data.conseils_nutrition);
+
+  document.getElementById('bmResDuree').textContent    = data.duree_recuperation || '–';
+  document.getElementById('bmResConsulter').textContent = data.quand_consulter   || '–';
+
+  const resultEl = document.getElementById('bmResult');
+  resultEl.style.display = 'flex';
+}
+
+function bmFillList(ulId, items) {
+  const ul = document.getElementById(ulId);
+  ul.innerHTML = '';
+  if (!Array.isArray(items) || items.length === 0) {
+    ul.innerHTML = '<li>Aucune donnée disponible.</li>'; return;
+  }
+  items.forEach(item => {
+    const li = document.createElement('li');
+    li.textContent = item;
+    ul.appendChild(li);
+  });
+}
+
+// Bouton reset
+document.addEventListener('DOMContentLoaded', () => {
+  const btnReset = document.getElementById('btnBmReset');
+  if (btnReset) {
+    btnReset.addEventListener('click', () => {
+      document.querySelectorAll('#bmBodySvg .bm-zone').forEach(z => z.classList.remove('selected'));
+      document.getElementById('bmResult').style.display     = 'none';
+      document.getElementById('bmEmptyState').style.display = 'flex';
+    });
+  }
+});
+
 </script>
 {% endblock %}

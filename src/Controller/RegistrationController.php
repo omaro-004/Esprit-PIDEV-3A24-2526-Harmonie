@@ -40,9 +40,7 @@ class RegistrationController extends AbstractController
                 'prenom'        => $user->getUserPrenom(),
                 'email'         => $user->getUserEmail(),
                 'password'      => $hashedPassword,
-                'dateNaissance' => $user->getUserDateDeNaissance() instanceof \DateTimeInterface
-                    ? $user->getUserDateDeNaissance()->format('Y-m-d')
-                    : (string) $user->getUserDateDeNaissance(),
+                'dateNaissance' => $user->getUserDateDeNaissance(),
             ]);
 
             return $this->redirectToRoute('app_register_step2');
@@ -84,10 +82,28 @@ class RegistrationController extends AbstractController
         $form = $this->createForm(RegistrationStep2FormType::class, $user);
         $form->handleRequest($request);
 
+        $preSelectedPath = trim((string) $request->request->get('preSelectedAvatarPath', ''));
+        $avatarFile = $form->get('avatarFile')->getData();
+
+        if ($form->isSubmitted() && !$avatarFile && '' !== $preSelectedPath) {
+            $allowedPrefixes = ['avatars/default/avatar_', 'user_images/ai_avatar_'];
+            $isValid = false;
+
+            foreach ($allowedPrefixes as $prefix) {
+                if (str_starts_with($preSelectedPath, $prefix)) {
+                    $isValid = true;
+                    break;
+                }
+            }
+
+            if ($isValid) {
+                $user->setUserImagePath($preSelectedPath);
+            }
+        }
+
         if ($form->isSubmitted() && $form->isValid()) {
 
             // Upload avatar
-            $avatarFile = $form->get('avatarFile')->getData();
             if ($avatarFile) {
                 $safeFilename = $slugger->slug($step1['nom']);
                 $newFilename  = $safeFilename . '-' . uniqid() . '.' . $avatarFile->guessExtension();
