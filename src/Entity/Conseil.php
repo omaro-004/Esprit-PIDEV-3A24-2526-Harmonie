@@ -17,8 +17,8 @@ class Conseil
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: SessionMeditation::class, inversedBy: 'conseils')]
-    #[ORM\JoinColumn(name: 'session_id', referencedColumnName: 'id', nullable: true, onDelete: 'CASCADE')]
-    private ?SessionMeditation $session = null;
+    #[ORM\JoinColumn(name: 'session_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
+    private ?SessionMeditation $session = null; // @phpstan-ignore doctrine.associationType
 
     #[ORM\Column(name: 'contenu', type: Types::TEXT)]
     #[Assert\NotBlank(message: 'Le contenu du conseil est obligatoire.')]
