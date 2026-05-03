@@ -16,11 +16,11 @@ class Activite
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: Exercice::class)]
-    #[ORM\JoinColumn(name: 'id_exercice', referencedColumnName: 'id_exercice', nullable: false)]
-    private Exercice $exercice;
+    #[ORM\JoinColumn(name: 'id_exercice', referencedColumnName: 'id_exercice', nullable: true)]
+    private ?Exercice $exercice = null;
 
-    #[ORM\Column(name: 'date_activite', type: Types::DATETIME_MUTABLE)]
-    private \DateTimeInterface $dateActivite;
+    #[ORM\Column(name: 'date_activite', type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $dateActivite = null;
 
     #[ORM\Column(name: 'duree_minutes', nullable: true)]
     private ?int $dureeMinutes = null;
@@ -53,7 +53,7 @@ class Activite
         return $this->exercice;
     }
 
-    public function setExercice(Exercice $exercice): static
+    public function setExercice(?Exercice $exercice): static
     {
         $this->exercice = $exercice;
         return $this;

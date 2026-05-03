@@ -14,8 +14,8 @@ class Exercice
     #[ORM\Column(name: 'id_exercice')]
     private ?int $id = null;
 
-    #[ORM\Column(name: 'nom_exercice', length: 100)]
-    private string $nomExercice;
+    #[ORM\Column(name: 'nom_exercice', length: 100, nullable: true)]
+    private ?string $nomExercice = null;
 
     #[ORM\Column(name: 'type_exercice', length: 100, nullable: true)]
     private ?string $typeExercice = null;

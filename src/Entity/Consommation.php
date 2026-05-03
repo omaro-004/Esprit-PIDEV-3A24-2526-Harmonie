@@ -20,12 +20,12 @@ class Consommation
     #[Assert\NotNull(message: 'Veuillez choisir un aliment.')]
     private ?Aliment $aliment = null;
 
-    #[ORM\Column(name: 'date_consommation', type: 'datetime')]
-    private \DateTimeInterface $dateConsommation;
+    #[ORM\Column(name: 'date_consommation', type: 'datetime', nullable: true)]
+    private ?\DateTimeInterface $dateConsommation = null;
 
-    #[ORM\Column(name: 'type_repas', length: 50)]
+    #[ORM\Column(name: 'type_repas', length: 50, nullable: true)]
     #[Assert\NotBlank(message: 'Veuillez choisir un type de repas.')]
-    private string $typeRepas;
+    private ?string $typeRepas = null;
 
     #[ORM\Column(name: 'poids_grammes', type: 'integer', nullable: true)]
     #[Assert\GreaterThan(value: 0, message: 'La quantité doit être supérieure à 0.')]

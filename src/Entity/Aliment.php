@@ -14,20 +14,20 @@ class Aliment
     #[ORM\Column(name: 'id_aliment', type: 'integer')]
     private ?int $id = null;
 
-    #[ORM\Column(name: 'nom_aliment', length: 100)]
-    private string $nomAliment;
+    #[ORM\Column(name: 'nom_aliment', length: 100, nullable: true)]
+    private ?string $nomAliment = null;
 
-    #[ORM\Column(name: 'calories_pour_100g', type: 'integer')]
-    private int $caloriesPour100g;
+    #[ORM\Column(name: 'calories_pour_100g', type: 'integer', nullable: true)]
+    private ?int $caloriesPour100g = null;
 
-    #[ORM\Column(type: 'float')]
-    private float $proteines;
+    #[ORM\Column(type: 'float', nullable: true)]
+    private ?float $proteines = null;
 
-    #[ORM\Column(type: 'float')]
-    private float $glucides;
+    #[ORM\Column(type: 'float', nullable: true)]
+    private ?float $glucides = null;
 
-    #[ORM\Column(type: 'float')]
-    private float $lipides;
+    #[ORM\Column(type: 'float', nullable: true)]
+    private ?float $lipides = null;
 
     public function getId(): ?int
     {

@@ -18,16 +18,16 @@ class JournalHumeur
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: User::class)]
-    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'user_id', nullable: false)]
-    private User $user;
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'user_id', nullable: true)]
+    private ?User $user = null;
 
-    #[ORM\Column(name: 'date', type: Types::DATE_MUTABLE)]
+    #[ORM\Column(name: 'date', type: Types::DATE_MUTABLE, nullable: true)]
     #[Assert\NotBlank(message: 'La date est obligatoire.')]
-    private \DateTimeInterface $dateJournal;
+    private ?\DateTimeInterface $dateJournal = null;
 
-    #[ORM\Column(name: 'humeur', type: Types::STRING, length: 50, enumType: Humeur::class)]
+    #[ORM\Column(name: 'humeur', type: Types::STRING, length: 50, enumType: Humeur::class, nullable: true)]
     #[Assert\NotBlank(message: "L'humeur est obligatoire.")]
-    private Humeur $humeur;
+    private ?Humeur $humeur = null;
 
     #[ORM\Column(name: 'score', type: Types::INTEGER)]
     private int $score = 3;
@@ -58,16 +58,18 @@ class JournalHumeur
     public function getId(): ?int { return $this->id; }
 
     public function getUser(): ?User { return $this->user; }
-    public function setUser(User $user): self { $this->user = $user; return $this; }
+    public function setUser(?User $user): self { $this->user = $user; return $this; }
 
     public function getDateJournal(): ?\DateTimeInterface { return $this->dateJournal; }
-    public function setDateJournal(\DateTimeInterface $dateJournal): self { $this->dateJournal = $dateJournal; return $this; }
+    public function setDateJournal(?\DateTimeInterface $dateJournal): self { $this->dateJournal = $dateJournal; return $this; }
 
     public function getHumeur(): ?Humeur { return $this->humeur; }
-    public function setHumeur(Humeur $humeur): self
+    public function setHumeur(?Humeur $humeur): self
     {
         $this->humeur = $humeur;
-        $this->score = $humeur->score();
+        if ($humeur) {
+            $this->score = $humeur->score();
+        }
         return $this;
     }
 

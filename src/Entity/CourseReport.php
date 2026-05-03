@@ -30,7 +30,7 @@ class CourseReport
     #[ORM\Column(name: 'details', type: Types::TEXT, nullable: true)]
     private ?string $details = null;
 
-    #[ORM\Column(name: 'status', type: 'string', columnDefinition: "ENUM('pending', 'reviewed', 'dismissed')", options: ['default' => 'pending'])]
+    #[ORM\Column(name: 'status', type: 'string', length: 50, options: ['default' => 'pending'])]
     private string $status = 'pending';
 
     #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE, options: ['default' => 'CURRENT_TIMESTAMP'])]
