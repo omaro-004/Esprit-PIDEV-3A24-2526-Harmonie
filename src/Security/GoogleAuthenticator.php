@@ -79,7 +79,7 @@ class GoogleAuthenticator extends OAuth2Authenticator
                 $nameParts = explode(' ', $name, 2);
                 $prenom    = $nameParts[0];
                 $nom       = $nameParts[1] ?? 'User';
-                $userEmail = $email ?? ('google_' . $googleId . '@noemail.harmony');
+                $userEmail = $email;
 
                 $user = new User();
                 $user->setGoogleId($googleId);

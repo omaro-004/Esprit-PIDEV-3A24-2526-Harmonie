@@ -19,7 +19,11 @@ trait PersistenceHelper
     {
         $violations = $this->getValidator()->validate($entity);
         if (\count($violations) > 0) {
-            throw new \DomainException((string) $violations);
+            $messages = [];
+            foreach ($violations as $violation) {
+                $messages[] = $violation->getMessage();
+            }
+            throw new \DomainException(implode(', ', $messages));
         }
     }
 

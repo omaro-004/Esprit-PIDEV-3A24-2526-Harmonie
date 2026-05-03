@@ -94,10 +94,12 @@ class AdminJournalController extends AbstractController
 
         $lines = ["Résumé anonymisé du journal de l'étudiant(e) :", ""];
         foreach ($entries as $e) {
+            $dateFormatee = $e->getDateJournal() ? $e->getDateJournal()->format('d/m/Y') : 'N/A';
+            $humeurLabel = $e->getHumeur() ? $e->getHumeur()->label() : 'N/A';
             $lines[] = sprintf(
                 "- %s : humeur=%s, score=%d/5",
-                $e->getDateJournal()->format('d/m/Y'),
-                $e->getHumeur()->label(),
+                $dateFormatee,
+                $humeurLabel,
                 $e->getScore()
             );
         }
