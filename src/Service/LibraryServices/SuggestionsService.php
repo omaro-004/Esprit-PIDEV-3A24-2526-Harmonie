@@ -18,6 +18,8 @@ class SuggestionsService
      * Smart two-strategy book search:
      * 1. Open Library Subject API  — books officially tagged with this subject
      * 2. Fallback: search for "<subject> textbook" to fill remaining slots
+     *
+     * @return array<int, array<string, mixed>>
      */
     public function fetchBooks(string $subject, int $limit = 10): array
     {
@@ -28,7 +30,7 @@ class SuggestionsService
         // ── Strategy 1: Subject API ───────────────────────────────────────────
         try {
             $slug = strtolower($subject);
-            $slug = preg_replace('/[^a-z0-9]+/', '_', $slug);
+            $slug = (string) preg_replace('/[^a-z0-9]+/', '_', $slug);
             $slug = trim($slug, '_');
 
             $json = $this->get("https://openlibrary.org/subjects/{$slug}.json?limit={$limit}");
@@ -62,7 +64,7 @@ class SuggestionsService
                 $json     = $this->get(
                     "https://openlibrary.org/search.json?q={$query}&limit=" . ($needed + 5) . "&fields=key,title,author_name,cover_i"
                 );
-                $data     = json_decode($json, true);
+                $data     = json_decode((string) $json, true);
                 $existing = array_column($results, 'title');
 
                 foreach ($data['docs'] ?? [] as $doc) {
@@ -90,10 +92,13 @@ class SuggestionsService
 
     // ── YouTube ───────────────────────────────────────────────────────────────
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function fetchVideos(string $query, int $limit = 10): array
     {
         $results = [];
-        if (trim($query) === '' || self::YOUTUBE_API_KEY === 'YOUR_YOUTUBE_API_KEY') return $results;
+        if (trim($query) === '') return $results;
 
         try {
             $encoded = urlencode(trim($query) . ' tutorial');
@@ -101,7 +106,7 @@ class SuggestionsService
                      . "?part=snippet&type=video&maxResults={$limit}&q={$encoded}&key=" . self::YOUTUBE_API_KEY;
 
             $json = $this->get($url);
-            $data = json_decode($json, true);
+            $data = json_decode((string) $json, true);
 
             foreach ($data['items'] ?? [] as $item) {
                 if (count($results) >= $limit) break;
