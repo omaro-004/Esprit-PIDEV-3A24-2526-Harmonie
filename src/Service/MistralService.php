@@ -11,6 +11,9 @@ class MistralService
         private string $apiKey
     ) {}
 
+    /**
+     * @param \App\Entity\Commentaire[] $commentaires
+     */
     public function suggestReply(string $postTitre, string $postContenu, array $commentaires): string
     {
         // Construit le contexte de la discussion

@@ -144,7 +144,7 @@ final class GithubIssueService
         }
 
         foreach ($tasks as $task) {
-            if (!$task instanceof Tache || 'EN_COURS' !== (string) $task->getStatutTache()) {
+            if ('EN_COURS' !== (string) $task->getStatutTache()) {
                 continue;
             }
 
@@ -533,7 +533,7 @@ GQL;
             throw new \RuntimeException($msg);
         }
 
-        return is_array($data) ? $data : [];
+        return $data;
     }
 
     private function resolveRepo(Tache $tache): string
@@ -618,9 +618,7 @@ GQL;
                 usleep($delayUs);
                 $delayUs *= 2;
             }
-        } while ($attempt < 3);
-
-        return [];
+        } while (true);
     }
 
     /**

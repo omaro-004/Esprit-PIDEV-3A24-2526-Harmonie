@@ -13,7 +13,7 @@ class SpellCheckService
      * Vérifie les fautes dans un texte via LanguageTool API
      * @param string $text     Le texte à vérifier
      * @param string $language La langue (fr, en, ar...)
-     * @return array           Liste des erreurs avec suggestions
+     * @return array<int, array<string, mixed>> Liste des erreurs avec suggestions
      */
     public function check(string $text, string $language = 'fr'): array
     {

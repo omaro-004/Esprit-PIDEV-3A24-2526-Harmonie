@@ -13,6 +13,9 @@ final class KanbanRealtimeNotifier
     ) {
     }
 
+    /**
+     * @param array<string, mixed> $payload
+     */
     public function dispatch(string $type, array $payload = []): void
     {
         $event = [
@@ -27,6 +30,9 @@ final class KanbanRealtimeNotifier
         $this->cache->save($item);
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     public function getLastEvent(): ?array
     {
         $item = $this->cache->getItem(self::KEY);

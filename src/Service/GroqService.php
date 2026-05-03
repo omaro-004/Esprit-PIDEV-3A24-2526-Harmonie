@@ -59,6 +59,9 @@ class GroqService
         return trim($data['text'] ?? '');
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function generateMeditation(string $theme): array
     {
         $seed      = rand(1000, 9999);
@@ -151,6 +154,9 @@ PROMPT;
         return '';
     }
 
+    /**
+     * @return string[]
+     */
     public function generateConseils(string $theme, string $excludeHint = ''): array
     {
         $seed   = rand(1000, 9999);
@@ -179,6 +185,9 @@ PROMPT;
         return $conseils;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function parseJournalFromSpeech(string $transcription, string $today): array
     {
         $system = <<<PROMPT
@@ -229,6 +238,10 @@ PROMPT;
         );
     }
 
+    /**
+     * @param array<int, array<string, mixed>> $fields
+     * @return array<string, string>
+     */
     private function buildMultipart(array $fields): array
     {
         $boundary = '----HarmonieGroqBoundary' . uniqid();
