@@ -29,8 +29,8 @@ class CourseFile
     private int $sizeBytes = 0;
 
     #[ORM\Column(name: 'filedata', type: Types::BLOB)]
-    /** @var resource|string */
-    private $fileData;
+    /** @var resource|string|null */
+    private mixed $fileData;
 
     #[ORM\Column(name: 'uploaded_at', type: Types::DATETIME_MUTABLE, options: ['default' => 'CURRENT_TIMESTAMP'])]
     private \DateTimeInterface $uploadedAt;

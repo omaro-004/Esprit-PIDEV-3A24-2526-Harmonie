@@ -111,11 +111,7 @@ class Course
     }
     public function removeCourseFile(CourseFile $courseFile): self
     {
-        if ($this->courseFiles->removeElement($courseFile)) {
-            if ($courseFile->getCourse() === $this) {
-                $courseFile->setCourse(null);
-            }
-        }
+        $this->courseFiles->removeElement($courseFile);
         return $this;
     }
 
@@ -133,11 +129,7 @@ class Course
     }
     public function removeSavedCourse(SavedCourse $savedCourse): self
     {
-        if ($this->savedCourses->removeElement($savedCourse)) {
-            if ($savedCourse->getCourse() === $this) {
-                $savedCourse->setCourse(null);
-            }
-        }
+        $this->savedCourses->removeElement($savedCourse);
         return $this;
     }
 
@@ -155,11 +147,7 @@ class Course
     }
     public function removeCourseReport(CourseReport $courseReport): self
     {
-        if ($this->courseReports->removeElement($courseReport)) {
-            if ($courseReport->getCourse() === $this) {
-                $courseReport->setCourse(null);
-            }
-        }
+        $this->courseReports->removeElement($courseReport);
         return $this;
     }
 }
