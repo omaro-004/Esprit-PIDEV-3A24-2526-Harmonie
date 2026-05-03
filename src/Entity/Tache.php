@@ -38,7 +38,7 @@ class Tache
 
     #[ORM\ManyToOne(inversedBy: 'taches')]
     #[ORM\JoinColumn(name: 'calendrier_id', referencedColumnName: 'id', nullable: false)]
-    private ?Calendrier $calendrier = null;
+    private Calendrier $calendrier;
 
     public function getId(): ?int
     {
@@ -129,12 +129,12 @@ class Tache
         return $this;
     }
 
-    public function getCalendrier(): ?Calendrier
+    public function getCalendrier(): Calendrier
     {
         return $this->calendrier;
     }
 
-    public function setCalendrier(?Calendrier $calendrier): static
+    public function setCalendrier(Calendrier $calendrier): static
     {
         $this->calendrier = $calendrier;
 

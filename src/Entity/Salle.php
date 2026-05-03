@@ -33,7 +33,7 @@ class Salle
     private ?string $description = null;
 
     #[ORM\Column(name: 'date_creation', type: Types::DATETIME_IMMUTABLE)]
-    private ?\DateTimeImmutable $dateCreation = null;
+    private \DateTimeImmutable $dateCreation;
 
     /** @var Collection<int, Seance> */
     #[ORM\OneToMany(targetEntity: Seance::class, mappedBy: 'salle')]
@@ -115,7 +115,7 @@ class Salle
         return $this;
     }
 
-    public function getDateCreation(): ?\DateTimeImmutable
+    public function getDateCreation(): \DateTimeImmutable
     {
         return $this->dateCreation;
     }
