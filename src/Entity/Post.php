@@ -46,7 +46,7 @@ class Post
     public function setContenu(string $contenu): static { $this->contenu = $contenu; return $this; }
     public function getDateCreation(): \DateTimeInterface { return $this->dateCreation; }
     
-    protected function setDateCreation(\DateTimeInterface $d): static { $this->dateCreation = $d; return $this; }
+    public function setDateCreation(\DateTimeInterface $d): static { $this->dateCreation = $d; return $this; }
     public function getUserId(): int { return $this->userId; }
     public function setUserId(int $userId): static { $this->userId = $userId; return $this; }
     public function getIdCategorie(): int { return $this->idCategorie; }
