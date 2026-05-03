@@ -367,6 +367,140 @@
         }
         .course-list-edit-btn:hover { background: var(--purple-pale); color: var(--purple); }
 
+        /* ── SEARCH & FILTER BAR ──────────────────────────────────── */
+        .search-filter-bar {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 20px; flex-wrap: wrap;
+        }
+        .search-wrap {
+            position: relative; flex: 1; min-width: 220px;
+        }
+        .search-icon {
+            position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+            color: var(--text-muted); pointer-events: none; display: flex;
+        }
+        .search-input {
+            width: 100%; padding: 9px 13px 9px 38px;
+            background: var(--white); border: 1.5px solid var(--border);
+            border-radius: var(--radius-md); font-family: var(--font-body);
+            font-size: 13.5px; color: var(--text); outline: none;
+            box-shadow: var(--shadow-sm);
+            transition: border-color var(--transition), box-shadow var(--transition);
+        }
+        .search-input::placeholder { color: var(--text-muted); }
+        .search-input:focus {
+            border-color: var(--purple-soft);
+            box-shadow: 0 0 0 3px rgba(106,90,205,.12);
+        }
+        .search-clear {
+            position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+            width: 20px; height: 20px; border-radius: 50%; border: none;
+            background: var(--text-muted); color: #fff; font-size: 10px;
+            cursor: pointer; display: none; place-items: center;
+            transition: background var(--transition);
+        }
+        .search-clear.visible { display: grid; }
+        .search-clear:hover { background: var(--purple); }
+        /* ── SUBJECT DROPDOWN ─────────────────────────────────────── */
+        .subject-dropdown-wrap {
+            position: relative; flex-shrink: 0;
+        }
+        .subject-dropdown-trigger {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 9px 13px; min-width: 180px;
+            background: var(--white); border: 1.5px solid var(--border);
+            border-radius: var(--radius-md); font-family: var(--font-body);
+            font-size: 13.5px; color: var(--text-mid); cursor: pointer;
+            box-shadow: var(--shadow-sm);
+            transition: border-color var(--transition), box-shadow var(--transition);
+            user-select: none;
+        }
+        .subject-dropdown-trigger:hover,
+        .subject-dropdown-trigger.open {
+            border-color: var(--purple-soft);
+            box-shadow: 0 0 0 3px rgba(106,90,205,.1);
+            color: var(--text);
+        }
+        .subject-dropdown-trigger.has-value { color: var(--purple); font-weight: 500; }
+        .sdt-label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sdt-chevron {
+            flex-shrink: 0; transition: transform var(--transition);
+        }
+        .subject-dropdown-trigger.open .sdt-chevron { transform: rotate(180deg); }
+        .sdt-clear {
+            flex-shrink: 0; width: 16px; height: 16px; border-radius: 50%;
+            background: var(--text-muted); color: #fff; font-size: 9px;
+            border: none; cursor: pointer; display: none; place-items: center;
+            transition: background var(--transition);
+        }
+        .sdt-clear.visible { display: grid; }
+        .sdt-clear:hover { background: var(--purple); }
+
+        .subject-dropdown-panel {
+            position: absolute; top: calc(100% + 6px); left: 0;
+            width: 240px; z-index: 300;
+            background: var(--white); border: 1.5px solid var(--border);
+            border-radius: var(--radius-lg); box-shadow: var(--shadow-md);
+            padding: 8px;
+            opacity: 0; pointer-events: none; transform: translateY(-6px);
+            transition: opacity var(--transition), transform var(--transition);
+        }
+        .subject-dropdown-panel.open {
+            opacity: 1; pointer-events: all; transform: translateY(0);
+        }
+        .sdp-search-wrap { position: relative; margin-bottom: 6px; }
+        .sdp-search-icon {
+            position: absolute; left: 9px; top: 50%; transform: translateY(-50%);
+            color: var(--text-muted); pointer-events: none; display: flex;
+        }
+        .sdp-search {
+            width: 100%; padding: 7px 10px 7px 30px;
+            background: var(--purple-ghost); border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm); font-family: var(--font-body);
+            font-size: 13px; color: var(--text); outline: none;
+            transition: border-color var(--transition);
+        }
+        .sdp-search::placeholder { color: var(--text-muted); }
+        .sdp-search:focus { border-color: var(--purple-soft); }
+        .sdp-list {
+            max-height: 220px; overflow-y: auto;
+            scrollbar-width: thin; scrollbar-color: var(--purple-soft) transparent;
+        }
+        .sdp-list::-webkit-scrollbar { width: 4px; }
+        .sdp-list::-webkit-scrollbar-thumb { background: var(--purple-soft); border-radius: 2px; }
+        .sdp-option {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 10px; border-radius: var(--radius-sm);
+            font-size: 13px; color: var(--text-mid); cursor: pointer;
+            transition: background var(--transition), color var(--transition);
+        }
+        .sdp-option:hover { background: var(--purple-pale); color: var(--purple); }
+        .sdp-option.selected { background: var(--purple-pale); color: var(--purple); font-weight: 600; }
+        .sdp-option-check {
+            width: 14px; height: 14px; border-radius: 4px;
+            border: 1.5px solid var(--border); flex-shrink: 0;
+            display: grid; place-items: center; font-size: 9px;
+            transition: background var(--transition), border-color var(--transition);
+        }
+        .sdp-option.selected .sdp-option-check {
+            background: var(--purple); border-color: var(--purple); color: #fff;
+        }
+        .sdp-empty { padding: 12px 10px; font-size: 13px; color: var(--text-muted); text-align: center; }
+        .search-results-count {
+            font-size: 12.5px; color: var(--text-muted); margin-bottom: 12px;
+            min-height: 18px;
+        }
+        .no-results-msg {
+            grid-column: 1/-1; display: flex; flex-direction: column; align-items: center;
+            padding: 60px 40px; text-align: center;
+            background: var(--white); border: 1px solid var(--border);
+            border-radius: var(--radius-xl); display: none;
+        }
+        .no-results-msg.visible { display: flex; }
+        .no-results-msg .no-results-icon { font-size: 2.5rem; margin-bottom: 16px; }
+        .no-results-msg h4 { font-family: var(--font-head); font-size: 17px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+        .no-results-msg p  { font-size: 13.5px; color: var(--text-muted); }
+
         /* ── COVER PREVIEW IN CHANGE-IMAGE MODAL ─────────────────── */
         .cover-preview-wrap {
             width: 100%; height: 140px; border-radius: var(--radius-md);
@@ -432,6 +566,47 @@
                 <a href="{{ path('library') }}" class="btn btn-secondary">📚 Library</a>
             </div>
         </div>
+
+        {# ── SEARCH & FILTER BAR ────────────────────────────────────── #}
+        <div class="search-filter-bar">
+            <div class="search-wrap">
+                <span class="search-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </span>
+                <input type="search" id="courseSearchInput" class="search-input"
+                       placeholder="Search courses…" autocomplete="off" aria-label="Search courses">
+                <button type="button" id="searchClearBtn" class="search-clear" aria-label="Clear search">✕</button>
+            </div>
+            {% if subjects is defined and subjects|length > 0 %}
+                <div class="subject-dropdown-wrap" id="subjectDropdownWrap">
+                    <button type="button" class="subject-dropdown-trigger" id="subjectDropdownTrigger"
+                            aria-haspopup="listbox" aria-expanded="false" aria-label="Filter by subject">
+                        <span class="sdt-label" id="subjectDropdownLabel">All Subjects</span>
+                        <button type="button" class="sdt-clear" id="subjectDropdownClear" aria-label="Clear subject filter" tabindex="-1">✕</button>
+                        <svg class="sdt-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="subject-dropdown-panel" id="subjectDropdownPanel" role="listbox" aria-label="Subjects">
+                        <div class="sdp-search-wrap">
+                            <span class="sdp-search-icon">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            </span>
+                            <input type="search" class="sdp-search" id="subjectSearch" placeholder="Search subjects…" autocomplete="off" aria-label="Search subjects">
+                        </div>
+                        <div class="sdp-list" id="subjectList">
+                            <div class="sdp-option selected" data-subject="" role="option" aria-selected="true">
+                                <span class="sdp-option-check">✓</span> All Subjects
+                            </div>
+                            {% for subject in subjects %}
+                                <div class="sdp-option" data-subject="{{ subject.name }}" role="option" aria-selected="false">
+                                    <span class="sdp-option-check"></span> {{ subject.name }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        <div class="search-results-count" id="searchResultsCount" aria-live="polite"></div>
 
         {# Toolbar — view toggle #}
         <div class="toolbar">
@@ -508,6 +683,11 @@
                     <button class="btn btn-primary" id="emptyAddBtn">Add Course</button>
                 </div>
             {% endif %}
+            <div class="no-results-msg" id="noResultsGrid">
+                <div class="no-results-icon">🔍</div>
+                <h4>No courses match your search</h4>
+                <p>Try a different keyword or clear the subject filter.</p>
+            </div>
         </div>
 
         {# ── LIST VIEW (hidden by default) ──────────────────────────── #}
@@ -570,6 +750,11 @@
                     <button class="btn btn-primary" id="emptyAddBtnList">Add Course</button>
                 </div>
             {% endif %}
+            <div class="no-results-msg" id="noResultsList" style="grid-column:unset;">
+                <div class="no-results-icon">🔍</div>
+                <h4>No courses match your search</h4>
+                <p>Try a different keyword or clear the subject filter.</p>
+            </div>
         </div>
 
     </div>{# /container #}
@@ -729,6 +914,129 @@
     <div class="toast-container" id="toastContainer" aria-live="polite"></div>
 
     <script>
+        /* ── SEARCH & FILTER ────────────────────────────────────────── */
+        (function () {
+            const searchInput   = document.getElementById('courseSearchInput');
+            const clearBtn      = document.getElementById('searchClearBtn');
+            const countEl       = document.getElementById('searchResultsCount');
+            const noResultsGrid = document.getElementById('noResultsGrid');
+            const noResultsList = document.getElementById('noResultsList');
+
+            const trigger   = document.getElementById('subjectDropdownTrigger');
+            const panel     = document.getElementById('subjectDropdownPanel');
+            const label     = document.getElementById('subjectDropdownLabel');
+            const sdtClear  = document.getElementById('subjectDropdownClear');
+            const sdpSearch = document.getElementById('subjectSearch');
+            const sdpList   = document.getElementById('subjectList');
+
+            let activeSubject = '';
+
+            /* ── Filtering ── */
+            function filterCourses() {
+                const query = (searchInput ? searchInput.value.trim().toLowerCase() : '');
+                if (clearBtn) clearBtn.classList.toggle('visible', query.length > 0);
+
+                const gridCards = [...document.querySelectorAll('#gridView .course-card')];
+                const listItems = [...document.querySelectorAll('#listView .course-list-item')];
+
+                function matches(el) {
+                    const title   = (el.dataset.title   || '').toLowerCase();
+                    const subject = (el.dataset.subject || '').toLowerCase();
+                    const qOk = !query || title.includes(query) || subject.includes(query);
+                    const sOk = !activeSubject || subject === activeSubject.toLowerCase();
+                    return qOk && sOk;
+                }
+
+                let visible = 0;
+                gridCards.forEach(el => { const s = matches(el); el.style.display = s ? '' : 'none'; if (s) visible++; });
+                listItems.forEach(el => { el.style.display = matches(el) ? '' : 'none'; });
+
+                if (query || activeSubject) {
+                    if (countEl) countEl.textContent = visible + ' of ' + gridCards.length + ' course' + (gridCards.length !== 1 ? 's' : '') + ' shown';
+                    if (noResultsGrid) noResultsGrid.classList.toggle('visible', visible === 0);
+                    if (noResultsList) noResultsList.classList.toggle('visible', visible === 0);
+                } else {
+                    if (countEl) countEl.textContent = '';
+                    if (noResultsGrid) noResultsGrid.classList.remove('visible');
+                    if (noResultsList) noResultsList.classList.remove('visible');
+                }
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('input', filterCourses);
+                if (clearBtn) clearBtn.addEventListener('click', () => { searchInput.value = ''; filterCourses(); searchInput.focus(); });
+            }
+
+            /* ── Dropdown open/close ── */
+            function openPanel() {
+                if (!panel) return;
+                panel.classList.add('open');
+                trigger.classList.add('open');
+                trigger.setAttribute('aria-expanded', 'true');
+                setTimeout(() => sdpSearch && sdpSearch.focus(), 60);
+            }
+            function closePanel() {
+                if (!panel) return;
+                panel.classList.remove('open');
+                trigger.classList.remove('open');
+                trigger.setAttribute('aria-expanded', 'false');
+                if (sdpSearch) { sdpSearch.value = ''; renderOptions(''); }
+            }
+
+            if (trigger) {
+                trigger.addEventListener('click', e => {
+                    if (e.target.closest('.sdt-clear')) return;
+                    panel.classList.contains('open') ? closePanel() : openPanel();
+                });
+            }
+            document.addEventListener('click', e => {
+                if (panel && panel.classList.contains('open') && !e.target.closest('#subjectDropdownWrap')) closePanel();
+            });
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape' && panel && panel.classList.contains('open')) closePanel();
+            });
+
+            /* ── Search inside dropdown ── */
+            function renderOptions(query) {
+                if (!sdpList) return;
+                const q = query.toLowerCase();
+                sdpList.querySelectorAll('.sdp-option').forEach(opt => {
+                    const text = (opt.dataset.subject || 'all subjects').toLowerCase();
+                    opt.style.display = (!q || text.includes(q)) ? '' : 'none';
+                });
+                const anyVisible = [...sdpList.querySelectorAll('.sdp-option')].some(o => o.style.display !== 'none');
+                let emptyMsg = sdpList.querySelector('.sdp-empty');
+                if (!anyVisible) {
+                    if (!emptyMsg) { emptyMsg = document.createElement('div'); emptyMsg.className = 'sdp-empty'; emptyMsg.textContent = 'No subjects found'; sdpList.appendChild(emptyMsg); }
+                    emptyMsg.style.display = '';
+                } else if (emptyMsg) { emptyMsg.style.display = 'none'; }
+            }
+            if (sdpSearch) sdpSearch.addEventListener('input', () => renderOptions(sdpSearch.value));
+
+            /* ── Select option ── */
+            function selectSubject(subject, text) {
+                activeSubject = subject;
+                if (label) label.textContent = subject ? text : 'All Subjects';
+                if (trigger) trigger.classList.toggle('has-value', !!subject);
+                if (sdtClear) sdtClear.classList.toggle('visible', !!subject);
+                if (sdpList) sdpList.querySelectorAll('.sdp-option').forEach(opt => {
+                    const sel = opt.dataset.subject === subject;
+                    opt.classList.toggle('selected', sel);
+                    opt.setAttribute('aria-selected', String(sel));
+                    opt.querySelector('.sdp-option-check').textContent = sel ? '✓' : '';
+                });
+                closePanel();
+                filterCourses();
+            }
+
+            if (sdpList) sdpList.addEventListener('click', e => {
+                const opt = e.target.closest('.sdp-option');
+                if (!opt) return;
+                selectSubject(opt.dataset.subject, opt.textContent.replace('✓', '').trim());
+            });
+            if (sdtClear) sdtClear.addEventListener('click', e => { e.stopPropagation(); selectSubject('', ''); });
+        })();
+
         (function () {
             /* ── VIEW TOGGLE ────────────────────────────────────────────── */
             const gridView    = document.getElementById('gridView');
