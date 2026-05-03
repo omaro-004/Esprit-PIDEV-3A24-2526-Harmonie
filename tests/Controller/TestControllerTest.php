@@ -25,7 +25,10 @@ final class TestControllerTest extends WebTestCase
                 ->setUserPrenom('User')
                 ->setUserPassword('password')
                 ->setDateInscription('2026-05-03')
-                ->setTypeUtilisateur('ADMIN');
+                ->setTypeUtilisateur('ETUDIANT');
+            $em = static::getContainer()->get('doctrine.orm.entity_manager');
+            $em->persist($testUser);
+            $em->flush();
         }
 
         $this->client->loginUser($testUser);

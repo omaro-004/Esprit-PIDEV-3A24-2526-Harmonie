@@ -21,6 +21,7 @@
         "phpdocumentor/reflection-docblock": "^5.6.7",
         "phpoffice/phpspreadsheet": "^5.6",
         "phpstan/phpdoc-parser": "^2.3.2",
+        "smalot/pdfparser": "^2.12",
         "symfony/asset": "6.4.*",
         "symfony/asset-mapper": "6.4.*",
         "symfony/console": "6.4.*",
@@ -56,6 +57,7 @@
         "twig/twig": "^3.0"
     },
     "require-dev": {
+        "ahmed-bhs/doctrine-doctor": "*",
         "doctrine/doctrine-fixtures-bundle": "^4.3",
         "phpstan/extension-installer": "^1.4",
         "phpstan/phpstan": "^2.1",
@@ -118,7 +120,7 @@
     },
     "extra": {
         "symfony": {
-            "allow-contrib": false,
+            "allow-contrib": true,
             "require": "6.4.*",
             "docker": false
         }
