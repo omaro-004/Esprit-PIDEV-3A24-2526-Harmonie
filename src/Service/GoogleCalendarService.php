@@ -8,9 +8,9 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class GoogleCalendarService
 {
-    private $client;
-    private $em;
-    private $router;
+    private ?\Google_Client $client = null;
+    private EntityManagerInterface $em;
+    private UrlGeneratorInterface $router;
 
     public function __construct(EntityManagerInterface $em, UrlGeneratorInterface $router)
     {
@@ -42,7 +42,7 @@ class GoogleCalendarService
         return $this->client->createAuthUrl();
     }
 
-    public function authenticate(string $code, $user)
+    public function authenticate(string $code, \App\Entity\User $user): bool
     {
         if (!$this->client) return false;
 
@@ -52,7 +52,8 @@ class GoogleCalendarService
             return false;
         }
 
-        $user->setGoogleAccessToken(json_encode($token));
+        $encodedToken = json_encode($token);
+        $user->setGoogleAccessToken($encodedToken !== false ? $encodedToken : null);
 
         if (isset($token['refresh_token'])) {
             $user->setGoogleRefreshToken($token['refresh_token']);
@@ -70,7 +71,7 @@ class GoogleCalendarService
         return true;
     }
 
-    private function autoConfigForUser($user)
+    private function autoConfigForUser(?\App\Entity\User $user): bool
     {
         if (!$this->client || !$user || !$user->getGoogleAccessToken()) {
             return false;
@@ -87,7 +88,8 @@ class GoogleCalendarService
                 $newTokenData = $this->client->fetchAccessTokenWithRefreshToken($refreshToken);
                 if (!isset($newTokenData['error'])) {
                     $newTokenData['refresh_token'] = $refreshToken;
-                    $user->setGoogleAccessToken(json_encode($newTokenData));
+                    $encodedNewToken = json_encode($newTokenData);
+                    $user->setGoogleAccessToken($encodedNewToken !== false ? $encodedNewToken : null);
 
                     if (isset($newTokenData['expires_in'])) {
                         $expiresAt = new \DateTime();
@@ -106,14 +108,16 @@ class GoogleCalendarService
         return true;
     }
 
-    public function syncEventToGoogle(Evenement $event)
+    public function syncEventToGoogle(Evenement $event): ?string
     {
         $user = $event->getProprietaire();
         if (!$user || !$this->autoConfigForUser($user)) {
             return null;
         }
 
-        $service = new \Google_Service_Calendar($this->client);
+        /** @var \Google_Client $client */
+        $client = $this->client;
+        $service = new \Google_Service_Calendar($client);
 
         $googleEvent = new \Google_Service_Calendar_Event([
             'summary' => $event->getTitre() ?? 'Sans titre',
@@ -146,14 +150,16 @@ class GoogleCalendarService
         }
     }
 
-    public function deleteEventFromGoogle(Evenement $event)
+    public function deleteEventFromGoogle(Evenement $event): bool
     {
         $user = $event->getProprietaire();
         if (!$user || !$this->autoConfigForUser($user) || !$event->getGoogleEventId()) {
             return false;
         }
 
-        $service = new \Google_Service_Calendar($this->client);
+        /** @var \Google_Client $client */
+        $client = $this->client;
+        $service = new \Google_Service_Calendar($client);
         try {
             $service->events->delete('primary', $event->getGoogleEventId());
             return true;
@@ -162,13 +168,15 @@ class GoogleCalendarService
         }
     }
 
-    public function pullEventsFromGoogle(\App\Entity\User $user)
+    public function pullEventsFromGoogle(\App\Entity\User $user): bool
     {
         if (!$this->autoConfigForUser($user)) {
             return false;
         }
 
-        $service = new \Google_Service_Calendar($this->client);
+        /** @var \Google_Client $client */
+        $client = $this->client;
+        $service = new \Google_Service_Calendar($client);
         $optParams = [
             'maxResults' => 200,
             'orderBy' => 'startTime',
