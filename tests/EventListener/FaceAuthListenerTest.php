@@ -34,7 +34,6 @@ class FaceAuthListenerTest extends TestCase
     private function setUserId(User $user, int $id): void
     {
         $prop = new \ReflectionProperty(User::class, 'userId');
-        $prop->setAccessible(true);
         $prop->setValue($user, $id);
     }
 
