@@ -15,24 +15,27 @@ class Reaction
     private ?int $idReaction = null;
 
     #[ORM\Column(name: "type_reaction", length: 50)]
-    private ?string $typeReaction = null;
+    private string $typeReaction = '';
 
     #[ORM\Column(name: "date_reaction", type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $dateReaction = null;
+    private \DateTimeInterface $dateReaction;
 
     #[ORM\Column(name: "id_post", type: "integer")]
-    private ?int $idPost = null;
+    private int $idPost = 0;
 
     #[ORM\Column(name: "user_id", type: "integer")]
-    private ?int $userId = null;
+    private int $userId = 0;
 
     public function getIdReaction(): ?int { return $this->idReaction; }
-    public function getTypeReaction(): ?string { return $this->typeReaction; }
+
+    public function getTypeReaction(): string { return $this->typeReaction; }
     public function setTypeReaction(string $v): static { $this->typeReaction = $v; return $this; }
-    public function getDateReaction(): ?\DateTimeInterface { return $this->dateReaction; }
+
+    public function getDateReaction(): \DateTimeInterface { return $this->dateReaction; }
     public function setDateReaction(\DateTimeInterface $v): static { $this->dateReaction = $v; return $this; }
-    public function getIdPost(): ?int { return $this->idPost; }
+
+    public function getIdPost(): int { return $this->idPost; }
     public function setIdPost(int $v): static { $this->idPost = $v; return $this; }
-    public function getUserId(): ?int { return $this->userId; }
+    public function getUserId(): int { return $this->userId; }
     public function setUserId(int $v): static { $this->userId = $v; return $this; }
 }

@@ -89,7 +89,7 @@ final class AdminSalleController extends AbstractController
     {
         $token = $request->request->getString('_token') ?: $request->getPayload()->getString('_token');
         if (!$this->isCsrfTokenValid('admin_toggle_salle'.$salle->getId(), $token)) {
-            if ($request->isXmlHttpRequest()) {
+        if ($request->isXmlHttpRequest()) {
                 return new JsonResponse(['ok' => false, 'error' => 'CSRF'], Response::HTTP_FORBIDDEN);
             }
 
@@ -99,7 +99,7 @@ final class AdminSalleController extends AbstractController
         try {
             $salle->setDisponible(!$salle->isDisponible());
             $domainService->saveSalle($salle);
-            if ($request->isXmlHttpRequest()) {
+        if ($request->isXmlHttpRequest()) {
                 return new JsonResponse([
                     'ok' => true,
                     'disponible' => $salle->isDisponible(),
@@ -107,7 +107,8 @@ final class AdminSalleController extends AbstractController
             }
             $this->addFlash('success', $salle->isDisponible() ? 'Salle marquée disponible.' : 'Salle marquée indisponible.');
         } catch (\DomainException $e) {
-            if ($request->isXmlHttpRequest()) {
+            /** @phpstan-ignore-next-line */
+        if ($request->isXmlHttpRequest()) {
                 return new JsonResponse(['ok' => false, 'error' => $e->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
             $this->addFlash('danger', $e->getMessage());

@@ -47,33 +47,43 @@ class GoogleAuthenticator extends OAuth2Authenticator
 
                 $googleId = $googleUser->getId();
                 $email    = $googleUser->getEmail();
+                if ($email === null) {
+                    throw new AuthenticationException('Email Google manquant.');
+                }
 
                 // 1. L'utilisateur a déjà lié son compte Google ?
                 $user = $this->userRepo->findOneBy(['googleId' => $googleId]);
-                if ($user) {
+                if ($user instanceof User) {
                     return $user;
                 }
 
                 // 2. Un compte existe avec ce même email ?
-                $user = $this->userRepo->findOneBy(['userEmail' => $email]);
-                if ($user) {
-                    // Lier le compte Google à l'utilisateur existant
-                    $user->setGoogleId($googleId);
-                    if (!$user->getOauthAvatarUrl()) {
-                        $user->setOauthAvatarUrl($googleUser->getAvatar());
+                if ($email) {
+                    $user = $this->userRepo->findOneBy(['userEmail' => $email]);
+                    if ($user instanceof User) {
+                        // Lier le compte Google à l'utilisateur existant
+                        $user->setGoogleId($googleId);
+                        if (!$user->getOauthAvatarUrl()) {
+                            $user->setOauthAvatarUrl($googleUser->getAvatar());
+                        }
+                        $this->em->flush();
+                        return $user;
                     }
-                    $this->em->flush();
-                    return $user;
                 }
 
                 // 3. Aucun compte → créer un nouvel utilisateur
-                $nameParts = explode(' ', $googleUser->getName() ?? 'Google User', 2);
-                $prenom    = $nameParts[0] ?? 'Google';
+                $name = (string) $googleUser->getName();
+                if ($name === '') {
+                    $name = 'Google User';
+                }
+                $nameParts = explode(' ', $name, 2);
+                $prenom    = $nameParts[0];
                 $nom       = $nameParts[1] ?? 'User';
+                $userEmail = $email ?? ('google_' . $googleId . '@noemail.harmony');
 
                 $user = new User();
                 $user->setGoogleId($googleId);
-                $user->setUserEmail($email);
+                $user->setUserEmail($userEmail);
                 $user->setUserNom($nom);
                 $user->setUserPrenom($prenom);
                 $user->setUserDateDeNaissance('2000-01-01'); // valeur par défaut
@@ -101,7 +111,9 @@ class GoogleAuthenticator extends OAuth2Authenticator
 
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
     {
-        $request->getSession()->getFlashBag()->add(
+        /** @var \Symfony\Component\HttpFoundation\Session\Session $session */
+        $session = $request->getSession();
+        $session->getFlashBag()->add(
             'error',
             'Connexion Google échouée : ' . strtr($exception->getMessageKey(), $exception->getMessageData())
         );

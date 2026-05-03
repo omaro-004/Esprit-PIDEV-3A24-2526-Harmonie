@@ -25,12 +25,91 @@ use App\Service\ImageGen;
 // ── Résumer la discussion ──────────────────────────────
 use App\Service\SummaryService;
 use App\Repository\CommentaireRepository;
+use App\Service\MistralService;
 
 
 use App\Repository\PostRepository;
 use App\Service\SentimentService;
+
+use App\Service\FactCheckService;
+
 class ForumController extends AbstractController
 {
+   #[Route('/forum/post/{id}/factcheck', name: 'forum_fact_check', methods: ['POST'])]
+    public function factCheck(
+        int $id,
+        PostRepository $postRepo,
+        FactCheckService $factCheck
+    ): JsonResponse {
+        $post = $postRepo->find($id);
+        if (!$post) return new JsonResponse(['error' => 'Post introuvable'], 404);
+
+        $result = $factCheck->checkPost(
+            $post->getTitre(),
+            $post->getContenu()
+        );
+        return new JsonResponse($result);
+    }
+
+    #[Route('/forum/post/{id}/factcheck-chat', name: 'forum_fact_check_chat', methods: ['POST'])]
+    public function factCheckChat(
+        int $id,
+        Request $request,
+        PostRepository $postRepo,
+        CommentaireRepository $commentaireRepo,
+        FactCheckService $factCheck
+    ): JsonResponse {
+        $post = $postRepo->find($id);
+        if (!$post) return new JsonResponse(['error' => 'Post introuvable'], 404);
+
+        $question = (string) $request->request->get('question', '');
+        if (empty(trim($question))) {
+            return new JsonResponse(['error' => 'Question vide'], 400);
+        }
+
+        $commentaires = $commentaireRepo->findBy(['idPost' => $id], ['dateCommentaire' => 'DESC'], 5);
+
+        $response = $factCheck->chatAboutPost(
+            $post->getTitre(),
+            $post->getContenu(),
+            $question,
+            $commentaires
+        );
+        return new JsonResponse(['response' => $response]);
+    }
+
+        // ── Suggestion de réponse via Mistral AI ──────────────
+    #[Route('/forum/post/{id}/suggest-reply', name: 'suggest_reply', methods: ['POST'])]
+    public function suggestReply(
+        int $id,
+        PostRepository $postRepo,
+        CommentaireRepository $commentaireRepo,
+        MistralService $mistralService
+    ): JsonResponse {
+        try {
+            $post = $postRepo->find($id);
+            if (!$post) {
+                return new JsonResponse(['error' => 'Post introuvable'], 404);
+            }
+
+            $commentaires = $commentaireRepo->findBy(
+                ['idPost' => $id],
+                ['dateCommentaire' => 'DESC'],
+                5  // derniers 5 commentaires
+            );
+
+            $suggestion = $mistralService->suggestReply(
+                $post->getTitre(),
+                $post->getContenu(),
+                $commentaires
+            );
+
+            return new JsonResponse(['suggestion' => $suggestion]);
+
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
     // ── analyse du sentiment comment ──────────────────────────────
     #[Route('/forum/comment/{id}/sentiment', name: 'comment_sentiment', methods: ['POST'])]
     public function analyzeSentiment(
@@ -112,8 +191,8 @@ class ForumController extends AbstractController
         Request $request,
         ImageGen $imageGenerator
     ): JsonResponse {
-        $prompt = trim($request->request->get('prompt', ''));
-        $style  = trim($request->request->get('style', ''));
+        $prompt = trim((string) $request->request->get('prompt', ''));
+        $style  = trim((string) $request->request->get('style', ''));
 
 
         if (empty($prompt)) {
@@ -152,8 +231,8 @@ class ForumController extends AbstractController
         Request $request,
         SpellCheckService $spellCheck
     ): JsonResponse {
-        $text     = $request->request->get('text', '');
-        $language = $request->request->get('language', 'fr');
+        $text     = (string) $request->request->get('text', '');
+        $language = (string) $request->request->get('language', 'fr');
 
 
         // Sécurité — texte trop long
@@ -171,7 +250,12 @@ class ForumController extends AbstractController
 
     private function getCurrentUserId(): int
     {
-        return $this->getUser()->getUserId();
+        // ❌ AVANT — getUserId() n'existe pas dans UserInterface
+        //return $this->getUser()->getUserId();
+        // ✅ APRÈS — cast vers ton entité User
+        /** @var \App\Entity\User $user */
+        $user = $this->getUser();
+        return (int) $user->getId();
     }
 
 
@@ -201,8 +285,8 @@ class ForumController extends AbstractController
 
 
         // Traduit le titre et le contenu séparément
-        $translatedTitre   = $translator->translate($post->getTitre(), 'fr', $targetLang);
-        $translatedContenu = $translator->translate($post->getContenu(), 'fr', $targetLang);
+        $translatedTitre   = $translator->translate($post->getTitre(), 'fr', (string) $targetLang);
+        $translatedContenu = $translator->translate($post->getContenu(), 'fr', (string) $targetLang);
 
 
         return new JsonResponse([
@@ -219,11 +303,17 @@ class ForumController extends AbstractController
 
 
     #[Route('/forum', name: 'forum')]
-    public function index(EntityManagerInterface $em): Response
-    {
-        $categories = $em->getRepository(Categorie::class)->findAll();
+    public function index(
+        EntityManagerInterface $em,
+        \App\Repository\PostRepository $postRepo,
+        \App\Repository\CommentaireRepository $comRepo
+    ): Response {
+        $categories = $em->getRepository(Categorie::class)->findBy([], ['dateCreation' => 'ASC'], 50);
+
         return $this->render('forum/index.html.twig', [
-            'categories' => $categories,
+            'categories'    => $categories,
+            'nb_posts'      => $postRepo->count([]),
+            'nb_commentaires' => $comRepo->count([]),
         ]);
     }
 
@@ -284,24 +374,6 @@ public function editCategorie(int $id, Request $request, EntityManagerInterface 
         if ($cat) { $em->remove($cat); $em->flush(); }
         return $this->redirectToRoute('forum');
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     // ════════════════════════════════════════════════
     //  POSTS — avec recherche, tri, pagination
     // ════════════════════════════════════════════════
@@ -322,18 +394,19 @@ public function posts(
 
 
     // ── Paramètres GET ──
-    $search = trim($request->query->get('search', ''));
-    $tri    = $request->query->get('tri', 'date_desc');
+    $search = trim((string) $request->query->get('search', ''));
+    $tri    = (string) $request->query->get('tri', 'date_desc');
 
 
     // ── Construction de la requête Doctrine (QueryBuilder) ──
     // On passe le QueryBuilder au paginator, pas les résultats
     // Le paginator s'occupe lui-même de LIMIT et OFFSET selon la page
     $qb = $em->createQueryBuilder()
-        ->select('p')
-        ->from(Post::class, 'p')
-        ->where('p.idCategorie = :idCat')
-        ->setParameter('idCat', $id);
+    ->select('p')
+    ->from(Post::class, 'p')
+    ->where('p.idCategorie = :idCat')
+    ->setParameter('idCat', $id)
+    ->orderBy('p.dateCreation', 'DESC');
 
 
     if ($search !== '') {
@@ -379,7 +452,8 @@ public function posts(
 
     // Tri par likes (après pagination — uniquement sur la page courante)
     if ($tri === 'likes') {
-        $postsArray = $posts;
+
+        $postsArray = iterator_to_array($posts);
         usort($postsArray, fn($a, $b) =>
             ($likesMap[$b->getIdPost()] ?? 0) <=> ($likesMap[$a->getIdPost()] ?? 0)
         );
@@ -396,7 +470,7 @@ public function posts(
 
 
     // ── Map userId => "Prénom Nom" ──
-    $userIds = array_unique(array_map(fn($p) => $p->getUserId(), $posts));
+    $userIds = array_unique(array_map(fn($p) => $p->getUserId(), (array) $posts));
     $allCommentUserIds = [];
     foreach ($commentairesMap as $comments) {
         foreach ($comments as $c) {
@@ -410,7 +484,8 @@ public function posts(
     if (!empty($allUserIds)) {
         $users = $em->createQueryBuilder()
             ->select('u')->from(\App\Entity\User::class, 'u')
-            ->where('u.userId IN (:ids)')->setParameter('ids', $allUserIds)
+            ->where('u.userId IN (:ids)')
+            ->setParameter('ids', $allUserIds, \Doctrine\DBAL\ArrayParameterType::INTEGER)
             ->getQuery()->getResult();
         foreach ($users as $u) {
             $usersMap[$u->getUserId()] = $u->getUserPrenom() . ' ' . $u->getUserNom();
@@ -431,7 +506,7 @@ public function posts(
         // Ces variables ne sont plus nécessaires — KnpPaginator les gère
         // 'page'       => supprimé
         // 'totalPages' => supprimé
-        // 'total'      => supprimé
+        // 'total'      => $total,
     ]);
 }
     // ════════════════════════════════════════════════
@@ -552,11 +627,14 @@ public function editPost(
     int $id,
     Request $request,
     EntityManagerInterface $em,
-    SluggerInterface $slugger
+    SluggerInterface $slugger,
+    ModerationService $moderation
 ): Response {
     $post      = $em->getRepository(Post::class)->find($id);
     if (!$post) throw $this->createNotFoundException();
-    $categorie = $em->getRepository(Categorie::class)->find($post->getIdCategorie());
+    $idCat = $post->getIdCategorie();
+    if (!$idCat) throw $this->createNotFoundException('Catégorie introuvable');
+    $categorie = $em->getRepository(Categorie::class)->find($idCat);
 
 
     $form = $this->createForm(PostType::class, $post, ['attr' => ['novalidate' => 'novalidate']]);
@@ -576,6 +654,7 @@ public function editPost(
             $newFilename      = $safeFilename . '-' . uniqid() . '.' . $imageFile->guessExtension();
 
 
+            // ✅ APRÈS — retire $moderation = null
             try {
                 $imageFile->move(
                     $this->getParameter('posts_images_directory'),
@@ -588,6 +667,7 @@ public function editPost(
         }
         // ── Vérification gros mots ──
         $texteAVerifier = $post->getTitre() . ' ' . $post->getContenu();
+        //$moderation = new \App\Service\ModerationService();
         if ($moderation->containsProfanity($texteAVerifier)) {
             $this->addFlash('error_moderation',
                 '🚫 Votre post contient des termes inappropriés. Merci de le reformuler.');
@@ -610,11 +690,6 @@ public function editPost(
         'categorie' => $categorie,
     ]);
 }
-
-
-   
-
-
     #[Route('/forum/post/{id}/delete', name: 'forum_post_delete', methods: ['POST'])]
     public function deletePost(int $id, EntityManagerInterface $em): Response
     {
@@ -647,7 +722,7 @@ public function editPost(
     if (!$post) throw $this->createNotFoundException();
 
 
-    $contenu = trim($request->request->get('contenu', ''));
+    $contenu = trim((string) $request->request->get('contenu', ''));
     // ── Validation longueur ──
     if (strlen($contenu) < 3) {
         // Flash avec l'ID du post pour afficher l'erreur sur le bon post
@@ -681,12 +756,14 @@ public function editPost(
 }
 
 
+
     #[Route('/forum/comment/{id}/edit', name: 'forum_comment_edit', methods: ['GET','POST'])]
 public function editComment(int $id, Request $request, EntityManagerInterface $em): Response
 {
     $c = $em->getRepository(Commentaire::class)->find($id);
     if (!$c) throw $this->createNotFoundException();
     $post = $em->getRepository(Post::class)->find($c->getIdPost());
+    if (!$post) throw $this->createNotFoundException();
 
 
     $form = $this->createForm(CommentaireType::class, $c, ['attr' => ['novalidate' => 'novalidate']]);

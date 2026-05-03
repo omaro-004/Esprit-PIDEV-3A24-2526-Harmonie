@@ -17,30 +17,26 @@ class Commentaire
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank(message: "Le commentaire est obligatoire.")]
     #[Assert\Length(min: 3, minMessage: "Le commentaire doit contenir au moins {{ limit }} caractères.")]
-    private ?string $contenu = null;
+    private string $contenu = '';
 
     #[ORM\Column(name: "date_commentaire", type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $dateCommentaire = null;
+    private \DateTimeInterface $dateCommentaire;
 
     #[ORM\Column(name: "id_post", type: "integer")]
-    private ?int $idPost = null;
+    private int $idPost = 0;
 
     #[ORM\Column(name: "user_id", type: "integer")]
-    private ?int $userId = null;
+    private int $userId = 0;
 
     public function getIdCommentaire(): ?int { return $this->idCommentaire; }
-    public function getContenu(): ?string { return $this->contenu; }
+    public function getContenu(): string { return $this->contenu; }
     
-    public function setContenu(?string $contenu): static 
-{ 
-    $this->contenu = $contenu; 
-    return $this; 
-}
-    
-    public function getDateCommentaire(): ?\DateTimeInterface { return $this->dateCommentaire; }
+    public function setContenu(string $contenu): static { $this->contenu = $contenu; return $this; }
+
+    public function getDateCommentaire(): \DateTimeInterface { return $this->dateCommentaire; }
     public function setDateCommentaire(\DateTimeInterface $d): static { $this->dateCommentaire = $d; return $this; }
-    public function getIdPost(): ?int { return $this->idPost; }
+    public function getIdPost(): int { return $this->idPost; }
     public function setIdPost(int $idPost): static { $this->idPost = $idPost; return $this; }
-    public function getUserId(): ?int { return $this->userId; }
+    public function getUserId(): int { return $this->userId; }
     public function setUserId(int $userId): static { $this->userId = $userId; return $this; }
 }

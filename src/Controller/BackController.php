@@ -42,7 +42,10 @@ class BackController extends AbstractController
 
         $postCounts = [];
         foreach ($categories as $cat) {
-            $postCounts[$cat->getIdCategorie()] = $postRepo->count(['idCategorie' => $cat->getIdCategorie()]);
+            $idCat = $cat->getIdCategorie();
+            if ($idCat !== null) {
+                $postCounts[$idCat] = $postRepo->count(['idCategorie' => $idCat]);
+            }
         }
 
         return $this->render('back/categories.html.twig', [
@@ -126,7 +129,10 @@ class BackController extends AbstractController
         // Map catId => nomCategorie
         $catMap = [];
         foreach ($categories as $cat) {
-            $catMap[$cat->getIdCategorie()] = $cat->getNomCategorie();
+            $idCat = $cat->getIdCategorie();
+            if ($idCat !== null) {
+                $catMap[$idCat] = $cat->getNomCategorie();
+            }
         }
 
         // Map userId => "Prénom Nom"

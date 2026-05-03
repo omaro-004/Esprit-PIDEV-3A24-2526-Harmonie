@@ -20,7 +20,7 @@ class SessionMeditation
 
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'user_id', nullable: false)]
-    private ?User $user = null;
+    private User $user;
 
     #[ORM\Column(name: 'auteur', type: Types::STRING, length: 255)]
     #[Assert\NotBlank(message: "L'auteur est obligatoire.")]
@@ -38,7 +38,7 @@ class SessionMeditation
         min: 5, max: 60,
         notInRangeMessage: 'La durée doit être entre {{ min }} et {{ max }} minutes.'
     )]
-    private ?int $duree = null;
+    private int $duree;
 
     #[ORM\Column(name: 'theme', type: Types::STRING, length: 255)]
     #[Assert\NotBlank(message: 'Le thème est obligatoire.')]
@@ -66,13 +66,13 @@ class SessionMeditation
     public function getId(): ?int { return $this->id; }
 
     public function getUser(): ?User { return $this->user; }
-    public function setUser(?User $user): self { $this->user = $user; return $this; }
+    public function setUser(User $user): self { $this->user = $user; return $this; }
 
     public function getAuteur(): ?string { return $this->auteur; }
     public function setAuteur(?string $auteur): self { $this->auteur = $auteur ?? ''; return $this; }
 
     public function getDuree(): ?int { return $this->duree; }
-    public function setDuree(?int $duree): self { $this->duree = $duree; return $this; }
+    public function setDuree(int $duree): self { $this->duree = $duree; return $this; }
 
     public function getTheme(): ?string { return $this->theme; }
     public function setTheme(?string $theme): self { $this->theme = $theme ?? ''; return $this; }
@@ -94,11 +94,7 @@ class SessionMeditation
 
     public function removeConseil(Conseil $conseil): self
     {
-        if ($this->conseils->removeElement($conseil)) {
-            if ($conseil->getSession() === $this) {
-                $conseil->setSession(null);
-            }
-        }
+        $this->conseils->removeElement($conseil);
         return $this;
     }
 }

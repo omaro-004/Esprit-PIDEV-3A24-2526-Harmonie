@@ -42,8 +42,10 @@ class AdminUserController extends AbstractController
 
         $scores = [];
         foreach ($users as $u) {
+            $userId = $u->getUserId();
+            if ($userId === null) continue;
             $s = $this->suspicion->compute($u);
-            $scores[$u->getUserId()] = [
+            $scores[$userId] = [
                 'score' => $s,
                 'label' => $this->suspicion->getLabel($s),
                 'color' => $this->suspicion->getColor($s),
@@ -119,7 +121,8 @@ class AdminUserController extends AbstractController
             if ($avatarFile) {
                 $safeFilename = $slugger->slug($user->getUserNom());
                 $newFilename  = $safeFilename . '-' . uniqid() . '.' . $avatarFile->guessExtension();
-                $uploadDir    = $this->getParameter('kernel.project_dir') . '/public/user_images';
+                $projectDir = is_string($dir = $this->getParameter('kernel.project_dir')) ? $dir : '';
+                $uploadDir    = $projectDir . '/public/user_images';
 
                 if (!is_dir($uploadDir)) {
                     mkdir($uploadDir, 0777, true);
@@ -147,7 +150,9 @@ class AdminUserController extends AbstractController
     #[Route('/{id}/toggle', name: 'admin_users_toggle', methods: ['POST'])]
     public function toggle(User $user, Request $request): Response
     {
-        if ($this->isCsrfTokenValid('toggle' . $user->getUserId(), $request->request->get('_token'))) {
+        $token = $request->request->get('_token');
+        $token = $token !== null ? (string) $token : null;
+        if ($this->isCsrfTokenValid('toggle' . $user->getUserId(), $token)) {
             $user->setIsActive(!$user->isActive());
             $this->em->flush();
             $action = $user->isActive() ? 'réactivé' : 'suspendu';

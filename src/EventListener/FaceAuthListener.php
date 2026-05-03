@@ -2,7 +2,6 @@
 
 namespace App\EventListener;
 
-use App\Repository\UserRepository;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
@@ -15,7 +14,6 @@ class FaceAuthListener implements EventSubscriberInterface
 {
     public function __construct(
         private readonly RouterInterface $router,
-        private readonly UserRepository  $userRepo,
     ) {}
 
     public static function getSubscribedEvents(): array

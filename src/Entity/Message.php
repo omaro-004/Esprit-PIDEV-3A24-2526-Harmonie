@@ -12,6 +12,7 @@ class Message
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(name: 'id', type: 'integer')]
+
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: Conversation::class, inversedBy: 'messages')]
@@ -52,6 +53,9 @@ class Message
     public function isRead(): bool { return $this->isRead; }
     public function setIsRead(bool $v): self { $this->isRead = $v; return $this; }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(): array
     {
         return [

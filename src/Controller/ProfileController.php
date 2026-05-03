@@ -42,13 +42,32 @@ class ProfileController extends AbstractController
         $profileForm = $this->createForm(ProfileFormType::class, $user);
         $profileForm->handleRequest($request);
 
+        $preSelectedPath = trim((string) $request->request->get('preSelectedAvatarPath', ''));
+        $avatarFile = $profileForm->get('avatarFile')->getData();
+
+        if ($profileForm->isSubmitted() && !$avatarFile && '' !== $preSelectedPath) {
+            $allowedPrefixes = ['avatars/default/avatar_', 'user_images/ai_avatar_'];
+            $isValid = false;
+
+            foreach ($allowedPrefixes as $prefix) {
+                if (str_starts_with($preSelectedPath, $prefix)) {
+                    $isValid = true;
+                    break;
+                }
+            }
+
+            if ($isValid) {
+                $user->setUserImagePath($preSelectedPath);
+            }
+        }
+
         if ($profileForm->isSubmitted() && $profileForm->isValid()) {
             // ── Gestion avatar ────────────────────────────────────────────
-            $avatarFile = $profileForm->get('avatarFile')->getData();
             if ($avatarFile) {
                 $safeFilename = $slugger->slug($user->getUserNom());
                 $newFilename  = $safeFilename . '-' . uniqid() . '.' . $avatarFile->guessExtension();
-                $uploadDir    = $this->getParameter('kernel.project_dir') . '/public/user_images';
+                $projectDir = is_string($dir = $this->getParameter('kernel.project_dir')) ? $dir : '';
+                $uploadDir    = $projectDir . '/public/user_images';
 
                 if (!is_dir($uploadDir)) {
                     mkdir($uploadDir, 0777, true);

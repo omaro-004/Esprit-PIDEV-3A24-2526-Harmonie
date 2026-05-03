@@ -29,7 +29,7 @@ class Seance
 
     #[ORM\ManyToOne(inversedBy: 'seances')]
     #[ORM\JoinColumn(name: 'salle_id', referencedColumnName: 'id', nullable: false)]
-    private ?Salle $salle = null;
+    private Salle $salle;
 
     #[ORM\Column]
     private bool $confirmee = false;
@@ -108,7 +108,7 @@ class Seance
         return $this->salle;
     }
 
-    public function setSalle(?Salle $salle): static
+    public function setSalle(Salle $salle): static
     {
         $this->salle = $salle;
 

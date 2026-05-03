@@ -31,7 +31,8 @@ class NutritionController extends AbstractController
         ConsommationRepository $consRepo,
         Request $request
     ): Response {
-        $dateStr = $request->query->get('date', (new \DateTime())->format('Y-m-d'));
+        // Fix PHPStan :37 — query->get() retourne string|null, new \DateTime() attend string
+        $dateStr = (string) $request->query->get('date', (new \DateTime())->format('Y-m-d'));
 
         try {
             $dt = new \DateTime($dateStr);
@@ -96,8 +97,8 @@ class NutritionController extends AbstractController
         Request $request,
         AlimentRepository $alimentRepo
     ): Response {
-        $repas = $request->query->get('repas', 'Déjeuner');
-        $date  = $request->query->get('date', (new \DateTime())->format('Y-m-d'));
+        $repas = (string) $request->query->get('repas', 'Déjeuner');
+        $date  = (string) $request->query->get('date', (new \DateTime())->format('Y-m-d'));
 
         if (!in_array($repas, array_keys($this->repasTypes()))) {
             $repas = 'Déjeuner';
@@ -117,8 +118,8 @@ class NutritionController extends AbstractController
     #[Route('/recettes', name: 'nutrition_recettes', methods: ['GET'])]
     public function recettes(Request $request): Response
     {
-        $date  = $request->query->get('date', (new \DateTime())->format('Y-m-d'));
-        $repas = $request->query->get('repas', 'Déjeuner');
+        $date  = (string) $request->query->get('date', (new \DateTime())->format('Y-m-d'));
+        $repas = (string) $request->query->get('repas', 'Déjeuner');
 
         return $this->render('nutrition/recettes.html.twig', [
             'date'       => $date,
@@ -136,20 +137,20 @@ class NutritionController extends AbstractController
             return new JsonResponse(['success' => false, 'message' => 'Données invalides.'], Response::HTTP_BAD_REQUEST);
         }
 
-        $calGoal  = max(1, (int) ($data['calGoal']  ?? 0));
-        $protGoal = max(1, (int) ($data['protGoal'] ?? 0));
-        $glucGoal = max(1, (int) ($data['glucGoal'] ?? 0));
-        $lipGoal  = max(1, (int) ($data['lipGoal']  ?? 0));
+        $calGoalRaw  = (int) ($data['calGoal']  ?? 0);
+        $protGoalRaw = (int) ($data['protGoal'] ?? 0);
+        $glucGoalRaw = (int) ($data['glucGoal'] ?? 0);
+        $lipGoalRaw  = (int) ($data['lipGoal']  ?? 0);
 
-        if ($calGoal <= 0 || $protGoal <= 0 || $glucGoal <= 0 || $lipGoal <= 0) {
+        if ($calGoalRaw <= 0 || $protGoalRaw <= 0 || $glucGoalRaw <= 0 || $lipGoalRaw <= 0) {
             return new JsonResponse(['success' => false, 'message' => 'Tous les objectifs doivent être valides.'], Response::HTTP_BAD_REQUEST);
         }
 
         $request->getSession()->set('nutrition_goals', [
-            'cal'  => $calGoal,
-            'prot' => $protGoal,
-            'gluc' => $glucGoal,
-            'lip'  => $lipGoal,
+            'cal'  => $calGoalRaw,
+            'prot' => $protGoalRaw,
+            'gluc' => $glucGoalRaw,
+            'lip'  => $lipGoalRaw,
         ]);
 
         return new JsonResponse(['success' => true, 'message' => 'Objectifs enregistrés.']);
@@ -164,12 +165,12 @@ class NutritionController extends AbstractController
             return new JsonResponse(['success' => false, 'message' => 'Données JSON invalides.'], 400);
         }
 
-        $sexe     = strtolower(trim($data['sexe']     ?? ''));
+        $sexe     = strtolower(trim((string) ($data['sexe']     ?? '')));
         $age      = (int)   ($data['age']      ?? 0);
         $poids    = (float) ($data['poids']    ?? 0);
         $taille   = (int)   ($data['taille']   ?? 0);
-        $activite = strtolower(trim($data['activite'] ?? ''));
-        $objectif = strtolower(trim($data['objectif'] ?? ''));
+        $activite = strtolower(trim((string) ($data['activite'] ?? '')));
+        $objectif = strtolower(trim((string) ($data['objectif'] ?? '')));
 
         $errors = [];
         if (!in_array($sexe, ['homme', 'femme']))                                            { $errors[] = 'Sexe invalide.'; }
@@ -220,35 +221,8 @@ class NutritionController extends AbstractController
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    //  API : ANALYSE PHOTO DE REPAS — Google Gemini 1.5 Flash
+    //  API : ANALYSE PHOTO DE REPAS — Google Gemini Vision
     // ═══════════════════════════════════════════════════════════════════════
-
-    /**
-     * Analyse une photo de repas via Google Gemini 1.5 Flash Vision.
-     *
-     * Route : POST /nutrition/api/analyze-photo
-     *
-     * Corps JSON attendu :
-     * {
-     *   "image": "data:image/jpeg;base64,/9j/4AAQ...",
-     *   "repas": "Déjeuner"
-     * }
-     *
-     * Réponse :
-     * {
-     *   "success": true,
-     *   "analysis": {
-     *     "plats_detectes":       ["Pâtes bolognaise", "Salade"],
-     *     "calories_totales":     650,
-     *     "proteines_g":          35.0,
-     *     "glucides_g":           72.0,
-     *     "lipides_g":            18.0,
-     *     "score_equilibre":      7,
-     *     "suggestions":          ["Ajouter des légumes verts", ...],
-     *     "note_nutritionnelle":  "Repas bien équilibré..."
-     *   }
-     * }
-     */
     #[Route('/api/analyze-photo', name: 'nutrition_api_analyze_photo', methods: ['POST'])]
     public function apiAnalyzePhoto(
         Request $request,
@@ -264,23 +238,20 @@ class NutritionController extends AbstractController
         $mimeType = 'image/jpeg';
         $base64   = $imageRaw;
 
-        // Extraire mimeType + base64 pur depuis le data URI
         if (preg_match('/^data:(image\/[a-zA-Z0-9+\-]+);base64,(.+)$/s', $imageRaw, $matches)) {
             $mimeType = $matches[1];
             $base64   = $matches[2];
         }
 
-        // Limite de taille (~3 MB réel)
         if (strlen($base64) > 5_000_000) {
             return new JsonResponse(['success' => false, 'message' => 'Image trop volumineuse. Max 3 Mo.'], 400);
         }
 
-        // Formats acceptés
         if (!in_array(strtolower($mimeType), ['image/jpeg','image/jpg','image/png','image/webp','image/heic'])) {
             return new JsonResponse(['success' => false, 'message' => 'Format non supporté. Utilisez JPEG, PNG ou WebP.'], 400);
         }
 
-        $repasType = $data['repas'] ?? 'Déjeuner';
+        $repasType = (string) ($data['repas'] ?? 'Déjeuner');
 
         try {
             $analysis = $gemini->analyzeMealPhoto($base64, $mimeType, $repasType);
@@ -296,7 +267,8 @@ class NutritionController extends AbstractController
         Request $request,
         SpoonacularService $spoonacular
     ): JsonResponse {
-        $ingredients = trim($request->query->get('ingredients', ''));
+        // Fix PHPStan :271 — query->get() retourne string|null, trim() attend string
+        $ingredients = trim((string) $request->query->get('ingredients', ''));
         $number      = min((int) $request->query->get('number', 8), 20);
 
         if ($ingredients === '') {
@@ -397,12 +369,12 @@ class NutritionController extends AbstractController
                 }
             }
 
-            $recipeTitle = trim($data['recipe_title']);
-            $calories    = (float)$data['calories'];
-            $mealType    = trim($data['meal_type']);
+            $recipeTitle = trim((string) $data['recipe_title']);
+            $calories    = (float) $data['calories'];
+            $mealType    = trim((string) $data['meal_type']);
 
             try {
-                $dateConsommation = new \DateTime($data['date']);
+                $dateConsommation = new \DateTime((string) $data['date']);
             } catch (\Exception) {
                 return new JsonResponse(['success' => false, 'message' => 'Date invalide.'], 400);
             }
@@ -417,8 +389,8 @@ class NutritionController extends AbstractController
             if (!$aliment) {
                 $aliment = new Aliment();
                 $aliment->setNomAliment($alimentName);
-                $aliment->setCaloriesPour100g(round(($calories * 100) / 300));
-                $aliment->setProteines((float)($data['proteines'] ?? 20));
+                $aliment->setCaloriesPour100g((int) round(($calories * 100) / 300));
+                $aliment->setProteines((float) ($data['proteines'] ?? 20));
                 $aliment->setGlucides((float) ($data['glucides']  ?? 50));
                 $aliment->setLipides((float)  ($data['lipides']   ?? 15));
                 $em->persist($aliment);
@@ -446,7 +418,8 @@ class NutritionController extends AbstractController
         Request $request,
         ConsommationRepository $consRepo
     ): JsonResponse {
-        $dateStr = $request->query->get('date', (new \DateTime())->format('Y-m-d'));
+        // Fix PHPStan :425 — query->get() retourne string|null, new \DateTime() attend string
+        $dateStr = (string) $request->query->get('date', (new \DateTime())->format('Y-m-d'));
 
         try {
             $dt = new \DateTime($dateStr);
@@ -479,7 +452,8 @@ class NutritionController extends AbstractController
         Request $request,
         AlimentRepository $repo
     ): JsonResponse {
-        $q        = trim($request->query->get('q', ''));
+        // Fix PHPStan :455 — query->get() retourne string|null, trim() attend string
+        $q        = trim((string) $request->query->get('q', ''));
         $aliments = $q ? $repo->search($q) : $repo->findAllOrdered();
 
         return new JsonResponse(array_map(fn($a) => [
@@ -512,13 +486,14 @@ class NutritionController extends AbstractController
             return new JsonResponse(['success' => false, 'errors' => $errors], 422);
         }
 
+        // Fix PHPStan :504 — repo->find() retourne object|null, on vérifie instanceof Aliment
         $aliment = $alimentRepo->find((int)$data['aliment_id']);
-        if (!$aliment) {
+        if (!$aliment instanceof Aliment) {
             return new JsonResponse(['success' => false, 'errors' => ['aliment' => 'Aliment introuvable.']], 404);
         }
 
         try {
-            $dt = new \DateTime($data['date']);
+            $dt = new \DateTime((string) $data['date']);
         } catch (\Exception $e) {
             return new JsonResponse(['success' => false, 'errors' => ['date' => 'Date invalide.']], 400);
         }
@@ -531,7 +506,7 @@ class NutritionController extends AbstractController
         $c->setAliment($aliment);
         $c->setUserId(self::DEMO_USER_ID);
         $c->setDateConsommation($dt);
-        $c->setTypeRepas($data['type_repas']);
+        $c->setTypeRepas((string) $data['type_repas']);
         $c->setPoidsGrammes((int)round((float)$data['poids_grammes']));
         $c->setQuantiteEauMl(!empty($data['eau_ml']) ? (int)$data['eau_ml'] : null);
 
@@ -556,8 +531,10 @@ class NutritionController extends AbstractController
         EntityManagerInterface $em,
         ConsommationRepository $consRepo
     ): JsonResponse {
+        // Fix PHPStan :533,:548,:551,:554 — repo->find() retourne object|null
+        // On vérifie instanceof Consommation pour garantir le type
         $c = $consRepo->find($id);
-        if (!$c || $c->getUserId() !== self::DEMO_USER_ID) {
+        if (!$c instanceof Consommation || $c->getUserId() !== self::DEMO_USER_ID) {
             return new JsonResponse(['success' => false, 'message' => 'Consommation introuvable.'], 404);
         }
 
@@ -576,6 +553,11 @@ class NutritionController extends AbstractController
         $em->flush();
 
         $dt = $c->getDateConsommation();
+        // Fix PHPStan :580-583 — getDateConsommation() peut retourner null → on garantit un DateTime
+        if (!$dt instanceof \DateTime) {
+            $dt = new \DateTime();
+        }
+
         return new JsonResponse([
             'success'      => true,
             'consommation' => $this->consToArray($c),
@@ -593,12 +575,19 @@ class NutritionController extends AbstractController
         EntityManagerInterface $em,
         ConsommationRepository $consRepo
     ): JsonResponse {
+        // Fix PHPStan :570,:574 — repo->find() retourne object|null
         $c = $consRepo->find($id);
-        if (!$c || $c->getUserId() !== self::DEMO_USER_ID) {
+        if (!$c instanceof Consommation || $c->getUserId() !== self::DEMO_USER_ID) {
             return new JsonResponse(['success' => false, 'message' => 'Consommation introuvable.'], 404);
         }
 
-        $dt = clone $c->getDateConsommation();
+        $dateConsommation = $c->getDateConsommation();
+        // Fix PHPStan :580-583 — getDateConsommation() peut retourner null
+        if (!$dateConsommation instanceof \DateTime) {
+            $dateConsommation = new \DateTime();
+        }
+        $dt = clone $dateConsommation;
+
         $em->remove($c);
         $em->flush();
 
@@ -613,6 +602,7 @@ class NutritionController extends AbstractController
 
     // ─── Helpers privés ─────────────────────────────────────────────
 
+    /** @return array<string, array{icon: string, color: string}> */
     private function repasTypes(): array
     {
         return [
@@ -623,8 +613,13 @@ class NutritionController extends AbstractController
         ];
     }
 
+    /**
+     * @param array<Consommation> $consommations
+     * @return array<string, array<int, Consommation>>
+     */
     private function groupByRepas(array $consommations): array
     {
+        /** @var array<string, array<int, Consommation>> $types */
         $types = [
             'Petit-déjeuner' => [],
             'Déjeuner'       => [],
@@ -634,6 +629,10 @@ class NutritionController extends AbstractController
 
         foreach ($consommations as $c) {
             $t = $c->getTypeRepas();
+            // Fix PHPStan :612 — getTypeRepas() peut retourner string|null
+            if ($t === null) {
+                continue;
+            }
             if (!array_key_exists($t, $types)) {
                 $types[$t] = [];
             }
@@ -643,6 +642,7 @@ class NutritionController extends AbstractController
         return $types;
     }
 
+    /** @return array<string, mixed> */
     private function consToArray(Consommation $c): array
     {
         return [

@@ -43,7 +43,7 @@
         .section-yellow{background:#FFFBEB;border:1px solid rgba(245,158,11,.15)}
         .section-title{font-family:var(--font-head);font-size:16px;font-weight:700;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:8px}
 
-        /* Avatar uploader */
+        /* Avatar selector */
         .avatar-section{display:flex;align-items:center;gap:20px;margin-bottom:16px}
         .avatar-preview{
             width:80px;height:80px;border-radius:50%;
@@ -54,21 +54,46 @@
             box-shadow:0 4px 14px rgba(106,90,205,.3);
         }
         .avatar-preview img{width:100%;height:100%;object-fit:cover}
-        .avatar-controls{display:flex;flex-direction:column;gap:8px}
+        .avatar-controls{display:flex;flex-direction:column;gap:6px}
         .avatar-hint{font-size:11.5px;color:var(--text-muted)}
+        .avatar-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+        .avatar-tab-btn{
+            padding:8px 12px;background:#fff;color:var(--text-mid);
+            border:1.5px solid var(--border);border-radius:10px;font-size:12.5px;
+            font-weight:600;cursor:pointer;font-family:var(--font-body);transition:.15s;
+        }
+        .avatar-tab-btn.active{background:var(--purple);border-color:var(--purple);color:#fff}
+        .avatar-tab-content{
+            display:none;background:#fff;border:1px solid var(--border);
+            border-radius:12px;padding:12px;
+        }
+        .avatar-tab-content.active{display:block}
+        .avatar-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+        .default-avatar-item{
+            border:2px solid transparent;background:#fff;border-radius:10px;
+            padding:4px;cursor:pointer;transition:.15s;
+        }
+        .default-avatar-item img{width:100%;height:auto;border-radius:8px;display:block}
+        .default-avatar-item:hover{border-color:var(--purple-soft)}
+        .default-avatar-item.selected{border-color:var(--purple);box-shadow:0 0 0 3px rgba(106,90,205,.12)}
+        #avatarFieldWrapper{display:none}
+        .avatar-upload-help{font-size:12px;color:var(--text-muted)}
+        .ai-controls{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+        .ai-input{
+            width:100%;padding:10px 12px;border:1.5px solid rgba(106,90,205,.15);
+            border-radius:10px;font-size:13px;font-family:var(--font-body);
+        }
+        .ai-input:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 3px rgba(106,90,205,.08)}
         .btn-upload{
-            padding:9px 18px;background:var(--purple);color:#fff;
-            border:none;border-radius:10px;font-size:13px;font-weight:600;
-            cursor:pointer;display:flex;align-items:center;gap:7px;
+            padding:9px 14px;background:var(--purple);color:#fff;border:none;
+            border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;
             font-family:var(--font-body);transition:.15s;
         }
         .btn-upload:hover{background:var(--purple-dark)}
-        .btn-remove{
-            padding:9px 18px;background:#fff;color:var(--text-muted);
-            border:1.5px solid var(--border);border-radius:10px;font-size:13px;
-            font-weight:500;cursor:pointer;font-family:var(--font-body);transition:.15s;
-        }
-        .btn-remove:hover{border-color:#EF4444;color:#EF4444}
+        .btn-upload:disabled{opacity:.6;cursor:not-allowed}
+        .avatar-loader{font-size:12px;color:var(--text-muted);margin-top:10px}
+        .ai-result{margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+        .ai-result img{width:84px;height:84px;border-radius:12px;object-fit:cover;border:1px solid var(--border)}
 
         /* Form */
         .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
@@ -145,32 +170,57 @@
             <!-- Photo de profil -->
             <div class="section-card section-purple">
                 <div class="section-title">📷 Photo de profil <span style="font-size:12px;font-weight:400;color:var(--text-muted)">(optionnel)</span></div>
+
+                <input type="hidden" id="selectedAvatarPath" name="selectedAvatarPath" value="">
+
                 <div class="avatar-section">
                     <div class="avatar-preview" id="avatarPreview">
                         {{ step1.prenom|first|upper }}
                     </div>
                     <div class="avatar-controls">
                         <div class="avatar-hint" id="avatarHint">Aucune image sélectionnée</div>
-                        <div style="display:flex;gap:8px">
-                            {#
-                              IMPORTANT : on récupère l'id généré par Symfony avec form_widget
-                              puis on cible ce champ depuis JS via document.querySelector('[name$="[avatarFile]"]')
-                              pour éviter les problèmes de préfixe de nom de formulaire.
-                            #}
-                            <button type="button" class="btn-upload" id="openAvatarBtn">
-                                📁 Choisir une image
-                            </button>
-                            <button type="button" class="btn-remove" id="removeBtn" onclick="removeAvatar()" style="display:none">
-                                🗑 Supprimer
-                            </button>
-                        </div>
-                        <div class="avatar-hint">Formats acceptés : JPG, PNG, GIF, WebP (max 2 Mo)</div>
+                        <div class="avatar-hint">Choisissez un avatar par défaut, importez une image ou générez avec l'IA.</div>
                     </div>
                 </div>
-                {# Champ fichier rendu par Symfony — caché visuellement #}
-                <div style="display:none" id="avatarFieldWrapper">
+
+                <div class="avatar-tabs">
+                    <button type="button" class="avatar-tab-btn active" data-tab="defaults">🎨 Avatars par défaut</button>
+                    <button type="button" class="avatar-tab-btn" data-tab="upload">📁 Importer une image</button>
+                    <button type="button" class="avatar-tab-btn" data-tab="ai">✨ Générer par IA</button>
+                </div>
+
+                <div class="avatar-tab-content active" data-content="defaults">
+                    <div class="avatar-grid" id="defaultAvatarGrid">
+                        {% for i in 1..12 %}
+                            {% set slug = 'avatar_' ~ '%02d'|format(i) %}
+                            <button type="button" class="default-avatar-item" data-slug="{{ slug }}" data-path="avatars/default/{{ slug }}.svg">
+                                <img src="{{ asset('avatars/default/' ~ slug ~ '.svg') }}" alt="{{ slug }}">
+                            </button>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="avatar-tab-content avatar-upload-panel" data-content="upload">
+                    <div class="avatar-upload-help">Le sélecteur de fichiers s'ouvre automatiquement. Si besoin, recliquez sur l'onglet "📁 Importer une image".</div>
+                    <div class="avatar-hint" style="margin-top:8px">Formats acceptés : JPG, PNG, GIF, WebP (max 2 Mo)</div>
+                </div>
+
+                <div id="avatarFieldWrapper">
                     {{ form_widget(form.avatarFile) }}
                 </div>
+
+                <div class="avatar-tab-content" data-content="ai">
+                    <div class="ai-controls">
+                        <input type="text" id="aiAvatarPrompt" class="ai-input" placeholder="Ex: etudiant cyborg pixel art lunettes soleil">
+                        <button type="button" class="btn-upload" id="generateAiBtn">Générer</button>
+                    </div>
+                    <div class="avatar-loader" id="aiLoader" style="display:none">Génération en cours... (peut prendre 10-20s)</div>
+                    <div class="ai-result" id="aiResult" style="display:none">
+                        <img id="aiResultImage" alt="Avatar IA">
+                        <button type="button" class="btn-upload" id="useAiBtn">Utiliser cet avatar</button>
+                    </div>
+                </div>
+
                 {% if form_errors(form.avatarFile) %}
                     <div class="form-error">{{ form_errors(form.avatarFile) }}</div>
                 {% endif %}
@@ -241,41 +291,198 @@
     </div>
 
     <script>
-        // ── Avatar preview ──────────────────────────────────────────────────────────
-        // On récupère le vrai input file généré par Symfony (quel que soit son id préfixé)
-        const avatarInput   = document.querySelector('#avatarFieldWrapper input[type="file"]');
+        const assetBase = '{{ asset('') }}';
+        const step2Form = document.getElementById('step2Form');
+        const avatarInput = document.querySelector('#avatarFieldWrapper input[type="file"]');
+        const selectedAvatarPath = document.getElementById('selectedAvatarPath');
         const avatarPreview = document.getElementById('avatarPreview');
-        const avatarHint    = document.getElementById('avatarHint');
-        const removeBtn     = document.getElementById('removeBtn');
-        const initiale      = '{{ step1.prenom|first|upper }}';
+        const avatarHint = document.getElementById('avatarHint');
+        const initiale = '{{ step1.prenom|first|upper }}';
 
-        // Le bouton "Choisir une image" déclenche le vrai input file caché
-        document.getElementById('openAvatarBtn').addEventListener('click', function() {
-            if (avatarInput) {
-                avatarInput.click();
+        const tabButtons = document.querySelectorAll('.avatar-tab-btn');
+        const tabContents = document.querySelectorAll('.avatar-tab-content');
+        const defaultItems = document.querySelectorAll('.default-avatar-item');
+        const aiPrompt = document.getElementById('aiAvatarPrompt');
+        const generateAiBtn = document.getElementById('generateAiBtn');
+        const aiLoader = document.getElementById('aiLoader');
+        const aiResult = document.getElementById('aiResult');
+        const aiResultImage = document.getElementById('aiResultImage');
+        const useAiBtn = document.getElementById('useAiBtn');
+
+        let generatedAiUrl = '';
+        let generatedAiPath = '';
+
+        async function parseJsonResponse(response) {
+            const raw = await response.text();
+            try {
+                return { ok: response.ok, data: JSON.parse(raw) };
+            } catch (e) {
+                return {
+                    ok: false,
+                    data: { error: 'Réponse serveur invalide. Vérifiez votre session et rechargez la page.' },
+                };
             }
+        }
+
+        function asAsset(path) {
+            return `${assetBase}${path}`;
+        }
+
+        function clearDefaultSelection() {
+            defaultItems.forEach(item => item.classList.remove('selected'));
+        }
+
+        function setPreview(src, text) {
+            avatarPreview.innerHTML = `<img src="${src}" alt="Avatar sélectionné">`;
+            avatarHint.textContent = text;
+        }
+
+        function resetPreviewToInitial() {
+            avatarPreview.textContent = initiale;
+            avatarHint.textContent = 'Aucune image sélectionnée';
+        }
+
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabName = btn.dataset.tab;
+                tabButtons.forEach(b => b.classList.toggle('active', b === btn));
+                tabContents.forEach(content => {
+                    content.classList.toggle('active', content.dataset.content === tabName);
+                });
+
+                if (tabName === 'upload' && avatarInput) {
+                    avatarInput.click();
+                }
+            });
+        });
+
+        defaultItems.forEach(item => {
+            item.addEventListener('click', async () => {
+                try {
+                    const response = await fetch('/api/avatar/set-default', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ avatarSlug: item.dataset.slug }),
+                    });
+
+                    const parsed = await parseJsonResponse(response);
+                    const data = parsed.data;
+                    if (!parsed.ok || !data.success) {
+                        throw new Error(data.error || 'Impossible de sélectionner cet avatar');
+                    }
+
+                    clearDefaultSelection();
+                    item.classList.add('selected');
+                    selectedAvatarPath.value = data.imagePath;
+                    if (avatarInput) {
+                        avatarInput.value = '';
+                    }
+                    setPreview(asAsset(data.imagePath), 'Avatar par défaut sélectionné');
+                } catch (error) {
+                    alert(error.message);
+                }
+            });
         });
 
         if (avatarInput) {
-            avatarInput.addEventListener('change', function() {
-                if (this.files && this.files[0]) {
-                    const file = this.files[0];
-                    const reader = new FileReader();
-                    reader.onload = e => {
-                        avatarPreview.innerHTML = `<img src="${e.target.result}" alt="Avatar" style="width:80px;height:80px;border-radius:50%;object-fit:cover;">`;
-                        avatarHint.textContent = file.name + ' (' + (file.size / 1024).toFixed(0) + ' Ko)';
-                        removeBtn.style.display = 'flex';
-                    };
-                    reader.readAsDataURL(file);
+            avatarInput.addEventListener('change', function () {
+                if (!this.files || !this.files[0]) {
+                    return;
                 }
+
+                const file = this.files[0];
+                selectedAvatarPath.value = '';
+                clearDefaultSelection();
+
+                const reader = new FileReader();
+                reader.onload = e => {
+                    setPreview(e.target.result, `${file.name} (${(file.size / 1024).toFixed(0)} Ko)`);
+                };
+                reader.readAsDataURL(file);
             });
         }
 
-        function removeAvatar() {
-            if (avatarInput) avatarInput.value = '';
-            avatarPreview.innerHTML = initiale;
-            avatarHint.textContent = 'Aucune image sélectionnée';
-            removeBtn.style.display = 'none';
-        }
+        generateAiBtn.addEventListener('click', async () => {
+            const prompt = (aiPrompt.value || '').trim();
+            if (!prompt) {
+                alert('Veuillez saisir une description pour générer un avatar.');
+                return;
+            }
+
+            const seed = Math.floor(Math.random() * 10000);
+            generatedAiUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=512&height=512&nologo=true&seed=${seed}`;
+
+            aiLoader.style.display = 'block';
+            aiResult.style.display = 'none';
+            generateAiBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/avatar/generate-from-url', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ imageUrl: generatedAiUrl }),
+                });
+
+                const parsed = await parseJsonResponse(response);
+                const data = parsed.data;
+                if (!parsed.ok || !data.success) {
+                    throw new Error(data.error || 'Generation IA indisponible pour le moment');
+                }
+
+                generatedAiPath = data.imagePath;
+                aiResultImage.src = `${asAsset(generatedAiPath)}?v=${Date.now()}`;
+                aiResult.style.display = 'flex';
+            } catch (error) {
+                alert(error.message);
+            } finally {
+                aiLoader.style.display = 'none';
+                generateAiBtn.disabled = false;
+            }
+        });
+
+        useAiBtn.addEventListener('click', async () => {
+            if (!generatedAiPath) {
+                return;
+            }
+
+            useAiBtn.disabled = true;
+            try {
+                selectedAvatarPath.value = generatedAiPath;
+                if (avatarInput) {
+                    avatarInput.value = '';
+                }
+                clearDefaultSelection();
+                setPreview(asAsset(generatedAiPath), 'Avatar IA sélectionné');
+            } catch (error) {
+                alert(error.message);
+            } finally {
+                useAiBtn.disabled = false;
+            }
+        });
+
+        step2Form.addEventListener('submit', () => {
+            const existing = document.getElementById('preSelectedAvatarPath');
+            const hasFile = avatarInput && avatarInput.files && avatarInput.files.length > 0;
+
+            if (hasFile || !selectedAvatarPath.value) {
+                if (existing) {
+                    existing.remove();
+                }
+                if (!hasFile && !selectedAvatarPath.value && !(avatarInput && avatarInput.value)) {
+                    resetPreviewToInitial();
+                }
+                return;
+            }
+
+            let hidden = existing;
+            if (!hidden) {
+                hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.id = 'preSelectedAvatarPath';
+                hidden.name = 'preSelectedAvatarPath';
+                step2Form.appendChild(hidden);
+            }
+            hidden.value = selectedAvatarPath.value;
+        });
     </script>
 {% endblock %}
