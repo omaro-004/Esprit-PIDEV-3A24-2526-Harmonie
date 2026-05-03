@@ -2,11 +2,18 @@
 
 namespace App\Controller\LibraryControllers;
 
+use App\Service\LibraryServices\GeminiService;
 use App\Service\LibraryServices\SuggestionsService;
+use Smalot\PdfParser\Parser as PdfParser;
 use Dompdf\Dompdf;
 use Dompdf\Options as DompdfOptions;
 use Knp\Bundle\SnappyBundle\Snappy\Response\PdfResponse;
 use Knp\Snappy\Pdf;
+use PhpOffice\PhpWord\Element\PageBreak as WordPageBreak;
+use PhpOffice\PhpWord\Element\Paragraph as WordParagraph;
+use PhpOffice\PhpWord\Element\Text as WordText;
+use PhpOffice\PhpWord\Element\TextBreak as WordTextBreak;
+use PhpOffice\PhpWord\Element\TextRun as WordTextRun;
 use PhpOffice\PhpWord\IOFactory as WordIOFactory;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -48,7 +55,8 @@ class CourseDetailsController extends AbstractController
     public function __construct(
         private Connection         $db,
         private SuggestionsService $suggestionsService,
-        private Pdf                $snappy
+        private Pdf                $snappy,
+        private GeminiService      $gemini
     ) {}
 
     private function getCurrentUserId(): ?int
@@ -203,7 +211,7 @@ class CourseDetailsController extends AbstractController
 
         $published = (int) ((bool) $req->request->get('published', false));
         $this->db->executeStatement('UPDATE courses SET is_published = ? WHERE id = ?', [$published, $id]);
-        return $this->json(['ok' => true, 'is_published' => $published]);
+        return $this->json(['ok' => true, 'published' => (bool) $published, 'message' => $published ? 'Course published to Library' : 'Course unpublished']);
     }
 
     // ── UPLOAD FILES ──────────────────────────────────────────────────────────
@@ -296,7 +304,7 @@ class CourseDetailsController extends AbstractController
     // ── LOAD NOTE CONTENT ─────────────────────────────────────────────────────
     // Handles: .rtfx (native JSON), .txt, .md, and .docx/.doc (PhpWord)
     #[Route('/note/{fileId}/content', name: '_note_content', requirements: ['fileId' => '\d+'], methods: ['GET'])]
-    public function noteContent(int $id, int $fileId): JsonResponse
+    public function noteContent(int $id, int $fileId): ?JsonResponse
     {
         $row = $this->db->fetchAssociative(
             'SELECT originalname, mimetype, filedata FROM coursefile WHERE id = ? AND courseid = ?',
@@ -304,7 +312,14 @@ class CourseDetailsController extends AbstractController
         );
         if (!$row) return $this->json(['message' => 'Not found'], 404);
 
-        $data = is_resource($row['filedata']) ? stream_get_contents($row['filedata']) : $row['filedata'];
+        if (is_resource($row['filedata'])) {
+            rewind($row['filedata']);
+            $data = stream_get_contents($row['filedata']);
+        } else {
+            $data = $row['filedata'];
+        }
+
+        if (empty($data)) return null;
         $name = strtolower($row['originalname'] ?? '');
 
         // ── Native JSON format (.rtfx) ─────────────────────────────────────
@@ -321,7 +336,7 @@ class CourseDetailsController extends AbstractController
         }
 
         // ── Plain text / markdown ──────────────────────────────────────────
-        $text = mb_convert_encoding($data, 'UTF-8', 'auto');
+        $text = (string) mb_convert_encoding((string) $data, 'UTF-8', 'auto');
         return $this->json(['paragraphs' => $this->textToParagraphs($text)]);
     }
 
@@ -339,7 +354,7 @@ class CourseDetailsController extends AbstractController
 
         $decoded = json_decode($content, true);
         if (!isset($decoded['paragraphs'])) {
-            $content = json_encode(['paragraphs' => [['text' => $content, 'align' => 'left', 'font' => 'Inter', 'size' => 14]]]);
+            $content = (string) json_encode(['paragraphs' => [['text' => $content, 'align' => 'left', 'font' => 'Inter', 'size' => 14]]]);
         }
 
         $update = 'UPDATE coursefile SET filedata = ?, sizebytes = ?, mimetype = ?';
@@ -396,7 +411,7 @@ class CourseDetailsController extends AbstractController
             ]);
 
             // Validate binary signature to avoid returning plain-text errors as .pdf
-            if (is_string($pdfContent) && str_starts_with($pdfContent, '%PDF')) {
+            if (str_starts_with($pdfContent, '%PDF')) {
                 return new PdfResponse($pdfContent, $downloadName);
             }
         } catch (\Throwable) {
@@ -441,11 +456,19 @@ class CourseDetailsController extends AbstractController
         // Word docs: render as HTML for the preview modal
         if (str_ends_with($name, '.docx') || str_ends_with($name, '.doc')) {
             $html = $this->wordToHtml($data, $name);
-            return new Response($html, 200, ['Content-Type' => 'text/html; charset=UTF-8']);
+            return new Response($html, 200, [
+                'Content-Type' => 'text/html; charset=UTF-8',
+                'X-Frame-Options' => 'SAMEORIGIN',
+                'Content-Security-Policy' => "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';",
+            ]);
         }
 
         if (str_ends_with($name, '.pdf'))  $mime = 'application/pdf';
         if (str_ends_with($name, '.svg'))  $mime = 'image/svg+xml';
+        if (str_ends_with($name, '.jpg') || str_ends_with($name, '.jpeg')) $mime = 'image/jpeg';
+        if (str_ends_with($name, '.png'))  $mime = 'image/png';
+        if (str_ends_with($name, '.gif'))  $mime = 'image/gif';
+        if (str_ends_with($name, '.webp')) $mime = 'image/webp';
 
         $response = new Response($data);
         $response->headers->set('Content-Type', $mime);
@@ -516,6 +539,193 @@ class CourseDetailsController extends AbstractController
             [$fileId, $id]
         );
         return $this->json(['ok' => true]);
+    }
+
+    // ── DOWNLOAD COURSE AS ZIP ────────────────────────────────────────────────
+    // GET /courses/{id}/download-zip
+    // Fetches every file in the course, converts notes (.rtfx / .txt / .md)
+    // to PDF on the fly, then streams a .zip.
+    #[Route('/download-zip', name: '_download_zip', methods: ['GET'])]
+    public function downloadZip(int $id): Response
+    {
+        $course = $this->db->fetchAssociative(
+            'SELECT title FROM courses WHERE id = ?',
+            [$id]
+        );
+        if (!$course) throw $this->createNotFoundException('Course not found.');
+
+        $files = $this->db->fetchAllAssociative(
+            'SELECT id, originalname, mimetype, filedata FROM coursefile WHERE courseid = ? ORDER BY id',
+            [$id]
+        );
+
+        // Build zip in a temp file
+        $tmpZip = tempnam(sys_get_temp_dir(), 'course_zip_') . '.zip';
+        $zip    = new \ZipArchive();
+        if ($zip->open($tmpZip, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            return new Response('Could not create zip archive.', 500);
+        }
+
+        $usedNames = [];
+
+        foreach ($files as $file) {
+            $data = is_resource($file['filedata'])
+                ? stream_get_contents($file['filedata'])
+                : $file['filedata'];
+            $data = (string) $data;
+
+            $origName = $file['originalname'] ?? 'file';
+            $lower    = strtolower($origName);
+
+            // ── Convert notes → PDF ───────────────────────────────────────
+            $isNote = str_ends_with($lower, '.rtfx')
+                || str_ends_with($lower, '.txt')
+                || str_ends_with($lower, '.md');
+
+            if ($isNote) {
+                $baseName = preg_replace('/\.(rtfx|txt|md)$/i', '', $origName);
+                $zipName  = $this->uniqueZipName($usedNames, $baseName . '.pdf');
+
+                try {
+                    $doc = json_decode($data, true);
+                    if (!isset($doc['paragraphs'])) {
+                        $lines = explode("\n", str_replace(["\r\n", "\r"], "\n", $data));
+                        $doc   = ['paragraphs' => array_map(
+                            fn($l) => ['text' => $l, 'align' => 'left', 'font' => 'Inter', 'size' => 14],
+                            $lines
+                        )];
+                    }
+                    $html = $this->renderView('library/note-pdf.html.twig', [
+                        'title'      => $baseName,
+                        'paragraphs' => $doc['paragraphs'],
+                    ]);
+
+                    $pdfBytes = $this->htmlToPdfBytes($html);
+                    $zip->addFromString($zipName, $pdfBytes);
+                } catch (\Throwable) {
+                    // Conversion failed — include raw file instead
+                    $rawName = $this->uniqueZipName($usedNames, $origName);
+                    $zip->addFromString($rawName, $data);
+                }
+            } else {
+                // All other files (PDF, Word docs, images, spreadsheets, etc.) go in as-is
+                $zipName = $this->uniqueZipName($usedNames, $origName);
+                $zip->addFromString($zipName, $data);
+            }
+        }
+
+        $zip->close();
+
+        $zipBytes  = (string) file_get_contents($tmpZip);
+        @unlink($tmpZip);
+
+        $safeTitle = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $course['title']);
+        $downloadName = $safeTitle . '.zip';
+
+        $response = new Response($zipBytes);
+        $response->headers->set('Content-Type', 'application/zip');
+        $response->headers->set(
+            'Content-Disposition',
+            $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $downloadName)
+        );
+        return $response;
+    }
+
+    // ── GET FILE LIST FOR DOWNLOAD ───────────────────────────────────────────
+    // GET /courses/{id}/download-files
+    // Returns the list of files to be downloaded for progress tracking
+    #[Route('/download-files', name: '_download_files', methods: ['GET'])]
+    public function downloadFiles(int $id): JsonResponse
+    {
+        $files = $this->db->fetchAllAssociative(
+            'SELECT id, originalname, mimetype, sizebytes FROM coursefile WHERE courseid = ? ORDER BY id',
+            [$id]
+        );
+
+        return $this->json([
+            'files' => array_map(fn($f) => [
+                'id' => $f['id'],
+                'name' => $f['originalname'],
+                'size' => $f['sizebytes'],
+            ], $files),
+            'total' => count($files),
+        ]);
+    }
+
+    // ── DOWNLOAD SINGLE FILE FOR ZIP ───────────────────────────────────────────
+    // GET /courses/{id}/file/{fileId}/download-for-zip
+    // Downloads a single file, converts notes (.rtfx / .txt / .md) to PDF if needed,
+    // for building zip on client
+    #[Route('/file/{fileId}/download-for-zip', name: '_file_download_for_zip', requirements: ['fileId' => '\d+'], methods: ['GET'])]
+    public function downloadFileForZip(int $id, int $fileId): Response
+    {
+        $row = $this->db->fetchAssociative(
+            'SELECT originalname, mimetype, filedata FROM coursefile WHERE id = ? AND courseid = ?',
+            [$fileId, $id]
+        );
+        if (!$row) throw $this->createNotFoundException('File not found.');
+
+        $data = is_resource($row['filedata']) ? stream_get_contents($row['filedata']) : $row['filedata'];
+        $name = strtolower($row['originalname'] ?? '');
+
+        // ── Convert notes → PDF ───────────────────────────────────────
+        $isNote = str_ends_with($name, '.rtfx')
+            || str_ends_with($name, '.txt')
+            || str_ends_with($name, '.md');
+
+        if ($isNote) {
+            $baseName = preg_replace('/\.(rtfx|txt|md)$/i', '', $row['originalname']);
+            $downloadName = $baseName . '.pdf';
+
+            try {
+                $doc = json_decode($data, true);
+                if (!isset($doc['paragraphs'])) {
+                    $lines = explode("\n", str_replace(["\r\n", "\r"], "\n", $data));
+                    $doc   = ['paragraphs' => array_map(
+                        fn($l) => ['text' => $l, 'align' => 'left', 'font' => 'Inter', 'size' => 14],
+                        $lines
+                    )];
+                }
+                $html = $this->renderView('library/note-pdf.html.twig', [
+                    'title'      => $baseName,
+                    'paragraphs' => $doc['paragraphs'],
+                ]);
+
+                $pdfBytes = $this->htmlToPdfBytes($html);
+                $response = new Response($pdfBytes);
+                $response->headers->set('Content-Type', 'application/pdf');
+                $response->headers->set(
+                    'Content-Disposition',
+                    $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $downloadName)
+                );
+                return $response;
+            } catch (\Throwable) {
+                // Conversion failed — return raw file
+            }
+        }
+
+        // Return original file (including Word docs as-is)
+        $mime = $row['mimetype'] ?: 'application/octet-stream';
+        $mimeMap = [
+            '.pdf'  => 'application/pdf',
+            '.docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            '.doc'  => 'application/msword',
+            '.pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            '.ppt'  => 'application/vnd.ms-powerpoint',
+            '.xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            '.xls'  => 'application/vnd.ms-excel',
+        ];
+        foreach ($mimeMap as $ext => $correctMime) {
+            if (str_ends_with($name, $ext)) { $mime = $correctMime; break; }
+        }
+
+        $response = new Response($data);
+        $response->headers->set('Content-Type', $mime);
+        $response->headers->set(
+            'Content-Disposition',
+            $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $row['originalname'])
+        );
+        return $response;
     }
 
     // ── SAVE TO LIBRARY (toggle) ──────────────────────────────────────────────
@@ -597,10 +807,288 @@ class CourseDetailsController extends AbstractController
         ]);
     }
 
+    // ── AI META ───────────────────────────────────────────────────────────────
+    // GET /courses/{id}/file/{fileId}/ai-meta
+    // Returns { isPdf, canCheatSheet } — used by the frontend to decide which
+    // AI buttons to show in the preview modal footer.
+    #[Route('/file/{fileId}/ai-meta', name: '_file_ai_meta', requirements: ['fileId' => '\d+'], methods: ['GET'])]
+    public function aiMeta(int $id, int $fileId): JsonResponse
+    {
+        $row = $this->db->fetchAssociative(
+            'SELECT originalname, mimetype, filedata FROM coursefile WHERE id = ? AND courseid = ?',
+            [$fileId, $id]
+        );
+        if (!$row) return $this->json(['message' => 'Not found'], 404);
+
+        $name  = strtolower($row['originalname'] ?? '');
+        $isPdf = str_ends_with($name, '.pdf') || $row['mimetype'] === 'application/pdf';
+
+        if (!$isPdf) {
+            return $this->json(['isPdf' => false, 'canCheatSheet' => false]);
+        }
+
+        if (is_resource($row['filedata'])) {
+            rewind($row['filedata']);
+            $data = stream_get_contents($row['filedata']);
+        } else {
+            $data = $row['filedata'];
+        }
+
+        $canCheatSheet = false;
+        try {
+            $parser = new PdfParser();
+            $pdf    = $parser->parseContent($data);
+            $text   = trim($pdf->getText());
+
+            if ($text !== '') {
+                $system = 'You are a strict yes/no classifier. '
+                    . 'Decide whether the following document is EDUCATIONAL or TECHNICAL content that would be useful to condense into a study cheat sheet. '
+                    . 'Reply with a single word only: yes or no. '
+                    . 'Say YES only if the document is: a course, lecture notes, a textbook chapter, an exam or exercise sheet, a scientific paper, a technical manual, or similar educational/technical material. '
+                    . 'Say NO if the document is: a CV or resume, a cover letter, a personal profile, a business report, an invoice, a contract, administrative paperwork, a narrative story, a blank template, a cover page, or any document whose primary purpose is not to teach or explain a subject. '
+                    . 'When in doubt, say no.';
+
+                $answer = strtolower(trim($this->gemini->generate($system, $text)));
+                $canCheatSheet = str_starts_with($answer, 'yes');
+            }
+        } catch (\Throwable) {
+            // If parsing or AI call fails, cheat sheet button stays hidden
+        }
+
+        return $this->json(['isPdf' => true, 'canCheatSheet' => $canCheatSheet]);
+    }
+
+    // ── AI SUMMARIZE ─────────────────────────────────────────────────────────
+    // POST /courses/{id}/file/{fileId}/summarize
+    #[Route('/file/{fileId}/summarize', name: '_file_summarize', requirements: ['fileId' => '\d+'], methods: ['POST'])]
+    public function summarize(int $id, int $fileId): JsonResponse
+    {
+        $result = $this->extractPdfText($id, $fileId);
+
+        if (isset($result['error'])) {
+            return match($result['error']) {
+                'not_found' => $this->json(['message' => 'File not found'], 404),
+                'not_pdf'   => $this->json(['message' => 'File is not a PDF'], 415),
+                'empty'     => $this->json(['message' => 'Could not extract text from this PDF. It may be image-based or password-protected.'], 422),
+                default     => $this->json(['message' => 'Unexpected error reading file'], 500),
+            };
+        }
+
+        $text = $result['text'];
+
+        $system = <<<SYS
+You are a concise academic assistant. Produce a clear, well-structured summary of the document the user provides.
+Rules:
+- Write in clear, fluent prose (no excessive bullet points unless the content is naturally list-like).
+- Capture the main thesis, key arguments, important facts, and any conclusions.
+- Keep the summary proportional: aim for roughly 15–25% of the original length, capped at ~600 words.
+- Do not add commentary, opinions, or text not supported by the document.
+- Start directly with the summary; do not include a preamble like "Here is a summary of…".
+SYS;
+
+        try {
+            $summary = $this->gemini->generate($system, $text);
+        } catch (\Throwable $e) {
+            return $this->json(['message' => 'AI service error: ' . $e->getMessage()], 502);
+        }
+
+        return $this->json(['text' => $summary]);
+    }
+
+    // ── AI CHEAT SHEET ────────────────────────────────────────────────────────
+    // POST /courses/{id}/file/{fileId}/cheat-sheet
+    #[Route('/file/{fileId}/cheat-sheet', name: '_file_cheat_sheet', requirements: ['fileId' => '\d+'], methods: ['POST'])]
+    public function cheatSheet(int $id, int $fileId): JsonResponse
+    {
+        $result = $this->extractPdfText($id, $fileId);
+
+        if (isset($result['error'])) {
+            return match($result['error']) {
+                'not_found' => $this->json(['message' => 'File not found'], 404),
+                'not_pdf'   => $this->json(['message' => 'File is not a PDF'], 415),
+                'empty'     => $this->json(['message' => 'Could not extract text from this PDF. It may be image-based or password-protected.'], 422),
+                default     => $this->json(['message' => 'Unexpected error reading file'], 500),
+            };
+        }
+
+        $text = $result['text'];
+
+        $system = <<<SYS
+You are an expert study-aid creator. Your job is to extract and condense the actual KNOWLEDGE from the document into a dense, exam-ready cheat sheet.
+
+CRITICAL RULES:
+- You are summarising KNOWLEDGE, not listing questions or tasks. Never restate what the document asks — instead extract and present the underlying concepts, methods, and facts needed to answer them.
+- If the document is an exam or exercise sheet: derive the cheat sheet from the subject matter it covers, not from the questions themselves. E.g. if a question asks to prove k=1/2, your cheat sheet should state the fact/method, not repeat the question.
+- Use ## headings for major topics and ### for subtopics.
+- Use concise bullet points, short definitions, and formulas — never prose paragraphs.
+- For formulas: write them clearly and label what each variable means.
+- For theorems or properties: state them directly (e.g. "Unbiased estimator: E(T) = θ").
+- For tables or reference data (e.g. Z-tables): summarise how to read/use them, and include the most critical values.
+- Prioritise: definitions, formulas, properties, worked results, key values, decision rules.
+- Strip all fluff — every line must be something a student would write on a reference card.
+- Do not add information not present in the document.
+- Do not include a preamble — start immediately with the first section.
+SYS;
+
+        try {
+            $sheet = $this->gemini->generate($system, $text);
+        } catch (\Throwable $e) {
+            return $this->json(['message' => 'AI service error: ' . $e->getMessage()], 502);
+        }
+
+        return $this->json(['text' => $sheet]);
+    }
+
+    // ── PRIVATE: extract text from a PDF stored in coursefile ────────────────
+    // Max characters sent to Gemini — ~15 000 chars ≈ ~4 000 tokens, well within
+    // the free-tier per-request limit while covering most academic documents.
+    private const AI_TEXT_LIMIT = 15000;
+
+    /**
+     * Returns ['text' => string] on success, or ['error' => string] on failure.
+     * Error keys: 'not_found', 'not_pdf', 'empty'.
+     *
+     * FIX: previously returned ?string, conflating "file not found" and "not a PDF"
+     * into the same null — making it impossible to return a meaningful HTTP status.
+     * Now callers can map each error case to the correct response code.
+     *
+     * @return array{text: string}|array{error: string}
+     */
+    private function extractPdfText(int $courseId, int $fileId): array
+    {
+        $row = $this->db->fetchAssociative(
+            'SELECT originalname, mimetype, filedata FROM coursefile WHERE id = ? AND courseid = ?',
+            [$fileId, $courseId]
+        );
+        if (!$row) return ['error' => 'not_found'];
+
+        // FIX: rewind stream before reading — Doctrine may leave the pointer at EOF
+        if (is_resource($row['filedata'])) {
+            rewind($row['filedata']);
+            $data = stream_get_contents($row['filedata']);
+        } else {
+            $data = $row['filedata'];
+        }
+
+        // FIX: cast to string — some DB drivers return a resource handle or lazy
+        // object instead of raw bytes; (string) forces materialisation so that the
+        // %PDF header sniff below actually works.
+        $data = (string) $data;
+
+        if ($data === '') return ['error' => 'not_found'];
+
+        $name = strtolower($row['originalname'] ?? '');
+
+        // FIX: also sniff the binary %PDF header so files stored with a wrong
+        // MIME type or a renamed extension are still processed correctly.
+        $looksLikePdf = str_ends_with($name, '.pdf')
+            || $row['mimetype'] === 'application/pdf'
+            || str_starts_with($data, '%PDF');
+
+        // FIX: return a typed error instead of null so callers can distinguish
+        // "file not a PDF" (415) from "file not found" (404).
+        if (!$looksLikePdf) return ['error' => 'not_pdf'];
+
+        try {
+            $parser = new PdfParser();
+            $pdf    = $parser->parseContent($data);
+            $text   = $pdf->getText() ?: '';
+            file_put_contents('D:/web/pdf_debug.txt', 'Length: ' . strlen($text) . "\n" . substr($text, 0, 500));
+        } catch (\Throwable $e) {
+            file_put_contents('D:/web/pdf_debug.txt', 'ERROR: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return ['error' => 'empty'];
+        }
+
+        // Collapse excessive whitespace so we don't waste tokens on blank lines
+        $text = (string) preg_replace('/[ \t]{2,}/', ' ', $text);
+        $text = (string) preg_replace('/(\r?\n){3,}/', "\n\n", $text);
+        $text = trim($text);
+
+        if ($text === '') return ['error' => 'empty'];
+
+        // Hard cap — truncate cleanly at a word boundary
+        if (mb_strlen($text) > self::AI_TEXT_LIMIT) {
+            $text = mb_substr($text, 0, self::AI_TEXT_LIMIT);
+            $lastSpace = mb_strrpos($text, ' ');
+            if ($lastSpace !== false) {
+                $text = mb_substr($text, 0, $lastSpace);
+            }
+            $text .= "\n\n[Document truncated for AI processing]";
+        }
+
+        return ['text' => $text];
+    }
+
+
     // ── PRIVATE HELPERS ───────────────────────────────────────────────────────
 
     /**
+     * Convert an HTML string to PDF bytes using Snappy (wkhtmltopdf) with
+     * Dompdf as a fallback — mirrors the logic in exportNotePdf().
+     */
+    private function htmlToPdfBytes(string $html): string
+    {
+        try {
+            $pdfContent = $this->snappy->getOutputFromHtml($html, [
+                'encoding'         => 'UTF-8',
+                'print-media-type' => true,
+                'margin-top'       => 10,
+                'margin-bottom'    => 12,
+                'margin-left'      => 10,
+                'margin-right'     => 10,
+            ]);
+            if (str_starts_with($pdfContent, '%PDF')) {
+                return $pdfContent;
+            }
+        } catch (\Throwable) {
+            // fall through to Dompdf
+        }
+
+        $options = new DompdfOptions();
+        $options->set('defaultFont', 'DejaVu Sans');
+        $options->setIsRemoteEnabled(true);
+
+        $dompdf = new Dompdf($options);
+        $dompdf->loadHtml($html, 'UTF-8');
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        return (string) $dompdf->output();
+    }
+
+    /**
+     * Return a filename that does not clash with already-used zip entry names.
+     * Appends " (1)", " (2)", … before the extension when a conflict exists.
+     *
+     * @param array<string,true> $used  Pass-by-reference map of already-used names.
+     */
+    private function uniqueZipName(array &$used, string $desired): string
+    {
+        $desired = ltrim($desired, '/\\');
+
+        if (!isset($used[$desired])) {
+            $used[$desired] = true;
+            return $desired;
+        }
+
+        $dot  = strrpos($desired, '.');
+        $base = $dot !== false ? substr($desired, 0, $dot) : $desired;
+        $ext  = $dot !== false ? substr($desired, $dot)    : '';
+
+        $counter = 1;
+        do {
+            $candidate = sprintf('%s (%d)%s', $base, $counter, $ext);
+            $counter++;
+        } while (isset($used[$candidate]));
+
+        $used[$candidate] = true;
+        return $candidate;
+    }
+
+    /**
      * Convert a plain text string to our internal paragraph JSON format.
+     *
+     * @return array<int, array{text: string, align: string, font: string, size: int}>
      */
     private function textToParagraphs(string $text): array
     {
@@ -611,22 +1099,29 @@ class CourseDetailsController extends AbstractController
             'font'  => 'Inter',
             'size'  => 14,
         ], $lines);
-        return $paragraphs ?: [['text' => '', 'align' => 'left', 'font' => 'Inter', 'size' => 14]];
+        return $paragraphs;
     }
 
     /**
      * Parse a .docx/.doc binary blob and return our internal paragraph format
      * so it can be opened and edited in the note editor.
+     *
+     * @return array<int, array{text: string, align: string, font: string, size: int}>
      */
     private function wordToParagraphs(string $blob, string $filename): array
     {
         $paragraphs = [];
         try {
-            $ext = pathinfo($filename, PATHINFO_EXTENSION);
+            // Detect actual format by checking file signature
+            // .docx files are ZIP archives starting with "PK"
+            $isDocx = str_starts_with($blob, 'PK');
+
+            $ext = $isDocx ? 'docx' : pathinfo($filename, PATHINFO_EXTENSION);
             $tmp = tempnam(sys_get_temp_dir(), 'phpdocx_') . '.' . $ext;
             file_put_contents($tmp, $blob);
 
-            $type   = strtolower($ext) === 'docx' ? 'Word2007' : 'MsDoc';
+            $type   = $isDocx ? 'Word2007' : 'MsDoc';
+            /** @phpstan-ignore class.notFound */
             $reader = WordIOFactory::createReader($type);
             $doc    = $reader->load($tmp);
             @unlink($tmp);
@@ -636,24 +1131,27 @@ class CourseDetailsController extends AbstractController
                     $text  = '';
                     $align = 'left';
 
-                    if ($element instanceof \PhpOffice\PhpWord\Element\TextRun
-                        || $element instanceof \PhpOffice\PhpWord\Element\Paragraph) {
+                    /** @phpstan-ignore class.notFound */
+                    if ($element instanceof WordTextRun
+                        || $element instanceof WordParagraph) { // @phpstan-ignore class.notFound
+                        /** @phpstan-ignore-next-line */
                         $pStyle = $element->getParagraphStyle();
                         if (is_object($pStyle)) {
-                            $a = $pStyle->getAlignment();
+                            $a = $pStyle->getAlignment(); // @phpstan-ignore method.notFound
                             if (in_array($a, ['center', 'right', 'justify'], true)) $align = $a;
                         }
+                        /** @phpstan-ignore-next-line */
                         foreach ($element->getElements() as $child) {
-                            if ($child instanceof \PhpOffice\PhpWord\Element\Text) {
-                                $text .= $child->getText();
-                            } elseif ($child instanceof \PhpOffice\PhpWord\Element\TextBreak) {
+                            if ($child instanceof WordText) { // @phpstan-ignore class.notFound
+                                $text .= $child->getText(); // @phpstan-ignore class.notFound
+                            } elseif ($child instanceof WordTextBreak) { // @phpstan-ignore class.notFound
                                 $text .= "\n";
                             }
                         }
-                    } elseif ($element instanceof \PhpOffice\PhpWord\Element\Text) {
-                        $text = $element->getText();
-                    } elseif ($element instanceof \PhpOffice\PhpWord\Element\TextBreak
-                        || $element instanceof \PhpOffice\PhpWord\Element\PageBreak) {
+                    } elseif ($element instanceof WordText) { // @phpstan-ignore class.notFound
+                        $text = $element->getText(); // @phpstan-ignore class.notFound
+                    } elseif ($element instanceof WordTextBreak // @phpstan-ignore class.notFound
+                        || $element instanceof WordPageBreak) { // @phpstan-ignore class.notFound
                         $paragraphs[] = ['text' => '', 'align' => 'left', 'font' => 'Inter', 'size' => 14];
                         continue;
                     } else {
@@ -669,10 +1167,10 @@ class CourseDetailsController extends AbstractController
                 }
             }
         } catch (\Throwable) {
-            // PhpWord failed — fall back to raw printable text extraction
-            $paragraphs = $this->textToParagraphs(
-                trim(preg_replace('/[^\x20-\x7E\n\r\t]/', '', $blob))
-            );
+            // PhpWord failed — do NOT fall back to raw binary extraction as that
+            // dumps ZIP/XML garbage into the editor.  Return a sentinel paragraph
+            // that the frontend can detect to show a read-only error message.
+            return [['text' => '__DOCX_PARSE_ERROR__', 'align' => 'left', 'font' => 'Inter', 'size' => 14]];
         }
 
         return $paragraphs ?: [['text' => '', 'align' => 'left', 'font' => 'Inter', 'size' => 14]];
@@ -681,40 +1179,114 @@ class CourseDetailsController extends AbstractController
     /**
      * Convert a .docx/.doc blob to a self-contained HTML string
      * for rendering inside the preview modal iframe.
+     *
+     * Strategy (in order):
+     *   1. LibreOffice headless  — best fidelity, correct encoding
+     *   2. PhpWord text extraction → plain-HTML rebuild  — safe fallback
      */
     private function wordToHtml(string $blob, string $filename): string
     {
-        try {
-            $ext    = pathinfo($filename, PATHINFO_EXTENSION);
-            $tmp    = tempnam(sys_get_temp_dir(), 'phpdocx_') . '.' . $ext;
-            file_put_contents($tmp, $blob);
+        $isDocx = str_starts_with($blob, 'PK');
+        $ext    = $isDocx ? 'docx' : strtolower(pathinfo($filename, PATHINFO_EXTENSION) ?: 'docx');
 
-            $type   = strtolower($ext) === 'docx' ? 'Word2007' : 'MsDoc';
-            $reader = WordIOFactory::createReader($type);
-            $doc    = $reader->load($tmp);
-            @unlink($tmp);
+        // ── 1. LibreOffice headless conversion ────────────────────────────────
+        $loPath = $this->findLibreOffice();
+        if ($loPath !== null) {
+            $tmpDir  = sys_get_temp_dir() . '/lo_' . bin2hex(random_bytes(8));
+            $tmpFile = $tmpDir . '/input.' . $ext;
+            @mkdir($tmpDir, 0700, true);
+            file_put_contents($tmpFile, $blob);
 
-            $tmpOut = tempnam(sys_get_temp_dir(), 'phpdocx_out_') . '.html';
-            $writer = WordIOFactory::createWriter($doc, 'HTML');
-            $writer->save($tmpOut);
+            $cmd = sprintf(
+                '%s --headless --convert-to html --outdir %s %s 2>/dev/null',
+                escapeshellarg($loPath),
+                escapeshellarg($tmpDir),
+                escapeshellarg($tmpFile)
+            );
+            exec($cmd, $output, $exitCode);
 
-            $html = file_get_contents($tmpOut);
-            @unlink($tmpOut);
+            $htmlFile = $tmpDir . '/input.html';
+            if ($exitCode === 0 && is_file($htmlFile)) {
+                $raw = (string) file_get_contents($htmlFile);
 
-            return '<!DOCTYPE html><html><head><meta charset="UTF-8">
-                <style>
-                    body { font-family: Inter, Arial, sans-serif; font-size: 13px;
+                // Clean up temp files
+                @unlink($tmpFile);
+                @unlink($htmlFile);
+                @rmdir($tmpDir);
+
+                // LibreOffice outputs a full HTML document; normalise charset
+                // and inject our viewport styles so it renders cleanly in the iframe.
+                $raw = (string) preg_replace(
+                    '/<meta[^>]+charset[^>]+>/i',
+                    '<meta charset="UTF-8">',
+                    $raw
+                );
+                // Force UTF-8 decode in case LO wrote Latin-1 bytes
+                if (!mb_check_encoding($raw, 'UTF-8')) {
+                    $raw = (string) mb_convert_encoding($raw, 'UTF-8', 'Windows-1252');
+                }
+
+                // Inject reset styles into the existing <head>
+                $injectCss = '<style>
+                    body { font-family: Inter, Arial, sans-serif !important; font-size: 13px !important;
                            line-height: 1.7; color: #111; padding: 24px 32px; margin: 0; }
                     table { border-collapse: collapse; width: 100%; margin: 12px 0; }
                     td, th { border: 1px solid #e5e7eb; padding: 6px 10px; }
                     img { max-width: 100%; height: auto; }
                     p { margin: 0 0 6px; }
-                </style></head><body>' . $html . '</body></html>';
+                </style>';
+                $raw = (string) preg_replace('/<\/head>/i', $injectCss . '</head>', $raw, 1);
 
-        } catch (\Throwable) {
-            return '<html><body style="font-family:sans-serif;padding:32px;color:#6b7280;">
-                        <p>Preview not available for this file. Please use the Download button.</p>
-                    </body></html>';
+                return $raw;
+            }
+
+            // Clean up on failure too
+            @unlink($tmpFile);
+            @rmdir($tmpDir);
         }
+
+        // ── 2. PhpWord text-extraction fallback ───────────────────────────────
+        // We intentionally do NOT use PhpWord's HTML writer here — it emits
+        // mis-encoded bytes that cause the scrambled-text bug.  Instead we
+        // extract plain paragraphs and rebuild a clean HTML page ourselves.
+        $paragraphs = $this->wordToParagraphs($blob, $filename);
+
+        $lines = '';
+        foreach ($paragraphs as $p) {
+            $text  = htmlspecialchars((string) $p['text'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $align = in_array($p['align'], ['center', 'right', 'justify'], true) ? $p['align'] : 'left';
+            $lines .= '<p style="text-align:' . $align . '">' . ($text !== '' ? $text : '&nbsp;') . "</p>\n";
+        }
+
+        return '<!DOCTYPE html><html><head><meta charset="UTF-8">
+            <style>
+                body { font-family: Inter, Arial, sans-serif; font-size: 13px;
+                       line-height: 1.7; color: #111; padding: 24px 32px; margin: 0; }
+                p { margin: 0 0 6px; }
+                table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+                td, th { border: 1px solid #e5e7eb; padding: 6px 10px; }
+            </style></head><body>' . $lines . '</body></html>';
+    }
+
+    /**
+     * Return the path to a LibreOffice / soffice executable, or null if none found.
+     */
+    private function findLibreOffice(): ?string
+    {
+        $candidates = [
+            '/usr/bin/libreoffice',
+            '/usr/bin/soffice',
+            '/usr/local/bin/libreoffice',
+            '/usr/local/bin/soffice',
+            '/Applications/LibreOffice.app/Contents/MacOS/soffice', // macOS dev
+        ];
+
+        foreach ($candidates as $path) {
+            if (is_executable($path)) return $path;
+        }
+
+        // Last-resort: ask the shell (suppressed to avoid noise if missing)
+        $which = trim((string) shell_exec('which libreoffice 2>/dev/null || which soffice 2>/dev/null'));
+        return ($which !== '' && is_executable($which)) ? $which : null;
     }
 }

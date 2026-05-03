@@ -7,7 +7,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class ImageGenerationService
 {
-    private const API_KEY = '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';
+    private const API_KEY = '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';
     private const API_URL = 'https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell';
 
     public function __construct(private readonly HttpClientInterface $http) {}

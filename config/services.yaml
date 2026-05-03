@@ -85,3 +85,8 @@ services:
     App\Service\SentimentService:
         arguments:
             $apiKey: '%env(GROQ_API_KEY)%'
+
+    # ----------------------LibraryServices/GeminiService ----------------------
+    App\Service\LibraryServices\GeminiService:
+        arguments:
+            $apiKey: '%env(I_AM_GROQ)%'
