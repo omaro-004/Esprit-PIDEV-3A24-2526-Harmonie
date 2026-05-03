@@ -38,5 +38,5 @@ class Categorie
     public function setDescription(?string $v): static { $this->description = $v; return $this; }
 
     public function getDateCreation(): \DateTimeInterface { return $this->dateCreation; }
-    protected function setDateCreation(\DateTimeInterface $v): static { $this->dateCreation = $v; return $this; }
+    public function setDateCreation(\DateTimeInterface $v): static { $this->dateCreation = $v; return $this; }
 }

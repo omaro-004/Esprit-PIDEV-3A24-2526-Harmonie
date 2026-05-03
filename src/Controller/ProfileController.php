@@ -66,7 +66,8 @@ class ProfileController extends AbstractController
             if ($avatarFile) {
                 $safeFilename = $slugger->slug($user->getUserNom());
                 $newFilename  = $safeFilename . '-' . uniqid() . '.' . $avatarFile->guessExtension();
-                $uploadDir    = $this->getParameter('kernel.project_dir') . '/public/user_images';
+                $projectDir = is_string($dir = $this->getParameter('kernel.project_dir')) ? $dir : '';
+                $uploadDir    = $projectDir . '/public/user_images';
 
                 if (!is_dir($uploadDir)) {
                     mkdir($uploadDir, 0777, true);

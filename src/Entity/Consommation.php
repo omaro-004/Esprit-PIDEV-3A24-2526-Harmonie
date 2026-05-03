@@ -13,7 +13,6 @@ class Consommation
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(name: 'id_consommation', type: 'integer')]
-    /** @phpstan-ignore property.unusedType */
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: Aliment::class)]
@@ -22,11 +21,11 @@ class Consommation
     private ?Aliment $aliment = null;
 
     #[ORM\Column(name: 'date_consommation', type: 'datetime')]
-    private ?\DateTime $dateConsommation = null;
+    private \DateTimeInterface $dateConsommation;
 
     #[ORM\Column(name: 'type_repas', length: 50)]
     #[Assert\NotBlank(message: 'Veuillez choisir un type de repas.')]
-    private ?string $typeRepas = null;
+    private string $typeRepas;
 
     #[ORM\Column(name: 'poids_grammes', type: 'integer', nullable: true)]
     #[Assert\GreaterThan(value: 0, message: 'La quantité doit être supérieure à 0.')]
@@ -57,12 +56,12 @@ class Consommation
         return $this;
     }
 
-    public function getDateConsommation(): ?\DateTime
+    public function getDateConsommation(): ?\DateTimeInterface
     {
         return $this->dateConsommation;
     }
 
-    public function setDateConsommation(\DateTime $dateConsommation): static
+    public function setDateConsommation(\DateTimeInterface $dateConsommation): static
     {
         $this->dateConsommation = $dateConsommation;
         return $this;

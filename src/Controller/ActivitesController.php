@@ -281,7 +281,7 @@ class ActivitesController extends AbstractController
             ];
             $dateLabel = $dateObj->format('j') . ' ' . $months[(int)$dateObj->format('n')] . ' ' . $dateObj->format('Y');
 
-            $projectDir = (string) $this->getParameter('kernel.project_dir');
+            $projectDir = is_string($dir = $this->getParameter('kernel.project_dir')) ? $dir : '';
             $logoCandidates = [
                 $projectDir . '/public/image/logo.png',
                 $projectDir . '/public/images/logo.png',
@@ -381,7 +381,7 @@ class ActivitesController extends AbstractController
         }
 
         // ── 4. Rendu du template Twig → HTML string ────────────────────────
-        $projectDirForPdf = (string) $this->getParameter('kernel.project_dir');
+        $projectDirForPdf = is_string($dir = $this->getParameter('kernel.project_dir')) ? $dir : '';
         $publicDir = $projectDirForPdf . '/public';
 
         $html = $this->renderView('activites/bilan_pdf.html.twig', [
@@ -445,7 +445,7 @@ class ActivitesController extends AbstractController
             $groupedData[$date] = $exs;
         }
 
-        $projectDirDompdf = (string) $this->getParameter('kernel.project_dir');
+        $projectDirDompdf = is_string($dir = $this->getParameter('kernel.project_dir')) ? $dir : '';
         $publicDir = $projectDirDompdf . '/public';
 
         $html = $this->renderView('activites/bilan_pdf.html.twig', [

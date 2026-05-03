@@ -99,8 +99,8 @@ class ForumController extends AbstractController
             );
 
             $suggestion = $mistralService->suggestReply(
-                $post->getTitre() ?? '',
-                $post->getContenu() ?? '',
+                $post->getTitre(),
+                $post->getContenu(),
                 $commentaires
             );
 
@@ -124,7 +124,7 @@ class ForumController extends AbstractController
             }
 
 
-            $result = $sentimentService->analyze($commentaire->getContenu() ?? '');
+            $result = $sentimentService->analyze($commentaire->getContenu());
 
 
             return new JsonResponse($result);
@@ -168,7 +168,7 @@ class ForumController extends AbstractController
 
 
             $resume = $summaryService->summarizeDiscussion(
-                $post->getTitre() ?? '',
+                $post->getTitre(),
                 $commentaires
             );
 
@@ -285,8 +285,8 @@ class ForumController extends AbstractController
 
 
         // Traduit le titre et le contenu séparément
-        $translatedTitre   = $translator->translate($post->getTitre() ?? '', 'fr', (string) $targetLang);
-        $translatedContenu = $translator->translate($post->getContenu() ?? '', 'fr', (string) $targetLang);
+        $translatedTitre   = $translator->translate($post->getTitre(), 'fr', (string) $targetLang);
+        $translatedContenu = $translator->translate($post->getContenu(), 'fr', (string) $targetLang);
 
 
         return new JsonResponse([

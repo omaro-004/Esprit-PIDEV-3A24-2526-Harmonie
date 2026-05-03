@@ -13,15 +13,14 @@ class Activite
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(name: 'id_activite')]
-    /** @phpstan-ignore property.unusedType */
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: Exercice::class)]
     #[ORM\JoinColumn(name: 'id_exercice', referencedColumnName: 'id_exercice', nullable: false)]
-    private ?Exercice $exercice = null;
+    private Exercice $exercice;
 
     #[ORM\Column(name: 'date_activite', type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $dateActivite = null;
+    private \DateTimeInterface $dateActivite;
 
     #[ORM\Column(name: 'duree_minutes', nullable: true)]
     private ?int $dureeMinutes = null;
@@ -54,7 +53,7 @@ class Activite
         return $this->exercice;
     }
 
-    public function setExercice(?Exercice $exercice): static
+    public function setExercice(Exercice $exercice): static
     {
         $this->exercice = $exercice;
         return $this;

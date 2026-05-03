@@ -12,11 +12,10 @@ class Exercice
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(name: 'id_exercice')]
-    /** @phpstan-ignore property.unusedType */
     private ?int $id = null;
 
     #[ORM\Column(name: 'nom_exercice', length: 100)]
-    private ?string $nomExercice = null;
+    private string $nomExercice;
 
     #[ORM\Column(name: 'type_exercice', length: 100, nullable: true)]
     private ?string $typeExercice = null;

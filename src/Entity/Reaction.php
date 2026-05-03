@@ -32,7 +32,7 @@ class Reaction
     public function setTypeReaction(string $v): static { $this->typeReaction = $v; return $this; }
 
     public function getDateReaction(): \DateTimeInterface { return $this->dateReaction; }
-    protected function setDateReaction(\DateTimeInterface $v): static { $this->dateReaction = $v; return $this; }
+    public function setDateReaction(\DateTimeInterface $v): static { $this->dateReaction = $v; return $this; }
 
     public function getIdPost(): int { return $this->idPost; }
     public function setIdPost(int $v): static { $this->idPost = $v; return $this; }

@@ -146,7 +146,7 @@ class AdminNutritionController extends AbstractController
 
         // ── 5. Logo Harmony (A1) ──────────────────────────────────────
         // Fix PHPStan :167 — getParameter() retourne mixed, on assert is_string
-        $projectDir = (string) $this->getParameter('kernel.project_dir');
+        $projectDir = is_string($dir = $this->getParameter('kernel.project_dir')) ? $dir : '';
         $logoPath = $projectDir . '/public/image/logo.png';
 
         if (file_exists($logoPath)) {

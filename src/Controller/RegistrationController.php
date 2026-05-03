@@ -107,7 +107,8 @@ class RegistrationController extends AbstractController
             if ($avatarFile) {
                 $safeFilename = $slugger->slug($step1['nom']);
                 $newFilename  = $safeFilename . '-' . uniqid() . '.' . $avatarFile->guessExtension();
-                $uploadDir    = $this->getParameter('kernel.project_dir') . '/public/user_images';
+                $projectDir = is_string($dir = $this->getParameter('kernel.project_dir')) ? $dir : '';
+                $uploadDir    = $projectDir . '/public/user_images';
 
                 if (!is_dir($uploadDir)) {
                     mkdir($uploadDir, 0777, true);
@@ -198,7 +199,8 @@ class RegistrationController extends AbstractController
 
         // Sauvegarder l'image faciale
         if ($faceImage) {
-            $faceDir = $this->getParameter('kernel.project_dir') . '/public/face_data';
+            $projectDir = is_string($dir = $this->getParameter('kernel.project_dir')) ? $dir : '';
+            $faceDir = $projectDir . '/public/face_data';
             if (!is_dir($faceDir)) {
                 mkdir($faceDir, 0777, true);
             }

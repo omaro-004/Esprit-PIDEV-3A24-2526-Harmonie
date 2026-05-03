@@ -15,7 +15,7 @@ class Conversation
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(name: 'id', type: 'integer')]
-    /** @phpstan-ignore-next-line ORM assigns id at runtime */
+
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: User::class)]

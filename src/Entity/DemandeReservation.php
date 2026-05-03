@@ -23,21 +23,21 @@ class DemandeReservation
 
     #[ORM\ManyToOne(inversedBy: 'demandeReservations')]
     #[ORM\JoinColumn(name: 'evenement_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
-    private ?Evenement $evenement = null;
+    private Evenement $evenement;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(name: 'salle_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
-    private ?Salle $salle = null;
+    private Salle $salle;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(name: 'utilisateur_id', referencedColumnName: 'user_id', nullable: false, onDelete: 'CASCADE')]
-    private ?User $utilisateur = null;
+    private User $utilisateur;
 
     #[ORM\Column(length: 20)]
     private string $statut = self::STATUT_EN_ATTENTE;
 
     #[ORM\Column(name: 'date_demande', type: Types::DATETIME_IMMUTABLE)]
-    private ?\DateTimeImmutable $dateDemande = null;
+    private \DateTimeImmutable $dateDemande;
 
     #[ORM\Column(name: 'commentaire_admin', length: 500, nullable: true)]
     private ?string $commentaireAdmin = null;
@@ -57,7 +57,7 @@ class DemandeReservation
         return $this->evenement;
     }
 
-    public function setEvenement(?Evenement $evenement): static
+    public function setEvenement(Evenement $evenement): static
     {
         $this->evenement = $evenement;
 
@@ -69,7 +69,7 @@ class DemandeReservation
         return $this->salle;
     }
 
-    public function setSalle(?Salle $salle): static
+    public function setSalle(Salle $salle): static
     {
         $this->salle = $salle;
 
@@ -81,7 +81,7 @@ class DemandeReservation
         return $this->utilisateur;
     }
 
-    public function setUtilisateur(?User $utilisateur): static
+    public function setUtilisateur(User $utilisateur): static
     {
         $this->utilisateur = $utilisateur;
 

@@ -23,7 +23,7 @@ class SummaryService
     /** @param array<int, \App\Entity\Commentaire> $commentaires */
     public function summarizeDiscussion(string $titre, array $commentaires): string
     {
-        $texte = implode("\n", array_map(fn($c) => $c->getContenu() ?? '', $commentaires));
+        $texte = implode("\n", array_map(fn($c) => $c->getContenu(), $commentaires));
        
         // Sécurité : texte minimum requis
         if (strlen(trim($texte)) < 5) {

@@ -100,7 +100,10 @@ class MockUserController extends AbstractController
 
     // ── HELPERS ────────────────────────────────────────────────────────────
 
-    /** Find a user by id — DB first, dummy list as fallback */
+    /**
+     * Find a user by id — DB first, dummy list as fallback
+     * @return array<mixed>|null
+     */
     private function findUser(int $id): ?array
     {
         try {
@@ -121,7 +124,10 @@ class MockUserController extends AbstractController
         return null;
     }
 
-    /** Attempt to detect alternative column naming conventions */
+    /**
+     * Attempt to detect alternative column naming conventions
+     * @return array<mixed>
+     */
     private function tryGenericColumns(): array
     {
         // Try snake_case alternatives common in other frameworks

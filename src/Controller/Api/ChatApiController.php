@@ -46,7 +46,7 @@ final class ChatApiController extends AbstractController
             return $this->json(['error' => 'JSON invalide'], 400);
         }
 
-        $userMessage = trim((string) ($payload['userMessage'] ?? ''));
+        $userMessage = trim((string) ($payload['userMessage']));
         $history     = $payload['history'] ?? [];
         $model       = (string) ($payload['model'] ?? 'gemini-2.5-flash-lite');
         $confirmed   = (bool) ($payload['confirmed'] ?? false);
@@ -173,7 +173,7 @@ PROMPT;
                     return $this->json(['error' => $errMsg], $status);
                 }
 
-                $replyText = (string) ($data['choices'][0]['message']['content'] ?? '');
+                $replyText = (string) ($data['choices'][0]['message']['content']);
                 if ('' === trim($replyText)) {
                     return $this->json(['error' => 'Réponse Groq vide'], 502);
                 }
@@ -206,11 +206,12 @@ PROMPT;
                 usleep($delayUs);
                 $delayUs *= 2;
             }
-        } while ($attempt < self::MAX_RETRIES);
-
-        return $this->json(['error' => 'Erreur API Gemini'], 500);
+        } while (true);
     }
 
+    /**
+     * @return array<mixed>
+     */
     private function normalizeHistory(mixed $history): array
     {
         if (!is_array($history)) {
@@ -222,7 +223,7 @@ PROMPT;
             if (!is_array($item)) {
                 continue;
             }
-            $role = (string) ($item['role'] ?? '');
+            $role = (string) ($item['role']);
             if (!in_array($role, ['user', 'model'], true)) {
                 continue;
             }
@@ -247,6 +248,9 @@ PROMPT;
         return $normalized;
     }
 
+    /**
+     * @return array<mixed>
+     */
     private function serializeTasks(): array
     {
         $tasks = $this->tacheRepository->findAll();
@@ -263,6 +267,9 @@ PROMPT;
         }, $tasks);
     }
 
+    /**
+     * @return array<mixed>
+     */
     private function serializeEvents(): array
     {
         $events = $this->evenementRepository->findAll();
@@ -279,6 +286,9 @@ PROMPT;
         }, $events);
     }
 
+    /**
+     * @return array<mixed>|null
+     */
     private function extractActionJson(string $text): ?array
     {
         $decoded = json_decode($text, true);
@@ -303,6 +313,9 @@ PROMPT;
         return null;
     }
 
+    /**
+     * @param array<mixed> $data
+     */
     private function executeAction(string $action, array $data): void
     {
         switch ($action) {
@@ -357,7 +370,7 @@ PROMPT;
                 if (!$task) {
                     return;
                 }
-                $taskTitle = (string) ($task->getNom() ?? 'Tâche');
+                $taskTitle = (string) ($task->getNom());
                 $this->em->remove($task);
                 $this->em->flush();
                 $this->telegramNotifier->notifyTaskDeleted($taskTitle, true);
@@ -420,13 +433,16 @@ PROMPT;
         }
     }
 
+    /**
+     * @param array<mixed> $data
+     */
     private function findTask(array $data): ?Tache
     {
         if (isset($data['id']) && is_numeric($data['id'])) {
             return $this->tacheRepository->find((int) $data['id']);
         }
 
-        $title = trim((string) ($data['title'] ?? ''));
+        $title = trim((string) ($data['title']));
         if ('' === $title) {
             return null;
         }
@@ -441,20 +457,23 @@ PROMPT;
         return null;
     }
 
+    /**
+     * @param array<mixed> $data
+     */
     private function findEvent(array $data): ?Evenement
     {
         if (isset($data['id']) && is_numeric($data['id'])) {
             return $this->evenementRepository->find((int) $data['id']);
         }
 
-        $title = trim((string) ($data['title'] ?? ''));
+        $title = trim((string) ($data['title']));
         if ('' === $title) {
             return null;
         }
 
         $needle = $this->normalize($title);
         foreach ($this->evenementRepository->findAll() as $event) {
-            if (str_contains($this->normalize((string) ($event->getTitre() ?? '')), $needle)) {
+            if (str_contains($this->normalize((string) ($event->getTitre())), $needle)) {
                 return $event;
             }
         }
@@ -471,9 +490,12 @@ PROMPT;
         };
     }
 
+    /**
+     * @param array<mixed> $data
+     */
     private function encodeJson(array $data): string
     {
-        return json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        return (string) json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
     private function normalize(string $value): string

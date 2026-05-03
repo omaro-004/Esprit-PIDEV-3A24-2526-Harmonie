@@ -12,23 +12,22 @@ class Aliment
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(name: 'id_aliment', type: 'integer')]
-    /** @phpstan-ignore property.unusedType */
     private ?int $id = null;
 
     #[ORM\Column(name: 'nom_aliment', length: 100)]
-    private ?string $nomAliment = null;
+    private string $nomAliment;
 
     #[ORM\Column(name: 'calories_pour_100g', type: 'integer')]
-    private ?int $caloriesPour100g = null;
+    private int $caloriesPour100g;
 
     #[ORM\Column(type: 'float')]
-    private ?float $proteines = null;
+    private float $proteines;
 
     #[ORM\Column(type: 'float')]
-    private ?float $glucides = null;
+    private float $glucides;
 
     #[ORM\Column(type: 'float')]
-    private ?float $lipides = null;
+    private float $lipides;
 
     public function getId(): ?int
     {

@@ -39,6 +39,9 @@ class LibraryController extends AbstractController
         ]);
     }
 
+    /**
+     * @return array<mixed>
+     */
     private function getRecommendedCourses(): array
     {
         $user = $this->getUser();

@@ -14,6 +14,7 @@ class GoogleCalendarController extends AbstractController
     #[Route('/oauth/google/connect', name: 'app_google_calendar_connect')]
     public function connect(GoogleCalendarService $googleService): Response
     {
+        /** @var \App\Entity\User|null $user */
         $user = $this->getUser();
         if (!$user) {
             return $this->redirectToRoute('app_login');
@@ -32,6 +33,7 @@ class GoogleCalendarController extends AbstractController
     public function callback(Request $request, GoogleCalendarService $googleService): Response
     {
         $code = $request->query->get('code');
+        /** @var \App\Entity\User|null $user */
         $user = $this->getUser();
 
         if ($code && $user) {
@@ -49,6 +51,7 @@ class GoogleCalendarController extends AbstractController
     #[Route('/oauth/google/disconnect', name: 'app_google_calendar_disconnect')]
     public function disconnect(EntityManagerInterface $em): Response
     {
+        /** @var \App\Entity\User|null $user */
         $user = $this->getUser();
         if ($user) {
             $user->setGoogleAccessToken(null);
@@ -64,6 +67,7 @@ class GoogleCalendarController extends AbstractController
     #[Route('/oauth/google/pull', name: 'app_google_calendar_pull')]
     public function pull(GoogleCalendarService $googleService): Response
     {
+        /** @var \App\Entity\User|null $user */
         $user = $this->getUser();
         if ($user && $googleService->pullEventsFromGoogle($user)) {
             $this->addFlash('success', 'Calendrier synchronisé avec succès depuis Google !');

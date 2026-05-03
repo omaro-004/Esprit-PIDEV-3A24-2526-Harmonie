@@ -89,6 +89,9 @@ final class GithubWebhookController extends AbstractController
         return $this->json(['ok' => true]);
     }
 
+    /**
+     * @param array<mixed> $payload
+     */
     private function handleProjectV2ItemWebhook(
         array $payload,
         TacheRepository $tacheRepository,
@@ -160,7 +163,7 @@ final class GithubWebhookController extends AbstractController
         return $this->json(['ok' => true]);
     }
 
-    private function mapIssueToStatus(array $issue): string
+    /** @param array<mixed> $issue */ private function mapIssueToStatus(array $issue): string
     {
         $state = (string) ($issue['state'] ?? 'open');
         $labels = array_map(
@@ -178,6 +181,9 @@ final class GithubWebhookController extends AbstractController
         return 'A_FAIRE';
     }
 
+    /**
+     * @param array<mixed> $payload
+     */
     private function extractProjectStatusName(array $payload): ?string
     {
         $candidates = [

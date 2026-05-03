@@ -46,7 +46,8 @@ class FaceAuthController extends AbstractController
         }
 
         // Retourner le chemin de l'image de référence pour comparaison côté client
-        $faceImagePath = $this->getParameter('kernel.project_dir') . '/public/' . $user->getFaceImagePath();
+        $projectDir = is_string($dir = $this->getParameter('kernel.project_dir')) ? $dir : '';
+        $faceImagePath = $projectDir . '/public/' . $user->getFaceImagePath();
 
         if (!file_exists($faceImagePath)) {
             // Si l'image de référence n'existe plus, on laisse passer
@@ -129,14 +130,16 @@ class FaceAuthController extends AbstractController
             return new JsonResponse(['error' => 'Aucune image fournie'], 400);
         }
 
-        $faceDir = $this->getParameter('kernel.project_dir') . '/public/face_data';
+        $projectDir = is_string($dir = $this->getParameter('kernel.project_dir')) ? $dir : '';
+        $faceDir = $projectDir . '/public/face_data';
         if (!is_dir($faceDir)) {
             mkdir($faceDir, 0777, true);
         }
 
         // Supprimer l'ancienne image
         if ($user->getFaceImagePath()) {
-            $old = $this->getParameter('kernel.project_dir') . '/public/' . $user->getFaceImagePath();
+            $projectDir = is_string($dir = $this->getParameter('kernel.project_dir')) ? $dir : '';
+            $old = $projectDir . '/public/' . $user->getFaceImagePath();
             if (file_exists($old)) {
                 unlink($old);
             }
