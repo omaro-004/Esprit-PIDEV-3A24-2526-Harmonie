@@ -6,6 +6,9 @@ use App\Entity\SessionMeditation;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
+/**
+ * @extends ServiceEntityRepository<SessionMeditation>
+ */
 class SessionMeditationRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -13,6 +16,9 @@ class SessionMeditationRepository extends ServiceEntityRepository
         parent::__construct($registry, SessionMeditation::class);
     }
 
+    /**
+     * @return SessionMeditation[]
+     */
     public function searchAndSort(string $q = '', string $sort = 'id', string $direction = 'DESC'): array
     {
         $qb = $this->createQueryBuilder('s');

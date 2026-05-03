@@ -41,7 +41,10 @@ class PostRepository extends ServiceEntityRepository
     //        ;
     //    }
     
-        public function findAllWithCategorie(): array
+    /**
+     * @return Post[]
+     */
+    public function findAllWithCategorie(): array
 {
     return $this->findBy([], ['dateCreation' => 'DESC']);
 }

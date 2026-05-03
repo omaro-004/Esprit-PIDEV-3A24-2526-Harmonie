@@ -6,6 +6,9 @@ use App\Entity\Conseil;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
+/**
+ * @extends ServiceEntityRepository<Conseil>
+ */
 class ConseilRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -13,6 +16,9 @@ class ConseilRepository extends ServiceEntityRepository
         parent::__construct($registry, Conseil::class);
     }
 
+    /**
+     * @return Conseil[]
+     */
     public function findBySession(int $sessionId): array
     {
         return $this->createQueryBuilder('c')

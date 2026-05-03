@@ -43,6 +43,7 @@ class CommentaireRepository extends ServiceEntityRepository
     
     /**
      * Retourne tous les commentaires avec leur post associé.
+     * @return Commentaire[]
      */
     public function findAllWithPost(): array
 {

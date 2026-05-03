@@ -7,6 +7,9 @@ use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
+/**
+ * @extends ServiceEntityRepository<JournalHumeur>
+ */
 class JournalHumeurRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -14,6 +17,9 @@ class JournalHumeurRepository extends ServiceEntityRepository
         parent::__construct($registry, JournalHumeur::class);
     }
 
+    /**
+     * @return JournalHumeur[]
+     */
     public function findByUser(User $user): array
     {
         return $this->createQueryBuilder('j')
@@ -24,6 +30,9 @@ class JournalHumeurRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * @return JournalHumeur[]
+     */
     public function searchByUser(User $user, string $q = '', string $humeur = ''): array
     {
         $qb = $this->createQueryBuilder('j')
@@ -54,6 +63,9 @@ class JournalHumeurRepository extends ServiceEntityRepository
             ->getSingleScalarResult();
     }
 
+    /**
+     * @return JournalHumeur[]
+     */
     public function findAllForAdmin(): array
     {
         return $this->createQueryBuilder('j')
@@ -74,6 +86,9 @@ class JournalHumeurRepository extends ServiceEntityRepository
             ->execute();
     }
 
+    /**
+     * @return array<mixed>
+     */
     public function moodDistribution(User $user): array
     {
         return $this->createQueryBuilder('j')
@@ -85,6 +100,9 @@ class JournalHumeurRepository extends ServiceEntityRepository
             ->getArrayResult();
     }
 
+    /**
+     * @return array<mixed>
+     */
     public function moodStats(User $user): array
     {
         $row = $this->createQueryBuilder('j')
@@ -100,6 +118,9 @@ class JournalHumeurRepository extends ServiceEntityRepository
         ];
     }
 
+    /**
+     * @return array<mixed>
+     */
     public function scoreTrend(User $user, int $limit = 30): array
     {
         $entries = $this->createQueryBuilder('j')
@@ -120,6 +141,9 @@ class JournalHumeurRepository extends ServiceEntityRepository
         ], $entries);
     }
 
+    /**
+     * @return JournalHumeur[]
+     */
     public function findAllByUser(User $user): array
     {
         return $this->createQueryBuilder('j')
