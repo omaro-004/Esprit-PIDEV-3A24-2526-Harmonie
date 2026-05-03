@@ -34,7 +34,7 @@ class DatabaseAutoUpdateListener implements EventSubscriberInterface
         try {
             $schemaTool = new SchemaTool($this->em);
             $metadata   = $this->em->getMetadataFactory()->getAllMetadata();
-            $schemaTool->updateSchema($metadata, true);
+            $schemaTool->updateSchema($metadata);
         } catch (\Throwable) {
         }
     }
