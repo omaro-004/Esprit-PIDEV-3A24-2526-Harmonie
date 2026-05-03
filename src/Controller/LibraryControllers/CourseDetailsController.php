@@ -9,6 +9,11 @@ use Dompdf\Dompdf;
 use Dompdf\Options as DompdfOptions;
 use Knp\Bundle\SnappyBundle\Snappy\Response\PdfResponse;
 use Knp\Snappy\Pdf;
+use PhpOffice\PhpWord\Element\PageBreak as WordPageBreak;
+use PhpOffice\PhpWord\Element\Paragraph as WordParagraph;
+use PhpOffice\PhpWord\Element\Text as WordText;
+use PhpOffice\PhpWord\Element\TextBreak as WordTextBreak;
+use PhpOffice\PhpWord\Element\TextRun as WordTextRun;
 use PhpOffice\PhpWord\IOFactory as WordIOFactory;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -206,7 +211,7 @@ class CourseDetailsController extends AbstractController
 
         $published = (int) ((bool) $req->request->get('published', false));
         $this->db->executeStatement('UPDATE courses SET is_published = ? WHERE id = ?', [$published, $id]);
-        return $this->json(['ok' => true, 'is_published' => $published]);
+        return $this->json(['ok' => true, 'published' => (bool) $published, 'message' => $published ? 'Course published to Library' : 'Course unpublished']);
     }
 
     // ── UPLOAD FILES ──────────────────────────────────────────────────────────
@@ -331,7 +336,7 @@ class CourseDetailsController extends AbstractController
         }
 
         // ── Plain text / markdown ──────────────────────────────────────────
-        $text = mb_convert_encoding($data, 'UTF-8', 'auto');
+        $text = (string) mb_convert_encoding((string) $data, 'UTF-8', 'auto');
         return $this->json(['paragraphs' => $this->textToParagraphs($text)]);
     }
 
@@ -349,7 +354,7 @@ class CourseDetailsController extends AbstractController
 
         $decoded = json_decode($content, true);
         if (!isset($decoded['paragraphs'])) {
-            $content = json_encode(['paragraphs' => [['text' => $content, 'align' => 'left', 'font' => 'Inter', 'size' => 14]]]);
+            $content = (string) json_encode(['paragraphs' => [['text' => $content, 'align' => 'left', 'font' => 'Inter', 'size' => 14]]]);
         }
 
         $update = 'UPDATE coursefile SET filedata = ?, sizebytes = ?, mimetype = ?';
@@ -406,7 +411,7 @@ class CourseDetailsController extends AbstractController
             ]);
 
             // Validate binary signature to avoid returning plain-text errors as .pdf
-            if (is_string($pdfContent) && str_starts_with($pdfContent, '%PDF')) {
+            if (str_starts_with($pdfContent, '%PDF')) {
                 return new PdfResponse($pdfContent, $downloadName);
             }
         } catch (\Throwable) {
@@ -460,6 +465,10 @@ class CourseDetailsController extends AbstractController
 
         if (str_ends_with($name, '.pdf'))  $mime = 'application/pdf';
         if (str_ends_with($name, '.svg'))  $mime = 'image/svg+xml';
+        if (str_ends_with($name, '.jpg') || str_ends_with($name, '.jpeg')) $mime = 'image/jpeg';
+        if (str_ends_with($name, '.png'))  $mime = 'image/png';
+        if (str_ends_with($name, '.gif'))  $mime = 'image/gif';
+        if (str_ends_with($name, '.webp')) $mime = 'image/webp';
 
         $response = new Response($data);
         $response->headers->set('Content-Type', $mime);
@@ -607,7 +616,7 @@ class CourseDetailsController extends AbstractController
 
         $zip->close();
 
-        $zipBytes  = file_get_contents($tmpZip);
+        $zipBytes  = (string) file_get_contents($tmpZip);
         @unlink($tmpZip);
 
         $safeTitle = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $course['title']);
@@ -829,7 +838,7 @@ class CourseDetailsController extends AbstractController
         try {
             $parser = new PdfParser();
             $pdf    = $parser->parseContent($data);
-            $text   = trim($pdf->getText() ?? '');
+            $text   = trim($pdf->getText());
 
             if ($text !== '') {
                 $system = 'You are a strict yes/no classifier. '
@@ -991,8 +1000,8 @@ SYS;
         }
 
         // Collapse excessive whitespace so we don't waste tokens on blank lines
-        $text = preg_replace('/[ \t]{2,}/', ' ', $text);
-        $text = preg_replace('/(\r?\n){3,}/', "\n\n", $text);
+        $text = (string) preg_replace('/[ \t]{2,}/', ' ', $text);
+        $text = (string) preg_replace('/(\r?\n){3,}/', "\n\n", $text);
         $text = trim($text);
 
         if ($text === '') return ['error' => 'empty'];
@@ -1028,7 +1037,7 @@ SYS;
                 'margin-left'      => 10,
                 'margin-right'     => 10,
             ]);
-            if (is_string($pdfContent) && str_starts_with($pdfContent, '%PDF')) {
+            if (str_starts_with($pdfContent, '%PDF')) {
                 return $pdfContent;
             }
         } catch (\Throwable) {
@@ -1078,6 +1087,8 @@ SYS;
 
     /**
      * Convert a plain text string to our internal paragraph JSON format.
+     *
+     * @return array<int, array{text: string, align: string, font: string, size: int}>
      */
     private function textToParagraphs(string $text): array
     {
@@ -1088,12 +1099,14 @@ SYS;
             'font'  => 'Inter',
             'size'  => 14,
         ], $lines);
-        return $paragraphs ?: [['text' => '', 'align' => 'left', 'font' => 'Inter', 'size' => 14]];
+        return $paragraphs;
     }
 
     /**
      * Parse a .docx/.doc binary blob and return our internal paragraph format
      * so it can be opened and edited in the note editor.
+     *
+     * @return array<int, array{text: string, align: string, font: string, size: int}>
      */
     private function wordToParagraphs(string $blob, string $filename): array
     {
@@ -1108,6 +1121,7 @@ SYS;
             file_put_contents($tmp, $blob);
 
             $type   = $isDocx ? 'Word2007' : 'MsDoc';
+            /** @phpstan-ignore class.notFound */
             $reader = WordIOFactory::createReader($type);
             $doc    = $reader->load($tmp);
             @unlink($tmp);
@@ -1117,24 +1131,27 @@ SYS;
                     $text  = '';
                     $align = 'left';
 
-                    if ($element instanceof \PhpOffice\PhpWord\Element\TextRun
-                        || $element instanceof \PhpOffice\PhpWord\Element\Paragraph) {
+                    /** @phpstan-ignore class.notFound */
+                    if ($element instanceof WordTextRun
+                        || $element instanceof WordParagraph) { // @phpstan-ignore class.notFound
+                        /** @phpstan-ignore-next-line */
                         $pStyle = $element->getParagraphStyle();
                         if (is_object($pStyle)) {
-                            $a = $pStyle->getAlignment();
+                            $a = $pStyle->getAlignment(); // @phpstan-ignore method.notFound
                             if (in_array($a, ['center', 'right', 'justify'], true)) $align = $a;
                         }
+                        /** @phpstan-ignore-next-line */
                         foreach ($element->getElements() as $child) {
-                            if ($child instanceof \PhpOffice\PhpWord\Element\Text) {
-                                $text .= $child->getText();
-                            } elseif ($child instanceof \PhpOffice\PhpWord\Element\TextBreak) {
+                            if ($child instanceof WordText) { // @phpstan-ignore class.notFound
+                                $text .= $child->getText(); // @phpstan-ignore class.notFound
+                            } elseif ($child instanceof WordTextBreak) { // @phpstan-ignore class.notFound
                                 $text .= "\n";
                             }
                         }
-                    } elseif ($element instanceof \PhpOffice\PhpWord\Element\Text) {
-                        $text = $element->getText();
-                    } elseif ($element instanceof \PhpOffice\PhpWord\Element\TextBreak
-                        || $element instanceof \PhpOffice\PhpWord\Element\PageBreak) {
+                    } elseif ($element instanceof WordText) { // @phpstan-ignore class.notFound
+                        $text = $element->getText(); // @phpstan-ignore class.notFound
+                    } elseif ($element instanceof WordTextBreak // @phpstan-ignore class.notFound
+                        || $element instanceof WordPageBreak) { // @phpstan-ignore class.notFound
                         $paragraphs[] = ['text' => '', 'align' => 'left', 'font' => 'Inter', 'size' => 14];
                         continue;
                     } else {
@@ -1190,7 +1207,7 @@ SYS;
 
             $htmlFile = $tmpDir . '/input.html';
             if ($exitCode === 0 && is_file($htmlFile)) {
-                $raw = file_get_contents($htmlFile);
+                $raw = (string) file_get_contents($htmlFile);
 
                 // Clean up temp files
                 @unlink($tmpFile);
@@ -1199,14 +1216,14 @@ SYS;
 
                 // LibreOffice outputs a full HTML document; normalise charset
                 // and inject our viewport styles so it renders cleanly in the iframe.
-                $raw = preg_replace(
+                $raw = (string) preg_replace(
                     '/<meta[^>]+charset[^>]+>/i',
                     '<meta charset="UTF-8">',
                     $raw
                 );
                 // Force UTF-8 decode in case LO wrote Latin-1 bytes
                 if (!mb_check_encoding($raw, 'UTF-8')) {
-                    $raw = mb_convert_encoding($raw, 'UTF-8', 'Windows-1252');
+                    $raw = (string) mb_convert_encoding($raw, 'UTF-8', 'Windows-1252');
                 }
 
                 // Inject reset styles into the existing <head>
@@ -1218,7 +1235,7 @@ SYS;
                     img { max-width: 100%; height: auto; }
                     p { margin: 0 0 6px; }
                 </style>';
-                $raw = preg_replace('/<\/head>/i', $injectCss . '</head>', $raw, 1);
+                $raw = (string) preg_replace('/<\/head>/i', $injectCss . '</head>', $raw, 1);
 
                 return $raw;
             }
@@ -1236,8 +1253,8 @@ SYS;
 
         $lines = '';
         foreach ($paragraphs as $p) {
-            $text  = htmlspecialchars((string) ($p['text'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-            $align = in_array($p['align'] ?? '', ['center', 'right', 'justify'], true) ? $p['align'] : 'left';
+            $text  = htmlspecialchars((string) $p['text'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $align = in_array($p['align'], ['center', 'right', 'justify'], true) ? $p['align'] : 'left';
             $lines .= '<p style="text-align:' . $align . '">' . ($text !== '' ? $text : '&nbsp;') . "</p>\n";
         }
 

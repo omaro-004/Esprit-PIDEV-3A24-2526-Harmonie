@@ -935,7 +935,8 @@
                         <div class="file-card-thumb" id="thumb-{{ file.id }}">
                             {% if file.mimetype starts with 'image/' %}
                                 <img src="{{ path('app_courses_detail_file_preview', {id: course.id, fileId: file.id}) }}"
-                                     alt="{{ file.originalname }}" loading="lazy">
+                                     alt="{{ file.originalname }}" loading="lazy"
+                                     onerror="this.style.display='none';this.parentElement.textContent='🖼️';">
                             {% elseif file.mimetype == 'application/pdf' %}
                                 📄
                             {% elseif isWord %}

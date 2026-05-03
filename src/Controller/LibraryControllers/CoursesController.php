@@ -198,6 +198,10 @@ class CoursesController extends AbstractController
             }
 
             $data     = file_get_contents($file->getRealPath());
+            if ($data === false) {
+                $rejected[] = $file->getClientOriginalName();
+                continue;
+            }
             $mime     = $file->getMimeType() ?? 'application/octet-stream';
             $origName = $file->getClientOriginalName();
             $this->db->executeStatement(
