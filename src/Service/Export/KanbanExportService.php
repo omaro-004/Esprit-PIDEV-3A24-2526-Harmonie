@@ -17,6 +17,8 @@ class KanbanExportService
 {
     /**
      * Génère et retourne un PDF du tableau Kanban
+     *
+     * @param array<string, Tache[]> $tachesByStatus
      */
     public function exportToPdf(array $tachesByStatus): Response
     {
@@ -43,6 +45,8 @@ class KanbanExportService
 
     /**
      * Génère et retourne un Excel du tableau Kanban
+     *
+     * @param Tache[] $taches
      */
     public function exportToExcel(array $taches): StreamedResponse
     {
@@ -109,6 +113,9 @@ class KanbanExportService
         );
     }
 
+    /**
+     * @param array<string, Tache[]> $tachesByStatus
+     */
     private function generateKanbanHtml(array $tachesByStatus): string
     {
         $columns = ['A_FAIRE', 'EN_COURS', 'FAIT'];
@@ -179,6 +186,9 @@ HTML;
         };
     }
 
+    /**
+     * @return array<mixed>
+     */
     private function getStatusStyle(string $statut): array
     {
         $color = match($statut) {

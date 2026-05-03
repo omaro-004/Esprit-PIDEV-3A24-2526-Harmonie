@@ -18,6 +18,8 @@ class CalendarExportService
 {
     /**
      * Génère et retourne un PDF du calendrier
+     *
+     * @param Evenement[] $evenements
      */
     public function exportToPdf(array $evenements, int $year, int $month): Response
     {
@@ -45,6 +47,8 @@ class CalendarExportService
 
     /**
      * Génère et retourne un Excel du calendrier
+     *
+     * @param Evenement[] $evenements
      */
     public function exportToExcel(array $evenements, int $year, int $month): StreamedResponse
     {
@@ -110,9 +114,12 @@ class CalendarExportService
         );
     }
 
+    /**
+     * @param Evenement[] $evenements
+     */
     private function generateCalendarHtml(array $evenements, int $year, int $month, string $monthName): string
     {
-        $firstDay = mktime(0, 0, 0, $month, 1, $year);
+        $firstDay = mktime(0, 0, 0, $month, 1, $year) ?: 0;
         $daysInMonth = date('t', $firstDay);
         $startWeekday = date('N', $firstDay);
 

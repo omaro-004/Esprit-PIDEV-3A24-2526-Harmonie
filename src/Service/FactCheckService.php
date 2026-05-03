@@ -10,6 +10,9 @@ class FactCheckService
         private string $apiKey
     ) {}
 
+    /**
+     * @return array<string, mixed>
+     */
     public function checkPost(string $titre, string $contenu): array
     {
         $prompt = 'Tu es un fact-checker expert. Analyse ce post de forum et détermine s\'il contient des fake news. ' .
@@ -54,7 +57,7 @@ class FactCheckService
         array $commentaires
     ): string {
         $contextComments = implode("\n", array_map(
-            fn($c) => '- ' . ($c->getContenu() ?? ''),
+            fn($c) => '- ' . $c->getContenu(),
             $commentaires
         ));
 
