@@ -38,9 +38,9 @@ class AdminCoursesController extends AbstractController
             . ' u.user_email AS owner_email,'
             . ' CONCAT(u.user_prenom, \' \', u.user_nom) AS owner_name,'
             . ' (SELECT COUNT(*) FROM course_reports cr WHERE cr.course_id = c.id) AS report_count,'
-            . ' (SELECT COUNT(*) FROM coursefile cf WHERE cf.courseid = c.id) AS file_count'
+            . ' (SELECT COUNT(*) FROM coursefile cf WHERE cf.courseid_id = c.id) AS file_count'
             . ' FROM courses c'
-            . ' LEFT JOIN user u ON u.user_id = c.userid'
+            . ' LEFT JOIN user u ON u.user_id = c.userid_id'
             . ' WHERE ' . $whereClause
             . ' ORDER BY c.created_at DESC';
 
@@ -78,7 +78,7 @@ class AdminCoursesController extends AbstractController
     {
         $course = $this->db->fetchAssociative(
             'SELECT c.*, CONCAT(u.user_prenom, \' \', u.user_nom) AS owner_name, u.user_email AS owner_email'
-            . ' FROM courses c LEFT JOIN user u ON u.user_id = c.userid'
+            . ' FROM courses c LEFT JOIN user u ON u.user_id = c.userid_id'
             . ' WHERE c.id = ?',
             [$courseId]
         );
@@ -88,7 +88,7 @@ class AdminCoursesController extends AbstractController
         }
 
         $files = $this->db->fetchAllAssociative(
-            'SELECT id, originalname, mimetype, sizebytes, uploaded_at FROM coursefile WHERE courseid = ? ORDER BY uploaded_at ASC',
+            'SELECT id, originalname, mimetype, sizebytes, uploaded_at FROM coursefile WHERE courseid_id = ? ORDER BY uploaded_at ASC',
             [$courseId]
         );
 

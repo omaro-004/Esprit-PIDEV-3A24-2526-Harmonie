@@ -20,7 +20,7 @@ class LibraryController extends AbstractController
         $courses = $this->db->fetchAllAssociative(
             "SELECT c.id, c.title, s.name AS subject_name, c.cover_image_path
              FROM courses c
-             LEFT JOIN subject s ON s.id = c.subjectid
+             LEFT JOIN subject s ON s.id = c.subjectid_id
              WHERE c.is_published = 1
              ORDER BY c.id DESC"
         );

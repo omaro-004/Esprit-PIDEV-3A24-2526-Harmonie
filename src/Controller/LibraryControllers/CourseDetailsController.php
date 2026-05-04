@@ -120,18 +120,18 @@ class CourseDetailsController extends AbstractController
     public function index(int $id, Request $req): Response
     {
         $course = $this->db->fetchAssociative(
-            'SELECT c.id, c.title, c.cover_image_path, c.is_published, c.userid,
+            'SELECT c.id, c.title, c.cover_image_path, c.is_published, c.userid_id,
                     s.name AS subject_name
              FROM courses c
-             LEFT JOIN subject s ON s.id = c.subjectid
-             WHERE c.id = ?',
+             LEFT JOIN subject s ON s.id = c.subjectid_id
+            WHERE c.id = ?',
             [$id]
         );
 
         if (!$course) throw $this->createNotFoundException('Course not found.');
 
         $currentUserId = $this->getCurrentUserId() ?? 0;
-        $isOwner       = (int) $course['userid'] === $currentUserId && $currentUserId > 0;
+        $isOwner       = (int) $course['userid_id'] === $currentUserId && $currentUserId > 0;
 
         $isSaved = false;
         if (!$isOwner && $currentUserId) {
@@ -792,7 +792,7 @@ class CourseDetailsController extends AbstractController
         $course = $this->db->fetchAssociative(
             'SELECT c.title, s.name AS subject_name
              FROM courses c
-             LEFT JOIN subject s ON s.id = c.subjectid
+             LEFT JOIN subject s ON s.id = c.subjectid_id
              WHERE c.id = ?',
             [$id]
         );

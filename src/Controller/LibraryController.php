@@ -18,7 +18,7 @@ class LibraryController extends AbstractController
         $courses = $this->db->fetchAllAssociative(
             "SELECT c.id, c.title, s.name AS subject_name, c.cover_image_path
              FROM courses c
-             LEFT JOIN subject s ON s.id = c.subjectid
+             LEFT JOIN subject s ON s.id = c.subjectid_id
              WHERE c.is_published = 1
              ORDER BY c.id DESC"
         );
@@ -65,15 +65,15 @@ class LibraryController extends AbstractController
         // If none exist yet (new user), we fall back to showing the most popular courses overall.
         $savedSubjectIds = [];
         $savedSubjects = $this->db->fetchAllAssociative(
-            "SELECT DISTINCT c.subjectid
+            "SELECT DISTINCT c.subjectid_id
              FROM saved_courses sc
              JOIN courses c ON c.id = sc.course_id
-             WHERE sc.user_id = ? AND c.subjectid IS NOT NULL",
+             WHERE sc.user_id = ? AND c.subjectid_id IS NOT NULL",
             [$userId]
         );
 
         foreach ($savedSubjects as $subject) {
-            $savedSubjectIds[] = (int) $subject['subjectid'];
+            $savedSubjectIds[] = (int) $subject['subjectid_id'];
         }
 
         // Build the main query: subject-matched if we have signals, otherwise top popular
@@ -82,7 +82,7 @@ class LibraryController extends AbstractController
             $recommendedCourses = $this->db->fetchAllAssociative(
                 "SELECT c.id, c.title, s.name AS subject_name, c.cover_image_path, c.saves
                  FROM courses c
-                 LEFT JOIN subject s ON s.id = c.subjectid
+                 LEFT JOIN subject s ON s.id = c.subjectid_id
                  WHERE c.is_published = 1
                  ORDER BY c.saves DESC
                  LIMIT 10"
@@ -93,10 +93,10 @@ class LibraryController extends AbstractController
             $recommendedCourses = $this->db->fetchAllAssociative(
                 "SELECT c.id, c.title, s.name AS subject_name, c.cover_image_path, c.saves
                  FROM courses c
-                 LEFT JOIN subject s ON s.id = c.subjectid
+                 LEFT JOIN subject s ON s.id = c.subjectid_id
                  WHERE c.is_published = 1
                    AND c.id NOT IN (SELECT course_id FROM saved_courses WHERE user_id = ?)
-                   AND c.subjectid IN ($placeholders)
+                   AND c.subjectid_id IN ($placeholders)
                  ORDER BY c.saves DESC
                  LIMIT 10",
                 array_merge([$userId], $savedSubjectIds)

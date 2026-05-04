@@ -16,7 +16,7 @@ class CourseFile
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: Course::class, inversedBy: 'courseFiles')]
-    #[ORM\JoinColumn(name: 'courseid', referencedColumnName: 'id', nullable: false)]
+    #[ORM\JoinColumn(name: 'courseid_id', referencedColumnName: 'id', nullable: false)]
     private Course $course;
 
     #[ORM\Column(name: 'originalname', type: 'string', length: 255)]

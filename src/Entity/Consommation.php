@@ -16,7 +16,7 @@ class Consommation
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: Aliment::class)]
-    #[ORM\JoinColumn(name: 'id_aliment', referencedColumnName: 'id_aliment', nullable: true)]
+    #[ORM\JoinColumn(name: 'id_aliment_id', referencedColumnName: 'id_aliment', nullable: true)]
     #[Assert\NotNull(message: 'Veuillez choisir un aliment.')]
     private ?Aliment $aliment = null;
 

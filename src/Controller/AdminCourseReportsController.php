@@ -35,12 +35,12 @@ class AdminCourseReportsController extends AbstractController
 
         $sql = 'SELECT'
             . ' cr.id, cr.course_id, cr.reporter_id, cr.reason, cr.details, cr.status, cr.created_at,'
-            . ' c.title AS course_title, c.is_published AS course_is_published, c.userid AS course_owner_id,'
+            . ' c.title AS course_title, c.is_published AS course_is_published, c.userid_id AS course_owner_id,'
             . ' owner.user_email AS owner_email,'
             . ' reporter.user_email AS reporter_email'
             . ' FROM course_reports cr'
             . ' JOIN courses c ON c.id = cr.course_id'
-            . ' LEFT JOIN user owner ON owner.user_id = c.userid'
+            . ' LEFT JOIN user owner ON owner.user_id = c.userid_id'
             . ' LEFT JOIN user reporter ON reporter.user_id = cr.reporter_id';
 
         if ($where) {

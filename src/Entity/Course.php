@@ -21,11 +21,11 @@ class Course
     private string $title = '';
 
     #[ORM\ManyToOne(targetEntity: Subject::class, inversedBy: 'courses')]
-    #[ORM\JoinColumn(name: 'subjectid', referencedColumnName: 'id', onDelete: 'SET NULL')]
+    #[ORM\JoinColumn(name: 'subjectid_id', referencedColumnName: 'id', onDelete: 'SET NULL')]
     private ?Subject $subject = null;
 
     #[ORM\ManyToOne(targetEntity: User::class)]
-    #[ORM\JoinColumn(name: 'userid', referencedColumnName: 'user_id', onDelete: 'SET NULL')]
+    #[ORM\JoinColumn(name: 'userid_id', referencedColumnName: 'user_id', onDelete: 'SET NULL')]
     private ?User $user = null;
 
     #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE, options: ['default' => 'CURRENT_TIMESTAMP'])]

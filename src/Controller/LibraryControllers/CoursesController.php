@@ -74,8 +74,8 @@ class CoursesController extends AbstractController
         $ownedRows = $this->db->fetchAllAssociative(
             "SELECT c.id, c.title, s.name AS subject_name, c.cover_image_path, c.is_published
              FROM courses c
-             LEFT JOIN subject s ON s.id = c.subjectid
-             WHERE c.userid = ?
+             LEFT JOIN subject s ON s.id = c.subjectid_id
+             WHERE c.userid_id = ?
              ORDER BY c.id DESC",
             [$userId]
         );
@@ -84,7 +84,7 @@ class CoursesController extends AbstractController
             "SELECT c.id, c.title, s.name AS subject_name, c.cover_image_path, c.is_published
              FROM saved_courses sc
              JOIN courses c ON c.id = sc.course_id
-             LEFT JOIN subject s ON s.id = c.subjectid
+             LEFT JOIN subject s ON s.id = c.subjectid_id
              WHERE sc.user_id = ?
              ORDER BY c.id DESC",
             [$userId]
