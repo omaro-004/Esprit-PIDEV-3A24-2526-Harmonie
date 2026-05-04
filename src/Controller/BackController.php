@@ -38,7 +38,7 @@ class BackController extends AbstractController
     #[Route('/categories', name: 'categories')]
     public function categories(CategorieRepository $catRepo, PostRepository $postRepo): Response
     {
-        $categories = $catRepo->findAll();
+        $categories = $catRepo->findBy([], ['idCategorie' => 'ASC'], 100); // Limit to 100
 
         $postCounts = [];
         foreach ($categories as $cat) {
@@ -124,7 +124,7 @@ class BackController extends AbstractController
         EntityManagerInterface $em
     ): Response {
         $posts      = $postRepo->findBy([], ['dateCreation' => 'DESC']);
-        $categories = $catRepo->findAll();
+        $categories = $catRepo->findBy([], ['idCategorie' => 'ASC'], 100); // Limit to 100
 
         // Map catId => nomCategorie
         $catMap = [];

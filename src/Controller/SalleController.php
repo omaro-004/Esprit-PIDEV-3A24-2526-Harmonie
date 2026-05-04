@@ -18,7 +18,7 @@ final class SalleController extends AbstractController
     public function index(SalleRepository $salleRepository): Response
     {
         return $this->render('salle/index.html.twig', [
-            'salles' => $salleRepository->findAll(),
+            'salles' => $salleRepository->findBy([], ['id' => 'ASC'], 500), // Limit to 500
         ]);
     }
 

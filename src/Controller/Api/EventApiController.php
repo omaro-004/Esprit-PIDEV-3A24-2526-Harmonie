@@ -20,7 +20,7 @@ final class EventApiController extends AbstractController
     #[Route('', name: 'api_events_list', methods: ['GET'])]
     public function list(EvenementRepository $evenementRepository): JsonResponse
     {
-        $events = $evenementRepository->findAll();
+        $events = $evenementRepository->findBy([], ['id' => 'DESC'], 100); // Limit to 100 results
         $data = [];
         foreach ($events as $event) {
             $data[] = [

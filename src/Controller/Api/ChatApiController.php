@@ -253,7 +253,7 @@ PROMPT;
      */
     private function serializeTasks(): array
     {
-        $tasks = $this->tacheRepository->findAll();
+        $tasks = $this->tacheRepository->findBy([], ['id' => 'DESC'], 100); // Limit to 100
 
         return array_map(static function (Tache $t): array {
             return [
@@ -272,7 +272,7 @@ PROMPT;
      */
     private function serializeEvents(): array
     {
-        $events = $this->evenementRepository->findAll();
+        $events = $this->evenementRepository->findBy([], ['id' => 'DESC'], 100); // Limit to 100
 
         return array_map(static function (Evenement $e): array {
             return [
@@ -448,7 +448,7 @@ PROMPT;
         }
 
         $needle = $this->normalize($title);
-        foreach ($this->tacheRepository->findAll() as $task) {
+        foreach ($this->tacheRepository->findBy([], [], 1000) as $task) { // Limit search to 1000
             if (str_contains($this->normalize((string) $task->getNom()), $needle)) {
                 return $task;
             }
@@ -472,7 +472,7 @@ PROMPT;
         }
 
         $needle = $this->normalize($title);
-        foreach ($this->evenementRepository->findAll() as $event) {
+        foreach ($this->evenementRepository->findBy([], [], 1000) as $event) { // Limit search to 1000
             if (str_contains($this->normalize((string) ($event->getTitre())), $needle)) {
                 return $event;
             }

@@ -5,9 +5,11 @@ namespace App\Entity;
 use App\Repository\UserRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use SensitiveParameter;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Annotation\Ignore;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
@@ -37,6 +39,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private string $userEmail = '';
 
     #[ORM\Column(name: 'user_password', type: Types::STRING, length: 255)]
+    #[Ignore]
     private string $userPassword = '';
 
     #[ORM\Column(name: 'user_date_de_naissance', type: Types::STRING, length: 10)]
@@ -125,18 +128,22 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * Secret TOTP pour Google Authenticator — réinitialisation de mot de passe.
      */
     #[ORM\Column(name: 'totp_secret', type: Types::STRING, length: 255, nullable: true)]
+    #[Ignore]
     private ?string $totpSecret = null;
 
     #[ORM\Column(name: 'telegram_chat_id', type: Types::STRING, length: 100, nullable: true)]
     private ?string $telegramChatId = null;
 
     #[ORM\Column(name: 'google_access_token', type: Types::TEXT, nullable: true)]
+    #[Ignore]
     private ?string $googleAccessToken = null;
 
     #[ORM\Column(name: 'google_refresh_token', type: Types::STRING, length: 512, nullable: true)]
+    #[Ignore]
     private ?string $googleRefreshToken = null;
 
     #[ORM\Column(name: 'google_token_expires_at', type: Types::DATETIME_MUTABLE, nullable: true)]
+    #[Ignore]
     private ?\DateTimeInterface $googleTokenExpiresAt = null;
 
     // ── Symfony UserInterface ──────────────────────────────────────────────────
@@ -173,7 +180,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setUserEmail(string $v): self    { $this->userEmail = $v; return $this; }
 
     public function getUserPassword(): string        { return $this->userPassword; }
-    public function setUserPassword(string $v): self { $this->userPassword = $v; return $this; }
+    public function setUserPassword(#[SensitiveParameter] string $v): self { $this->userPassword = $v; return $this; }
 
     public function getUserDateDeNaissance(): string         { return $this->userDateDeNaissance; }
     public function setUserDateDeNaissance(string $v): self  { $this->userDateDeNaissance = $v; return $this; }
@@ -226,19 +233,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setOauthAvatarUrl(?string $v): self  { $this->oauthAvatarUrl = $v; return $this; }
 
     public function getTotpSecret(): ?string         { return $this->totpSecret; }
-    public function setTotpSecret(?string $v): self  { $this->totpSecret = $v; return $this; }
+    public function setTotpSecret(#[SensitiveParameter] ?string $v): self  { $this->totpSecret = $v; return $this; }
 
     public function getTelegramChatId(): ?string          { return $this->telegramChatId; }
     public function setTelegramChatId(?string $v): self   { $this->telegramChatId = $v; return $this; }
 
     public function getGoogleAccessToken(): ?string         { return $this->googleAccessToken; }
-    public function setGoogleAccessToken(?string $v): self  { $this->googleAccessToken = $v; return $this; }
+    public function setGoogleAccessToken(#[SensitiveParameter] ?string $v): self  { $this->googleAccessToken = $v; return $this; }
 
     public function getGoogleRefreshToken(): ?string         { return $this->googleRefreshToken; }
-    public function setGoogleRefreshToken(?string $v): self  { $this->googleRefreshToken = $v; return $this; }
+    public function setGoogleRefreshToken(#[SensitiveParameter] ?string $v): self  { $this->googleRefreshToken = $v; return $this; }
 
     public function getGoogleTokenExpiresAt(): ?\DateTimeInterface         { return $this->googleTokenExpiresAt; }
-    public function setGoogleTokenExpiresAt(?\DateTimeInterface $v): self  { $this->googleTokenExpiresAt = $v; return $this; }
+    public function setGoogleTokenExpiresAt(#[SensitiveParameter] ?\DateTimeInterface $v): self  { $this->googleTokenExpiresAt = $v; return $this; }
 
     public function getDisplayAvatar(): ?string
     {

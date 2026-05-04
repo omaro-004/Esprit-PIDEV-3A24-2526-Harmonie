@@ -202,7 +202,7 @@ class MessagingController extends AbstractController
             $me = $this->getUser();
 
             // Test 1 : DB accessible ?
-            $users = $this->userRepo->findAll();
+            $users = $this->userRepo->findBy([], [], 10); // Limit test query to 10 users
 
             // Test 2 : EntityManager ok ?
             $this->em->getConnection()->executeQuery('SELECT 1');

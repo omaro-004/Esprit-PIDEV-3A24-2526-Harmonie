@@ -53,7 +53,7 @@ class AdminJournalController extends AbstractController
     #[Route('/students', name: 'admin_journal_students', methods: ['GET'])]
     public function students(): Response
     {
-        $users    = $this->userRepo->findAll();
+        $users    = $this->userRepo->findBy([], ['userId' => 'ASC'], 200); // Limit to 200 users
         $userData = array_map(function (object $user) {
             /** @var User $user */
             return [

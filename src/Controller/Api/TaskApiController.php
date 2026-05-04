@@ -16,7 +16,7 @@ final class TaskApiController extends AbstractController
     #[Route('', name: 'api_tasks_list', methods: ['GET'])]
     public function list(TacheRepository $tacheRepository): JsonResponse
     {
-        $tasks = $tacheRepository->findAll();
+        $tasks = $tacheRepository->findBy([], ['id' => 'DESC'], 100); // Limit to 100 results
         $data = [];
         foreach ($tasks as $task) {
             $data[] = [
