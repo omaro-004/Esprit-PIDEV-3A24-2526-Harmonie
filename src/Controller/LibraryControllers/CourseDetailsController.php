@@ -104,7 +104,7 @@ class CourseDetailsController extends AbstractController
 
     private function courseFileNameExists(int $courseId, string $name, ?int $excludeFileId = null): bool
     {
-        $sql = 'SELECT 1 FROM coursefile WHERE courseid = ? AND LOWER(originalname) = LOWER(?)';
+        $sql = 'SELECT 1 FROM coursefile WHERE courseid_id = ? AND LOWER(originalname) = LOWER(?)';
         $params = [$courseId, $name];
 
         if (null !== $excludeFileId) {
@@ -147,7 +147,7 @@ class CourseDetailsController extends AbstractController
 
         $files = $this->db->fetchAllAssociative(
             'SELECT id, originalname, mimetype, sizebytes, uploaded_at
-             FROM coursefile WHERE courseid = ? ORDER BY id',
+             FROM coursefile WHERE courseid_id = ? ORDER BY id',
             [$id]
         );
 
@@ -194,7 +194,7 @@ class CourseDetailsController extends AbstractController
             $subjectId = $this->db->lastInsertId();
         }
 
-        $this->db->executeStatement('UPDATE courses SET subjectid = ? WHERE id = ?', [$subjectId, $id]);
+        $this->db->executeStatement('UPDATE courses SET subjectid_id = ? WHERE id = ?', [$subjectId, $id]);
         return $this->json(['ok' => true]);
     }
 
@@ -241,7 +241,7 @@ class CourseDetailsController extends AbstractController
             $mime = $file->getMimeType() ?? 'application/octet-stream';
 
             $this->db->executeStatement(
-                'INSERT INTO coursefile (courseid, originalname, mimetype, sizebytes, filedata)
+                'INSERT INTO coursefile (courseid_id, originalname, mimetype, sizebytes, filedata)
                  VALUES (?, ?, ?, ?, ?)',
                 [$id, $file->getClientOriginalName(), $mime, $size, $bytes],
                 [
@@ -285,7 +285,7 @@ class CourseDetailsController extends AbstractController
         $size = mb_strlen((string) $docJson, '8bit');
 
         $this->db->executeStatement(
-            'INSERT INTO coursefile (courseid, originalname, mimetype, sizebytes, filedata)
+            'INSERT INTO coursefile (courseid_id, originalname, mimetype, sizebytes, filedata)
              VALUES (?, ?, ?, ?, ?)',
             [$id, $name, 'application/json', $size, $docJson],
             [
@@ -307,7 +307,7 @@ class CourseDetailsController extends AbstractController
     public function noteContent(int $id, int $fileId): ?JsonResponse
     {
         $row = $this->db->fetchAssociative(
-            'SELECT originalname, mimetype, filedata FROM coursefile WHERE id = ? AND courseid = ?',
+            'SELECT originalname, mimetype, filedata FROM coursefile WHERE id = ? AND courseid_id = ?',
             [$fileId, $id]
         );
         if (!$row) return $this->json(['message' => 'Not found'], 404);
@@ -364,7 +364,7 @@ class CourseDetailsController extends AbstractController
             $update  .= ', originalname = ?';
             $params[] = $name;
         }
-        $update  .= ' WHERE id = ? AND courseid = ?';
+        $update  .= ' WHERE id = ? AND courseid_id = ?';
         $params[] = $fileId;
         $params[] = $id;
 
@@ -377,7 +377,7 @@ class CourseDetailsController extends AbstractController
     public function exportNotePdf(int $id, int $fileId): Response
     {
         $row = $this->db->fetchAssociative(
-            'SELECT originalname, filedata FROM coursefile WHERE id = ? AND courseid = ?',
+            'SELECT originalname, filedata FROM coursefile WHERE id = ? AND courseid_id = ?',
             [$fileId, $id]
         );
         if (!$row) throw $this->createNotFoundException('Note not found.');
@@ -444,7 +444,7 @@ class CourseDetailsController extends AbstractController
     public function previewFile(int $id, int $fileId): Response
     {
         $row = $this->db->fetchAssociative(
-            'SELECT originalname, mimetype, filedata FROM coursefile WHERE id = ? AND courseid = ?',
+            'SELECT originalname, mimetype, filedata FROM coursefile WHERE id = ? AND courseid_id = ?',
             [$fileId, $id]
         );
         if (!$row) throw $this->createNotFoundException('File not found.');
@@ -484,7 +484,7 @@ class CourseDetailsController extends AbstractController
     public function downloadFile(int $id, int $fileId): Response
     {
         $row = $this->db->fetchAssociative(
-            'SELECT originalname, mimetype, filedata FROM coursefile WHERE id = ? AND courseid = ?',
+            'SELECT originalname, mimetype, filedata FROM coursefile WHERE id = ? AND courseid_id = ?',
             [$fileId, $id]
         );
         if (!$row) throw $this->createNotFoundException('File not found.');
@@ -524,7 +524,7 @@ class CourseDetailsController extends AbstractController
         if ($name === '') return $this->json(['message' => 'Name required'], 400);
 
         $this->db->executeStatement(
-            'UPDATE coursefile SET originalname = ? WHERE id = ? AND courseid = ?',
+            'UPDATE coursefile SET originalname = ? WHERE id = ? AND courseid_id = ?',
             [$name, $fileId, $id]
         );
         return $this->json(['ok' => true]);
@@ -535,7 +535,7 @@ class CourseDetailsController extends AbstractController
     public function deleteFile(int $id, int $fileId): JsonResponse
     {
         $this->db->executeStatement(
-            'DELETE FROM coursefile WHERE id = ? AND courseid = ?',
+            'DELETE FROM coursefile WHERE id = ? AND courseid_id = ?',
             [$fileId, $id]
         );
         return $this->json(['ok' => true]);
@@ -555,7 +555,7 @@ class CourseDetailsController extends AbstractController
         if (!$course) throw $this->createNotFoundException('Course not found.');
 
         $files = $this->db->fetchAllAssociative(
-            'SELECT id, originalname, mimetype, filedata FROM coursefile WHERE courseid = ? ORDER BY id',
+            'SELECT id, originalname, mimetype, filedata FROM coursefile WHERE courseid_id = ? ORDER BY id',
             [$id]
         );
 
@@ -638,7 +638,7 @@ class CourseDetailsController extends AbstractController
     public function downloadFiles(int $id): JsonResponse
     {
         $files = $this->db->fetchAllAssociative(
-            'SELECT id, originalname, mimetype, sizebytes FROM coursefile WHERE courseid = ? ORDER BY id',
+            'SELECT id, originalname, mimetype, sizebytes FROM coursefile WHERE courseid_id = ? ORDER BY id',
             [$id]
         );
 
@@ -660,7 +660,7 @@ class CourseDetailsController extends AbstractController
     public function downloadFileForZip(int $id, int $fileId): Response
     {
         $row = $this->db->fetchAssociative(
-            'SELECT originalname, mimetype, filedata FROM coursefile WHERE id = ? AND courseid = ?',
+            'SELECT originalname, mimetype, filedata FROM coursefile WHERE id = ? AND courseid_id = ?',
             [$fileId, $id]
         );
         if (!$row) throw $this->createNotFoundException('File not found.');
@@ -758,7 +758,7 @@ class CourseDetailsController extends AbstractController
         $reporterId = $this->getCurrentUserId();
         if (!$reporterId) return $this->json(['message' => 'Not authenticated'], 401);
 
-        $ownerId = $this->db->fetchOne('SELECT userid FROM courses WHERE id = ?', [$id]);
+        $ownerId = $this->db->fetchOne('SELECT userid_id FROM courses WHERE id = ?', [$id]);
         if ((int) $ownerId === $reporterId) {
             return $this->json(['message' => 'You cannot report your own course.'], 403);
         }
@@ -815,7 +815,7 @@ class CourseDetailsController extends AbstractController
     public function aiMeta(int $id, int $fileId): JsonResponse
     {
         $row = $this->db->fetchAssociative(
-            'SELECT originalname, mimetype, filedata FROM coursefile WHERE id = ? AND courseid = ?',
+            'SELECT originalname, mimetype, filedata FROM coursefile WHERE id = ? AND courseid_id = ?',
             [$fileId, $id]
         );
         if (!$row) return $this->json(['message' => 'Not found'], 404);
@@ -957,7 +957,7 @@ SYS;
     private function extractPdfText(int $courseId, int $fileId): array
     {
         $row = $this->db->fetchAssociative(
-            'SELECT originalname, mimetype, filedata FROM coursefile WHERE id = ? AND courseid = ?',
+            'SELECT originalname, mimetype, filedata FROM coursefile WHERE id = ? AND courseid_id = ?',
             [$fileId, $courseId]
         );
         if (!$row) return ['error' => 'not_found'];

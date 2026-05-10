@@ -179,7 +179,7 @@ class CoursesController extends AbstractController
 
         // Insert course
         $this->db->executeStatement(
-            'INSERT INTO courses (title, subjectid, cover_image_path, userid) VALUES (:title, :subjectId, :cover, :userId)',
+            'INSERT INTO courses (title, subjectid_id, cover_image_path, userid_id) VALUES (:title, :subjectId, :cover, :userId)',
             ['title' => $title, 'subjectId' => $subjectId, 'cover' => $coverPath, 'userId' => $userId ?: null]
         );
         $courseId = (int) $this->db->lastInsertId();
@@ -205,7 +205,7 @@ class CoursesController extends AbstractController
             $mime     = $file->getMimeType() ?? 'application/octet-stream';
             $origName = $file->getClientOriginalName();
             $this->db->executeStatement(
-                'INSERT INTO coursefile (courseid, originalname, mimetype, sizebytes, filedata)
+                     'INSERT INTO coursefile (courseid_id, originalname, mimetype, sizebytes, filedata)
              VALUES (:courseId, :name, :mime, :size, :data)',
                 ['courseId' => $courseId, 'name' => $origName, 'mime' => $mime, 'size' => strlen($data), 'data' => $data]
             );
@@ -256,7 +256,7 @@ class CoursesController extends AbstractController
         }
 
         $this->db->executeStatement(
-            'UPDATE courses SET title = :title, subjectid = :subjectId WHERE id = :id',
+            'UPDATE courses SET title = :title, subjectid_id = :subjectId WHERE id = :id',
             ['title' => $title, 'subjectId' => $subjectId, 'id' => $id]
         );
 
@@ -270,7 +270,7 @@ class CoursesController extends AbstractController
         $userId = $this->getMockUserId();
 
         $course = $this->db->fetchAssociative(
-            'SELECT id, title, subjectid FROM courses WHERE id = :id AND userid = :userId',
+            'SELECT id, title, subjectid_id FROM courses WHERE id = :id AND userid_id = :userId',
             ['id' => $id, 'userId' => $userId]
         );
         if (!$course) {
@@ -293,8 +293,8 @@ class CoursesController extends AbstractController
             $coverPath = $filename;
         } elseif ($autoGen) {
             $subjectName = '';
-            if ($course['subjectid']) {
-                $sub = $this->db->fetchAssociative('SELECT name FROM subject WHERE id = :id', ['id' => $course['subjectid']]);
+            if ($course['subjectid_id']) {
+                $sub = $this->db->fetchAssociative('SELECT name FROM subject WHERE id = :id', ['id' => $course['subjectid_id']]);
                 $subjectName = $sub ? $sub['name'] : '';
             }
 
@@ -325,7 +325,7 @@ class CoursesController extends AbstractController
         $userId = $this->getMockUserId();
 
         $course = $this->db->fetchAssociative(
-            'SELECT id, is_published FROM courses WHERE id = :id AND userid = :userId',
+            'SELECT id, is_published FROM courses WHERE id = :id AND userid_id = :userId',
             ['id' => $id, 'userId' => $userId]
         );
         if (!$course) {
@@ -354,7 +354,7 @@ class CoursesController extends AbstractController
         $userId = $this->getMockUserId();
 
         $course = $this->db->fetchAssociative(
-            'SELECT id FROM courses WHERE id = :id AND userid = :userId',
+            'SELECT id FROM courses WHERE id = :id AND userid_id = :userId',
             ['id' => $id, 'userId' => $userId]
         );
 
@@ -363,7 +363,7 @@ class CoursesController extends AbstractController
         }
 
         $this->db->executeStatement('DELETE FROM saved_courses WHERE course_id = :id', ['id' => $id]);
-        $this->db->executeStatement('DELETE FROM coursefile WHERE courseid = :id',     ['id' => $id]);
+        $this->db->executeStatement('DELETE FROM coursefile WHERE courseid_id = :id',     ['id' => $id]);
         $this->db->executeStatement('DELETE FROM courses WHERE id = :id',              ['id' => $id]);
 
         return new JsonResponse(['message' => 'Course deleted.']);
