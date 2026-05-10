@@ -5,8 +5,8 @@
 {% block stylesheets %}
 <style>
     :root {
-        --nut-green: #10B981; --nut-green-dark: #059669; --nut-green-pale: #D1FAE5;
-        --nut-orange: #F59E0B; --nut-red: #EF4444; --nut-blue: #3B82F6; --nut-purple: #8B5CF6;
+        --nut-green: #7C3AED; --nut-green-dark: #5B21B6; --nut-green-pale: #EDE9FE;
+        --nut-orange: #A855F7; --nut-red: #EF4444; --nut-blue: #3B82F6; --nut-purple: #8B5CF6;
     }
 
     /* ── TOOLBAR ── */
@@ -25,9 +25,9 @@
         background: linear-gradient(135deg, var(--nut-green), var(--nut-green-dark));
         color: #fff; border: none; border-radius: 10px; font-family: var(--font-body);
         font-size: 13px; font-weight: 600; cursor: pointer;
-        box-shadow: 0 4px 14px rgba(16,185,129,.35); transition: .15s; white-space: nowrap;
+        box-shadow: 0 4px 14px rgba(124,58,237,.35); transition: .15s; white-space: nowrap;
     }
-    .btn-add-food:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16,185,129,.45); }
+    .btn-add-food:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(124,58,237,.45); }
 
     /* ── BOUTON EXPORT EXCEL ── */
     .btn-export-excel {
@@ -89,7 +89,7 @@
         padding: 8px 18px; background: linear-gradient(135deg, var(--nut-green), var(--nut-green-dark));
         color: #fff; border: none; border-radius: 9px; font-family: var(--font-body);
         font-size: 12.5px; font-weight: 600; cursor: pointer;
-        box-shadow: 0 3px 10px rgba(16,185,129,.3); transition: .15s;
+        box-shadow: 0 3px 10px rgba(124,58,237,.3); transition: .15s;
     }
     .btn-filter-apply:hover { transform: translateY(-1px); }
 
@@ -99,7 +99,7 @@
         display: inline-flex; align-items: center; gap: 6px;
         padding: 4px 11px; border-radius: 20px;
         background: var(--nut-green-pale); color: var(--nut-green-dark);
-        font-size: 12px; font-weight: 600; border: 1.5px solid rgba(16,185,129,.25);
+        font-size: 12px; font-weight: 600; border: 1.5px solid rgba(124,58,237,.25);
     }
     .n-chip a { color: inherit; text-decoration: none; opacity: .7; font-size: 13px; line-height: 1; }
     .n-chip a:hover { opacity: 1; }
@@ -128,7 +128,7 @@
     table.n-table th.sorted a { color: var(--nut-green); }
     table.n-table td { padding: 12px 16px; font-size: 13.5px; color: var(--text); border-bottom: 1px solid var(--purple-ghost); vertical-align: middle; }
     table.n-table tr:last-child td { border: none; }
-    table.n-table tr:hover td { background: rgba(16,185,129,.04); }
+    table.n-table tr:hover td { background: rgba(124,58,237,.04); }
 
     .food-name-text { font-weight: 600; color: var(--text); }
     .id-badge { font-size: 11px; color: var(--text-muted); }
@@ -173,7 +173,7 @@
     .n-modal-overlay.open { opacity: 1; pointer-events: all; }
     .n-modal { background: var(--white); border-radius: 22px; width: 540px; max-width: 95vw; max-height: 92vh; overflow-y: auto; box-shadow: 0 32px 80px rgba(0,0,0,.22); transform: scale(.95) translateY(14px); transition: transform .25s; }
     .n-modal-overlay.open .n-modal { transform: scale(1) translateY(0); }
-    .n-modal-header { padding: 22px 26px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, #F0FDF4, #ECFDF5); }
+    .n-modal-header { padding: 22px 26px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, #F5F3FF, #F5F3FF); }
     .n-modal-title { font-family: var(--font-head); font-size: 17px; font-weight: 800; color: var(--text); }
     .n-modal-close { background: none; border: none; cursor: pointer; font-size: 20px; color: var(--text-muted); width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; transition: .12s; }
     .n-modal-close:hover { background: var(--nut-green-pale); color: var(--nut-green); }
@@ -183,22 +183,22 @@
     .n-form-group.full { grid-column: 1 / -1; }
     .n-form-group label { font-size: 12px; font-weight: 600; color: var(--text-mid); }
     .n-form-group input { padding: 10px 13px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; font-family: var(--font-body); color: var(--text); background: var(--purple-ghost); outline: none; transition: border-color .15s, box-shadow .15s; width: 100%; }
-    .n-form-group input:focus { border-color: var(--nut-green); background: #fff; box-shadow: 0 0 0 3px rgba(16,185,129,.12); }
+    .n-form-group input:focus { border-color: var(--nut-green); background: #fff; box-shadow: 0 0 0 3px rgba(124,58,237,.12); }
     .n-form-group.has-err input { border-color: var(--nut-red); }
     .n-form-group .err-msg { font-size: 11.5px; color: var(--nut-red); display: none; font-weight: 500; }
     .n-form-group.has-err .err-msg { display: block; }
     .req-star { color: var(--nut-red); }
-    .macro-verif { background: linear-gradient(135deg,#F0FDF4,#ECFDF5); border: 1px solid #A7F3D0; border-radius: 12px; padding: 14px 16px; margin-top: 14px; }
+    .macro-verif { background: linear-gradient(135deg,#F5F3FF,#F5F3FF); border: 1px solid #C4B5FD; border-radius: 12px; padding: 14px 16px; margin-top: 14px; }
     .macro-verif-title { font-size: 12px; font-weight: 700; color: var(--nut-green-dark); margin-bottom: 10px; }
     .mv-row { display: flex; justify-content: space-between; font-size: 13px; margin: 4px 0; }
     .mv-label { color: var(--text-muted); }
     .mv-val { font-weight: 700; }
     .mv-ok { color: var(--nut-green); }
     .mv-warn { color: var(--nut-orange); }
-    .mv-sep { height: 1px; background: rgba(16,185,129,.15); margin: 6px 0; }
+    .mv-sep { height: 1px; background: rgba(124,58,237,.15); margin: 6px 0; }
     .n-modal-footer { padding: 16px 26px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; background: var(--purple-ghost); border-radius: 0 0 22px 22px; }
     .btn-n-cancel { padding: 10px 20px; background: var(--white); border: 1.5px solid var(--border); border-radius: 10px; font-family: var(--font-body); font-size: 13px; cursor: pointer; color: var(--text-mid); }
-    .btn-n-save { padding: 10px 24px; background: linear-gradient(135deg, var(--nut-green), var(--nut-green-dark)); color: #fff; border: none; border-radius: 10px; font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 14px rgba(16,185,129,.35); transition: .15s; }
+    .btn-n-save { padding: 10px 24px; background: linear-gradient(135deg, var(--nut-green), var(--nut-green-dark)); color: #fff; border: none; border-radius: 10px; font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 14px rgba(124,58,237,.35); transition: .15s; }
     .btn-n-save:hover { transform: translateY(-1px); }
 
     /* Delete confirm modal */
@@ -385,7 +385,7 @@
 {# ── STATS ── #}
 <div class="n-stats">
     <div class="n-stat">
-        <div class="n-stat-icon" style="background:#D1FAE5;">🥗</div>
+        <div class="n-stat-icon" style="background:#EDE9FE;">🥗</div>
         <div>
             <div class="n-stat-val">{{ stats.idMax is not null ? (stats.idMax - stats.idMin + 1) : 0 }}</div>
             <div class="n-stat-lbl">Total aliments</div>

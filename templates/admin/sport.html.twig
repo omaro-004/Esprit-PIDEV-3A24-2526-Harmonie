@@ -5,7 +5,7 @@
 {% block stylesheets %}
 <style>
     :root {
-        --spt-green: #10B981; --spt-green-dark: #059669; --spt-green-pale: #D1FAE5;
+        --spt-green: #7C3AED; --spt-green-dark: #5B21B6; --spt-green-pale: #EDE9FE;
         --spt-blue: #3B82F6; --spt-orange: #F59E0B; --spt-red: #EF4444;
         --spt-pink: #EC4899; --spt-pink-pale: #FCE7F3;
         --spt-blue-pale: #DBEAFE;
@@ -58,7 +58,7 @@
     .view-toggle { display: flex; border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; }
     .view-btn { padding: 8px 14px; background: none; border: none; cursor: pointer; font-size: 12.5px; font-weight: 500; color: var(--text-muted); font-family: var(--font-body); transition: .12s; }
     .view-btn.active { background: var(--spt-green-pale); color: var(--spt-green-dark); }
-    .btn-add-ex { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; background: linear-gradient(135deg, var(--spt-green), var(--spt-green-dark)); color: #fff; border: none; border-radius: 10px; font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 14px rgba(16,185,129,.35); transition: .15s; white-space: nowrap; }
+    .btn-add-ex { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; background: linear-gradient(135deg, var(--spt-green), var(--spt-green-dark)); color: #fff; border: none; border-radius: 10px; font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 14px rgba(124,58,237,.35); transition: .15s; white-space: nowrap; }
     .btn-add-ex:hover { transform: translateY(-1px); }
 
     /* ── STATS ── */
@@ -119,7 +119,7 @@
         position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; cursor: pointer;
     }
     .play-btn { width: 46px; height: 46px; border-radius: 50%; background: rgba(255,255,255,.2); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,.4); transition: .2s; }
-    .play-btn:hover { background: rgba(16,185,129,.7); transform: scale(1.1); }
+    .play-btn:hover { background: rgba(124,58,237,.7); transform: scale(1.1); }
     .play-btn svg { width: 18px; height: 18px; fill: #fff; margin-left: 3px; }
 
     /* Section gender badge */
@@ -130,7 +130,7 @@
     }
     .gender-badge.femme { background: rgba(236,72,153,.85); color: #fff; }
     .gender-badge.homme { background: rgba(59,130,246,.85);  color: #fff; }
-    .gender-badge.neutre { background: rgba(16,185,129,.85); color: #fff; }
+    .gender-badge.neutre { background: rgba(124,58,237,.85); color: #fff; }
 
     .ex-body { padding: 14px 16px; }
     .ex-name { font-family: var(--font-head); font-size: 14.5px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
@@ -154,7 +154,7 @@
     table.s-table th.sorted-desc::after { content: ' ▼'; }
     table.s-table td { padding: 12px 16px; font-size: 13.5px; color: var(--text); border-bottom: 1px solid var(--purple-ghost); vertical-align: middle; }
     table.s-table tr:last-child td { border: none; }
-    table.s-table tr:hover td { background: rgba(16,185,129,.04); }
+    table.s-table tr:hover td { background: rgba(124,58,237,.04); }
     .vid-link { color: var(--spt-green); font-size: 12px; text-decoration: none; }
     .vid-link:hover { text-decoration: underline; }
     .no-vid { color: var(--text-muted); font-size: 12px; }
@@ -214,7 +214,7 @@
     .yt-result-info { flex: 1; min-width: 0; }
     .yt-result-title { font-size: 12.5px; font-weight: 600; color: #111; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.35; }
     .yt-result-channel { font-size: 11px; color: #888; margin-top: 3px; }
-    .yt-select-badge { font-size: 10.5px; font-weight: 700; color: #10B981; background: #D1FAE5; padding: 3px 8px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
+    .yt-select-badge { font-size: 10.5px; font-weight: 700; color: #10B981; background: #EDE9FE; padding: 3px 8px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
     .yt-result-item.selected .yt-select-badge { background: #10B981; color: #fff; }
     .yt-loading { padding: 22px; text-align: center; font-size: 13px; color: #888; display: flex; align-items: center; justify-content: center; gap: 10px; }
     .yt-spinner { width: 22px; height: 22px; border: 3px solid #FFD5D5; border-top-color: #FF0000; border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
@@ -223,7 +223,7 @@
 
     .s-modal-footer { padding: 16px 26px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; background: var(--purple-ghost); border-radius: 0 0 22px 22px; }
     .btn-s-cancel { padding: 10px 20px; background: var(--white); border: 1.5px solid var(--border); border-radius: 10px; font-family: var(--font-body); font-size: 13px; cursor: pointer; color: var(--text-mid); }
-    .btn-s-save { padding: 10px 24px; background: linear-gradient(135deg, var(--spt-green), var(--spt-green-dark)); color: #fff; border: none; border-radius: 10px; font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 14px rgba(16,185,129,.35); transition: .15s; }
+    .btn-s-save { padding: 10px 24px; background: linear-gradient(135deg, var(--spt-green), var(--spt-green-dark)); color: #fff; border: none; border-radius: 10px; font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 14px rgba(124,58,237,.35); transition: .15s; }
     .btn-s-save:hover { transform: translateY(-1px); }
 
     /* Delete modal */
@@ -302,7 +302,7 @@
 {# ── STATS ── #}
 <div class="s-stats">
     <div class="s-stat">
-        <div class="s-stat-icon" style="background:#D1FAE5;">🏋️</div>
+        <div class="s-stat-icon" style="background:#EDE9FE;">🏋️</div>
         <div><div class="s-stat-val" id="s-total">—</div><div class="s-stat-lbl">Total exercices</div></div>
     </div>
     <div class="s-stat">
