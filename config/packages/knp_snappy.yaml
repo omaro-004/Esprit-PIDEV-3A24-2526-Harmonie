@@ -1,0 +1,8 @@
+# config/packages/knp_snappy.yaml
+knp_snappy:
+    pdf:
+        enabled: true
+        binary: "%env(WKHTMLTOPDF_PATH)%"
+    image:
+        enabled: true
+        binary: "%env(WKHTMLTOIMAGE_PATH)%"

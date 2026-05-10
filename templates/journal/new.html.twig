@@ -1,0 +1,305 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvelle entrée - Harmony{% endblock %}
+
+{% block stylesheets %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --purple:#6A5ACD;--purple-dark:#4B3B9E;--purple-soft:#8B7FD4;
+            --purple-pale:#EDE8FA;--purple-ghost:#F7F5FD;
+            --text:#1C1733;--text-mid:#4A4570;--text-muted:#9590B8;
+            --border:rgba(106,90,205,.12);--white:#FFFFFF;
+            --font-head:'Syne',sans-serif;--font-body:'Inter',sans-serif;
+        }
+        html,body{height:100%;font-family:var(--font-body);background:var(--purple-ghost);color:var(--text);}
+
+        .topbar{position:sticky;top:0;z-index:200;background:var(--white);border-bottom:1px solid var(--border);height:62px;display:flex;align-items:center;padding:0 40px;gap:8px;}
+        .topbar-logo{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:32px;}
+        .logo-mark{width:34px;height:34px;border-radius:10px;object-fit:contain;flex-shrink:0;}
+        .nav-links{display:flex;align-items:center;gap:2px;flex:1;flex-wrap:nowrap;overflow-x:auto;}
+        .nav-link{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:9px;font-size:13.5px;font-weight:500;color:var(--text-mid);text-decoration:none;white-space:nowrap;transition:background .15s,color .15s;}
+        .nav-link:hover{background:var(--purple-pale);color:var(--purple);}
+        .nav-link.active{background:var(--purple-pale);color:var(--purple);font-weight:600;}
+        .nav-link .nav-emoji{font-size:14px;}
+        .topbar-right{display:flex;align-items:center;gap:10px;margin-left:auto;flex-shrink:0;}
+        .logout-btn{padding:7px 16px;border-radius:9px;border:1.5px solid rgba(239,68,68,.2);background:transparent;color:#E05252;font-family:var(--font-body);font-size:13px;font-weight:500;cursor:pointer;transition:background .15s,border-color .15s;white-space:nowrap;text-decoration:none;}
+        .logout-btn:hover{background:#FEF2F2;border-color:#E05252;}
+        .profile-wrap{position:relative;}
+        .avatar{width:36px;height:36px;border-radius:50%;background:var(--purple);color:white;font-family:var(--font-head);font-weight:700;font-size:14px;display:grid;place-items:center;cursor:pointer;border:2px solid var(--purple-pale);transition:box-shadow .15s;}
+        .avatar:hover{box-shadow:0 0 0 3px rgba(106,90,205,.25);}
+        .profile-dropdown{position:absolute;top:calc(100% + 10px);right:0;width:220px;background:var(--white);border:1px solid var(--border);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.1);padding:16px;display:none;z-index:500;}
+        .profile-dropdown.open{display:block;}
+        .pd-name{font-size:14px;font-weight:600;color:var(--text);}
+        .pd-email{font-size:12px;color:var(--text-muted);margin-top:2px;}
+        .pd-divider{height:1px;background:var(--border);margin:12px 0;}
+        .pd-hint{font-size:11px;color:var(--text-muted);font-style:italic;}
+
+        .container{max-width:700px;margin:0 auto;padding:48px 40px 80px;}
+        .back-link{display:inline-flex;align-items:center;gap:6px;color:var(--text-muted);text-decoration:none;font-size:13px;margin-bottom:20px;}
+        .back-link:hover{color:var(--purple);}
+
+        .form-card{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:32px;}
+        .form-card h2{font-family:var(--font-head);font-size:22px;font-weight:700;margin-bottom:24px;color:var(--text);}
+        .form-group{margin-bottom:20px;}
+        .form-group label{display:block;font-size:13px;font-weight:600;color:var(--text-mid);margin-bottom:6px;}
+        .form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:10px;font-size:14px;font-family:var(--font-body);color:var(--text);background:var(--white);transition:border-color .15s;}
+        .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--purple);}
+        .form-group textarea{resize:vertical;}
+        .form-group ul{list-style:none;padding:0;margin:4px 0 0;}
+        .form-group ul li{color:#E05252;font-size:12px;font-weight:500;}
+
+        .avatar-chooser {margin-bottom:20px;}
+        .avatar-chooser-label {display:block;font-size:13px;font-weight:600;color:var(--text-mid);margin-bottom:6px;}
+        .avatar-chooser-row {display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+        .avatar-chooser-row button {padding:10px 18px;border-radius:10px;border:1px solid var(--border);background:var(--purple-pale);color:var(--purple);font-size:14px;font-weight:600;cursor:pointer;}
+        .avatar-chooser-row button:hover {background:var(--purple);color:#fff;border-color:transparent;}
+        .avatar-status {font-size:13px;color:var(--text-muted);}
+        .avatar-preview {display:none;align-items:center;gap:12px;margin-top:16px;padding:14px;border:1px solid var(--border);border-radius:14px;background:var(--purple-ghost);}
+        .avatar-preview img {width:72px;height:72px;border-radius:18px;object-fit:cover;}
+        .avatar-preview-label {font-size:13px;color:var(--text);font-weight:600;}
+        .form-actions{display:flex;gap:12px;margin-top:24px;}
+        .btn-submit{padding:10px 24px;border-radius:10px;border:none;background:var(--purple);color:white;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font-body);}
+        .btn-submit:hover{background:var(--purple-dark);}
+        .btn-cancel{padding:10px 24px;border-radius:10px;border:1px solid var(--border);background:var(--white);color:var(--text-mid);font-size:14px;font-weight:500;text-decoration:none;display:inline-flex;align-items:center;}
+        .btn-cancel:hover{background:var(--purple-ghost);}
+
+        @media(max-width:640px){.topbar{padding:0 20px;}.nav-links{display:none;}.container{padding:24px 20px 60px;}}
+    </style>
+{% endblock %}
+
+{% block body %}
+    {% set current_route = app.request.attributes.get('_route') %}
+
+    <header class="topbar">
+        <a href="{{ path('homepage') }}" class="topbar-logo">
+            <img src="{{ asset('images/logo.png') }}" class="logo-mark" alt="Harmony">
+        </a>
+        <nav class="nav-links">
+            <a href="{{ path('activites') }}" class="nav-link"><span class="nav-emoji">🏋</span> Activités</a>
+            <a href="{{ path('forum') }}" class="nav-link"><span class="nav-emoji">💬</span> Forum</a>
+            <a href="{{ path('taches') }}" class="nav-link"><span class="nav-emoji">📚</span> Tâches</a>
+            <a href="{{ path('evenements') }}" class="nav-link"><span class="nav-emoji">📅</span> Événements</a>
+            <a href="{{ path('nutrition') }}" class="nav-link"><span class="nav-emoji">🥗</span> Nutrition</a>
+            <a href="{{ path('meditation') }}" class="nav-link"><span class="nav-emoji">🧘</span> Méditation</a>
+            <a href="{{ path('journal') }}" class="nav-link active"><span class="nav-emoji">📔</span> Journal</a>
+            <a href="{{ path('library') }}" class="nav-link"><span class="nav-emoji">📖</span> Library</a>
+        </nav>
+        <div class="topbar-right">
+            <a href="{{ path('app_logout') }}" class="logout-btn">🚪 Déconnexion</a>
+            <div class="profile-wrap">
+                <div class="avatar" id="avatarBtn">{{ app.user ? app.user.firstName|first|upper : 'E' }}</div>
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="pd-name">{{ app.user ? app.user.firstName ~ ' ' ~ app.user.lastName : 'Étudiant' }}</div>
+                    <div class="pd-email">{{ app.user ? app.user.email : 'email@exemple.com' }}</div>
+                    <div class="pd-divider"></div>
+                    <div class="pd-hint">Double-clic pour modifier</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <a href="{{ path('journal') }}" class="back-link">← Retour au journal</a>
+
+        {# ── Speech-to-Text recorder ── #}
+        <div class="form-card" style="margin-bottom:20px;">
+            <h2 style="margin-bottom:16px;">🎙 Dicter une entrée</h2>
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Parlez, l'IA transcrit et remplit le formulaire automatiquement.</p>
+
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                <button type="button" id="recordBtn" class="btn-submit" style="background:#E05252;border-color:#E05252;">
+                    🔴 Démarrer l'enregistrement
+                </button>
+                <span id="recordStatus" style="font-size:13px;color:var(--text-muted);"></span>
+            </div>
+
+            <div id="sttResult" style="display:none;margin-top:16px;padding:14px;background:var(--purple-pale);border-radius:10px;">
+                <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">Transcription :</div>
+                <div id="sttText" style="font-size:13px;color:var(--text);line-height:1.6;"></div>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <h2>📝 Nouvelle entrée</h2>
+
+            {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+
+            <div class="form-group">
+                {{ form_label(form.humeur) }}
+                {{ form_widget(form.humeur) }}
+                {{ form_errors(form.humeur) }}
+            </div>
+
+            <div class="form-group">
+                {{ form_label(form.dateJournal) }}
+                {{ form_widget(form.dateJournal) }}
+                {{ form_errors(form.dateJournal) }}
+            </div>
+
+            <div class="form-group">
+                {{ form_label(form.contenu) }}
+                {{ form_widget(form.contenu) }}
+                {{ form_errors(form.contenu) }}
+            </div>
+
+            <div class="avatar-chooser">
+                <div class="avatar-chooser-label">Avatar de l'entrée</div>
+                <div class="avatar-chooser-row">
+                    <a href="{{ path('avatar_creation', {'returnUrl': path('journal_new')}) }}" class="btn-cancel" id="openAvatarCreator">🎨 Créer mon avatar</a>
+                    <span class="avatar-status" id="avatarStatus">Aucun avatar sélectionné</span>
+                </div>
+                {{ form_widget(form.avatarImageUrl) }}
+                <div class="avatar-preview" id="avatarPreview">
+                    <img id="avatarPreviewImage" src="" alt="Avatar sélectionné">
+                    <div class="avatar-preview-label">Avatar sélectionné</div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-submit">✅ Enregistrer</button>
+                <a href="{{ path('journal') }}" class="btn-cancel">Annuler</a>
+            </div>
+
+            {{ form_end(form) }}
+        </div>
+    </div>
+
+    <script>
+        const btn = document.getElementById('avatarBtn');
+        const drop = document.getElementById('profileDropdown');
+        btn.addEventListener('click', e => { e.stopPropagation(); drop.classList.toggle('open'); });
+        document.addEventListener('click', () => drop.classList.remove('open'));
+
+        const avatarInput = document.getElementById('{{ form.avatarImageUrl.vars.id }}');
+        const avatarStatus = document.getElementById('avatarStatus');
+        const avatarPreview = document.getElementById('avatarPreview');
+        const avatarPreviewImage = document.getElementById('avatarPreviewImage');
+
+        if (avatarInput && avatarInput.value) {
+            avatarPreviewImage.src = avatarInput.value;
+            avatarPreview.style.display = 'flex';
+            avatarStatus.textContent = 'Avatar chargé';
+        }
+    </script>
+
+    <script>
+    (function(){
+        const recordBtn    = document.getElementById('recordBtn');
+        const recordStatus = document.getElementById('recordStatus');
+        const sttResult    = document.getElementById('sttResult');
+        const sttText      = document.getElementById('sttText');
+
+        // Map humeur string to select option value
+        const humeurMap = {
+            'TRES_BIEN': 'TRES_BIEN',
+            'BIEN':      'BIEN',
+            'NEUTRE':    'NEUTRE',
+            'MAL':       'MAL',
+            'TRES_MAL':  'TRES_MAL',
+        };
+
+        let mediaRecorder = null;
+        let chunks = [];
+        let recording = false;
+
+        // Check if getUserMedia is available (requires HTTPS or localhost)
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            recordBtn.disabled = true;
+            recordBtn.style.opacity = '0.5';
+            recordStatus.textContent = '⚠️ Microphone non disponible (le site doit être en HTTPS ou localhost).';
+        }
+
+        recordBtn.addEventListener('click', async () => {
+            if (!recording) {
+                // Start recording
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+                    // Pick a supported MIME type
+                    const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+                        ? 'audio/webm;codecs=opus'
+                        : MediaRecorder.isTypeSupported('audio/webm')
+                            ? 'audio/webm'
+                            : '';
+
+                    mediaRecorder = mimeType
+                        ? new MediaRecorder(stream, { mimeType })
+                        : new MediaRecorder(stream);
+
+                    chunks = [];
+                    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+                    mediaRecorder.onstop = sendAudio;
+                    mediaRecorder.start(100); // collect chunks every 100ms
+                    recording = true;
+                    recordBtn.textContent = '⏹ Arrêter et transcrire';
+                    recordBtn.style.background = '#4B3B9E';
+                    recordStatus.textContent = '⏺ Enregistrement en cours...';
+                } catch(err) {
+                    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                        recordStatus.textContent = '❌ Permission microphone refusée. Autorisez le micro dans les paramètres du navigateur.';
+                    } else if (err.name === 'NotFoundError') {
+                        recordStatus.textContent = '❌ Aucun microphone détecté.';
+                    } else {
+                        recordStatus.textContent = '❌ Erreur : ' + err.message;
+                    }
+                }
+            } else {
+                // Stop recording
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(t => t.stop());
+                recording = false;
+                recordBtn.textContent = '🔴 Démarrer l\'enregistrement';
+                recordBtn.style.background = '#E05252';
+                recordStatus.textContent = '⏳ Transcription en cours...';
+            }
+        });
+
+        async function sendAudio() {
+            const blob = new Blob(chunks, { type: 'audio/webm' });
+            const fd = new FormData();
+            fd.append('audio', blob, 'recording.webm');
+
+            try {
+                const res = await fetch('{{ path("journal_transcribe") }}', {
+                    method: 'POST',
+                    body: fd,
+                });
+                const data = await res.json();
+
+                if (data.error) {
+                    recordStatus.textContent = '❌ ' + data.error;
+                    return;
+                }
+
+                recordStatus.textContent = '✅ Transcription terminée !';
+
+                // Show transcription
+                sttResult.style.display = 'block';
+                sttText.textContent = data.transcription;
+
+                // Auto-fill the form
+                const dateField = document.querySelector('[name*="dateJournal"]');
+                if (dateField && data.date) dateField.value = data.date;
+
+                const humeurField = document.querySelector('[name*="humeur"]');
+                if (humeurField && data.humeur) {
+                    // Try to match the option value
+                    Array.from(humeurField.options).forEach(opt => {
+                        if (opt.value === data.humeur) humeurField.value = opt.value;
+                    });
+                }
+
+                const contenuField = document.querySelector('[name*="contenu"]');
+                if (contenuField && data.contenu) contenuField.value = data.contenu;
+
+            } catch(err) {
+                recordStatus.textContent = '❌ Erreur réseau : ' + err.message;
+            }
+        }
+    })();
+    </script>
+{% endblock %}

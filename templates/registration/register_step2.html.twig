@@ -1,0 +1,488 @@
+{% extends 'base.html.twig' %}
+{% block title %}Inscription — Étape 2 — Harmony{% endblock %}
+
+{% block stylesheets %}
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        :root{
+            --purple:#6A5ACD;--purple-dark:#4B3B9E;--purple-pale:#EDE8FA;
+            --purple-ghost:#F7F5FD;--text:#1C1733;--text-mid:#4A4570;
+            --text-muted:#9590B8;--border:rgba(106,90,205,.15);
+            --green:#10B981;--red:#EF4444;--orange:#F59E0B;
+            --font-head:'Syne',sans-serif;--font-body:'Inter',sans-serif
+        }
+        html,body{min-height:100vh;font-family:var(--font-body);background:var(--purple-ghost);padding:40px 20px}
+        .wrap{width:100%;max-width:560px;margin:0 auto}
+
+        /* Progress */
+        .progress-wrap{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:32px}
+        .step-circle{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-size:14px;font-weight:800;transition:.3s}
+        .step-circle.done{background:var(--green);color:#fff}
+        .step-circle.active{background:var(--purple);color:#fff;box-shadow:0 4px 14px rgba(106,90,205,.4)}
+        .step-line{width:60px;height:3px;background:var(--border)}
+        .step-line.done{background:var(--green)}
+        .step-labels{display:flex;justify-content:space-between;margin-bottom:28px;padding:0 4px}
+        .step-label{font-size:11px;font-weight:600;color:var(--text-muted)}
+        .step-label.active{color:var(--purple)}
+        .step-label.done{color:var(--green)}
+
+        /* Card global */
+        .card{background:#fff;border:1px solid var(--border);border-radius:24px;padding:44px;box-shadow:0 20px 60px rgba(106,90,205,.09);animation:fadeUp .4s ease both;margin-bottom:20px}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+        .card-logo{display:flex;align-items:center;gap:10px;margin-bottom:24px}
+        .card-logo img{width:32px;height:32px;border-radius:9px;object-fit:contain}
+        .card-logo span{font-family:var(--font-head);font-size:18px;font-weight:800;color:var(--text)}
+        .card-title{font-family:var(--font-head);font-size:26px;font-weight:800;color:var(--text);margin-bottom:4px}
+        .card-sub{font-size:13px;color:var(--text-muted);margin-bottom:28px}
+
+        /* Sections colorées */
+        .section-card{border-radius:18px;padding:24px;margin-bottom:20px}
+        .section-purple{background:var(--purple-pale);border:1px solid rgba(106,90,205,.15)}
+        .section-blue{background:#EFF6FF;border:1px solid rgba(59,130,246,.15)}
+        .section-yellow{background:#FFFBEB;border:1px solid rgba(245,158,11,.15)}
+        .section-title{font-family:var(--font-head);font-size:16px;font-weight:700;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+
+        /* Avatar selector */
+        .avatar-section{display:flex;align-items:center;gap:20px;margin-bottom:16px}
+        .avatar-preview{
+            width:80px;height:80px;border-radius:50%;
+            background:var(--purple);color:#fff;
+            font-family:var(--font-head);font-size:28px;font-weight:800;
+            display:flex;align-items:center;justify-content:center;
+            flex-shrink:0;overflow:hidden;border:3px solid #fff;
+            box-shadow:0 4px 14px rgba(106,90,205,.3);
+        }
+        .avatar-preview img{width:100%;height:100%;object-fit:cover}
+        .avatar-controls{display:flex;flex-direction:column;gap:6px}
+        .avatar-hint{font-size:11.5px;color:var(--text-muted)}
+        .avatar-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+        .avatar-tab-btn{
+            padding:8px 12px;background:#fff;color:var(--text-mid);
+            border:1.5px solid var(--border);border-radius:10px;font-size:12.5px;
+            font-weight:600;cursor:pointer;font-family:var(--font-body);transition:.15s;
+        }
+        .avatar-tab-btn.active{background:var(--purple);border-color:var(--purple);color:#fff}
+        .avatar-tab-content{
+            display:none;background:#fff;border:1px solid var(--border);
+            border-radius:12px;padding:12px;
+        }
+        .avatar-tab-content.active{display:block}
+        .avatar-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+        .default-avatar-item{
+            border:2px solid transparent;background:#fff;border-radius:10px;
+            padding:4px;cursor:pointer;transition:.15s;
+        }
+        .default-avatar-item img{width:100%;height:auto;border-radius:8px;display:block}
+        .default-avatar-item:hover{border-color:var(--purple-soft)}
+        .default-avatar-item.selected{border-color:var(--purple);box-shadow:0 0 0 3px rgba(106,90,205,.12)}
+        #avatarFieldWrapper{display:none}
+        .avatar-upload-help{font-size:12px;color:var(--text-muted)}
+        .ai-controls{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+        .ai-input{
+            width:100%;padding:10px 12px;border:1.5px solid rgba(106,90,205,.15);
+            border-radius:10px;font-size:13px;font-family:var(--font-body);
+        }
+        .ai-input:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 3px rgba(106,90,205,.08)}
+        .btn-upload{
+            padding:9px 14px;background:var(--purple);color:#fff;border:none;
+            border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;
+            font-family:var(--font-body);transition:.15s;
+        }
+        .btn-upload:hover{background:var(--purple-dark)}
+        .btn-upload:disabled{opacity:.6;cursor:not-allowed}
+        .avatar-loader{font-size:12px;color:var(--text-muted);margin-top:10px}
+        .ai-result{margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+        .ai-result img{width:84px;height:84px;border-radius:12px;object-fit:cover;border:1px solid var(--border)}
+
+        /* Form */
+        .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+        .form-group{margin-bottom:14px}
+        .form-group label{display:block;font-size:12.5px;font-weight:600;color:var(--text-mid);margin-bottom:6px}
+        .form-group input,.form-group select{
+            width:100%;padding:10px 13px;border:1.5px solid rgba(106,90,205,.15);
+            border-radius:10px;font-family:var(--font-body);font-size:14px;color:var(--text);
+            background:#fff;outline:none;transition:border-color .2s;
+        }
+        .form-group input:focus,.form-group select:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(106,90,205,.08)}
+        .form-error{color:var(--red);font-size:11.5px;margin-top:4px}
+        .form-hint{font-size:11px;color:var(--text-muted);margin-top:3px}
+
+        /* Buttons navigation */
+        .nav-btns{display:flex;gap:12px;margin-top:8px}
+        .btn-back{
+            flex:1;padding:13px;background:#fff;color:var(--text-mid);
+            border:1.5px solid var(--border);border-radius:12px;font-family:var(--font-body);
+            font-size:14px;font-weight:500;cursor:pointer;text-decoration:none;
+            display:flex;align-items:center;justify-content:center;gap:8px;transition:.15s;
+        }
+        .btn-back:hover{border-color:var(--purple);color:var(--purple)}
+        .btn-submit{
+            flex:2;padding:13px;background:var(--purple);color:#fff;
+            border:none;border-radius:12px;font-family:var(--font-body);
+            font-size:14px;font-weight:600;cursor:pointer;
+            box-shadow:0 4px 18px rgba(106,90,205,.35);transition:.15s;
+            display:flex;align-items:center;justify-content:center;gap:8px;
+        }
+        .btn-submit:hover{background:var(--purple-dark)}
+
+        /* Flash */
+        .flash-error{background:#FEF2F2;color:#991B1B;padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;border:1px solid #FECACA}
+
+        /* Security note */
+        .security-note{
+            background:var(--purple-ghost);border:1px solid var(--border);
+            border-radius:12px;padding:14px 16px;font-size:12px;
+            color:var(--text-muted);display:flex;align-items:flex-start;gap:10px;
+            margin-top:16px;
+        }
+        .security-note .lock{font-size:18px;flex-shrink:0}
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="wrap">
+        <!-- Progress -->
+        <div class="progress-wrap">
+            <div class="step-circle done">✓</div>
+            <div class="step-line done"></div>
+            <div class="step-circle active">2</div>
+        </div>
+        <div class="step-labels">
+            <span class="step-label done">Compte</span>
+            <span class="step-label active">Profil</span>
+        </div>
+
+        <div class="card">
+            <div class="card-logo">
+                <img src="{{ asset('images/logo.png') }}" alt="Harmony">
+                <span>Harmony</span>
+            </div>
+            <div class="card-title">Informations complémentaires</div>
+            <div class="card-sub">Étape 2 sur 2 — Personnalisez votre profil</div>
+
+            {% for msg in app.flashes('error') %}
+                <div class="flash-error">⚠ {{ msg }}</div>
+            {% endfor %}
+
+            {{ form_start(form, {'attr': {'enctype': 'multipart/form-data', 'novalidate': 'novalidate', 'id': 'step2Form'}}) }}
+
+            <!-- Photo de profil -->
+            <div class="section-card section-purple">
+                <div class="section-title">📷 Photo de profil <span style="font-size:12px;font-weight:400;color:var(--text-muted)">(optionnel)</span></div>
+
+                <input type="hidden" id="selectedAvatarPath" name="selectedAvatarPath" value="">
+
+                <div class="avatar-section">
+                    <div class="avatar-preview" id="avatarPreview">
+                        {{ step1.prenom|first|upper }}
+                    </div>
+                    <div class="avatar-controls">
+                        <div class="avatar-hint" id="avatarHint">Aucune image sélectionnée</div>
+                        <div class="avatar-hint">Choisissez un avatar par défaut, importez une image ou générez avec l'IA.</div>
+                    </div>
+                </div>
+
+                <div class="avatar-tabs">
+                    <button type="button" class="avatar-tab-btn active" data-tab="defaults">🎨 Avatars par défaut</button>
+                    <button type="button" class="avatar-tab-btn" data-tab="upload">📁 Importer une image</button>
+                    <button type="button" class="avatar-tab-btn" data-tab="ai">✨ Générer par IA</button>
+                </div>
+
+                <div class="avatar-tab-content active" data-content="defaults">
+                    <div class="avatar-grid" id="defaultAvatarGrid">
+                        {% for i in 1..12 %}
+                            {% set slug = 'avatar_' ~ '%02d'|format(i) %}
+                            <button type="button" class="default-avatar-item" data-slug="{{ slug }}" data-path="avatars/default/{{ slug }}.svg">
+                                <img src="{{ asset('avatars/default/' ~ slug ~ '.svg') }}" alt="{{ slug }}">
+                            </button>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="avatar-tab-content avatar-upload-panel" data-content="upload">
+                    <div class="avatar-upload-help">Le sélecteur de fichiers s'ouvre automatiquement. Si besoin, recliquez sur l'onglet "📁 Importer une image".</div>
+                    <div class="avatar-hint" style="margin-top:8px">Formats acceptés : JPG, PNG, GIF, WebP (max 2 Mo)</div>
+                </div>
+
+                <div id="avatarFieldWrapper">
+                    {{ form_widget(form.avatarFile) }}
+                </div>
+
+                <div class="avatar-tab-content" data-content="ai">
+                    <div class="ai-controls">
+                        <input type="text" id="aiAvatarPrompt" class="ai-input" placeholder="Ex: etudiant cyborg pixel art lunettes soleil">
+                        <button type="button" class="btn-upload" id="generateAiBtn">Générer</button>
+                    </div>
+                    <div class="avatar-loader" id="aiLoader" style="display:none">Génération en cours... (peut prendre 10-20s)</div>
+                    <div class="ai-result" id="aiResult" style="display:none">
+                        <img id="aiResultImage" alt="Avatar IA">
+                        <button type="button" class="btn-upload" id="useAiBtn">Utiliser cet avatar</button>
+                    </div>
+                </div>
+
+                {% if form_errors(form.avatarFile) %}
+                    <div class="form-error">{{ form_errors(form.avatarFile) }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Infos de santé -->
+            <div class="section-card section-blue">
+                <div class="section-title">💪 Informations de santé</div>
+
+                <div class="form-group">
+                    {{ form_label(form.userSexe) }}
+                    {{ form_widget(form.userSexe) }}
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        {{ form_label(form.userPoids) }}
+                        {{ form_widget(form.userPoids) }}
+                        <div class="form-hint">Entre 40 et 200 kg</div>
+                        {% if form_errors(form.userPoids) %}
+                            <div class="form-error">{{ form_errors(form.userPoids) }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        {{ form_label(form.userTaille) }}
+                        {{ form_widget(form.userTaille) }}
+                        <div class="form-hint">Entre 100 et 210 cm</div>
+                        {% if form_errors(form.userTaille) %}
+                            <div class="form-error">{{ form_errors(form.userTaille) }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    {{ form_label(form.userNiveauActivitePhysique) }}
+                    {{ form_widget(form.userNiveauActivitePhysique) }}
+                </div>
+            </div>
+
+            <!-- Infos scolaires -->
+            <div class="section-card section-yellow">
+                <div class="section-title">🎓 Informations scolaires</div>
+
+                <div class="form-group">
+                    {{ form_label(form.userNiveauScolaire) }}
+                    {{ form_widget(form.userNiveauScolaire) }}
+                </div>
+
+                <div class="form-group">
+                    {{ form_label(form.userEtablissementScolaire) }}
+                    {{ form_widget(form.userEtablissementScolaire) }}
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="nav-btns">
+                <a href="{{ path('app_register') }}" class="btn-back">← Retour</a>
+                <button type="submit" class="btn-submit">Suivant → 📷</button>
+            </div>
+
+            <div class="security-note">
+                <span class="lock">🔒</span>
+                <span>Vos données sont chiffrées et sécurisées. Les images sont vérifiées automatiquement.</span>
+            </div>
+
+            {{ form_end(form) }}
+        </div>
+    </div>
+
+    <script>
+        const assetBase = '{{ asset('') }}';
+        const step2Form = document.getElementById('step2Form');
+        const avatarInput = document.querySelector('#avatarFieldWrapper input[type="file"]');
+        const selectedAvatarPath = document.getElementById('selectedAvatarPath');
+        const avatarPreview = document.getElementById('avatarPreview');
+        const avatarHint = document.getElementById('avatarHint');
+        const initiale = '{{ step1.prenom|first|upper }}';
+
+        const tabButtons = document.querySelectorAll('.avatar-tab-btn');
+        const tabContents = document.querySelectorAll('.avatar-tab-content');
+        const defaultItems = document.querySelectorAll('.default-avatar-item');
+        const aiPrompt = document.getElementById('aiAvatarPrompt');
+        const generateAiBtn = document.getElementById('generateAiBtn');
+        const aiLoader = document.getElementById('aiLoader');
+        const aiResult = document.getElementById('aiResult');
+        const aiResultImage = document.getElementById('aiResultImage');
+        const useAiBtn = document.getElementById('useAiBtn');
+
+        let generatedAiUrl = '';
+        let generatedAiPath = '';
+
+        async function parseJsonResponse(response) {
+            const raw = await response.text();
+            try {
+                return { ok: response.ok, data: JSON.parse(raw) };
+            } catch (e) {
+                return {
+                    ok: false,
+                    data: { error: 'Réponse serveur invalide. Vérifiez votre session et rechargez la page.' },
+                };
+            }
+        }
+
+        function asAsset(path) {
+            return `${assetBase}${path}`;
+        }
+
+        function clearDefaultSelection() {
+            defaultItems.forEach(item => item.classList.remove('selected'));
+        }
+
+        function setPreview(src, text) {
+            avatarPreview.innerHTML = `<img src="${src}" alt="Avatar sélectionné">`;
+            avatarHint.textContent = text;
+        }
+
+        function resetPreviewToInitial() {
+            avatarPreview.textContent = initiale;
+            avatarHint.textContent = 'Aucune image sélectionnée';
+        }
+
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabName = btn.dataset.tab;
+                tabButtons.forEach(b => b.classList.toggle('active', b === btn));
+                tabContents.forEach(content => {
+                    content.classList.toggle('active', content.dataset.content === tabName);
+                });
+
+                if (tabName === 'upload' && avatarInput) {
+                    avatarInput.click();
+                }
+            });
+        });
+
+        defaultItems.forEach(item => {
+            item.addEventListener('click', async () => {
+                try {
+                    const response = await fetch('/api/avatar/set-default', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ avatarSlug: item.dataset.slug }),
+                    });
+
+                    const parsed = await parseJsonResponse(response);
+                    const data = parsed.data;
+                    if (!parsed.ok || !data.success) {
+                        throw new Error(data.error || 'Impossible de sélectionner cet avatar');
+                    }
+
+                    clearDefaultSelection();
+                    item.classList.add('selected');
+                    selectedAvatarPath.value = data.imagePath;
+                    if (avatarInput) {
+                        avatarInput.value = '';
+                    }
+                    setPreview(asAsset(data.imagePath), 'Avatar par défaut sélectionné');
+                } catch (error) {
+                    alert(error.message);
+                }
+            });
+        });
+
+        if (avatarInput) {
+            avatarInput.addEventListener('change', function () {
+                if (!this.files || !this.files[0]) {
+                    return;
+                }
+
+                const file = this.files[0];
+                selectedAvatarPath.value = '';
+                clearDefaultSelection();
+
+                const reader = new FileReader();
+                reader.onload = e => {
+                    setPreview(e.target.result, `${file.name} (${(file.size / 1024).toFixed(0)} Ko)`);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        generateAiBtn.addEventListener('click', async () => {
+            const prompt = (aiPrompt.value || '').trim();
+            if (!prompt) {
+                alert('Veuillez saisir une description pour générer un avatar.');
+                return;
+            }
+
+            const seed = Math.floor(Math.random() * 10000);
+            generatedAiUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=512&height=512&nologo=true&seed=${seed}`;
+
+            aiLoader.style.display = 'block';
+            aiResult.style.display = 'none';
+            generateAiBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/avatar/generate-from-url', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ imageUrl: generatedAiUrl }),
+                });
+
+                const parsed = await parseJsonResponse(response);
+                const data = parsed.data;
+                if (!parsed.ok || !data.success) {
+                    throw new Error(data.error || 'Generation IA indisponible pour le moment');
+                }
+
+                generatedAiPath = data.imagePath;
+                aiResultImage.src = `${asAsset(generatedAiPath)}?v=${Date.now()}`;
+                aiResult.style.display = 'flex';
+            } catch (error) {
+                alert(error.message);
+            } finally {
+                aiLoader.style.display = 'none';
+                generateAiBtn.disabled = false;
+            }
+        });
+
+        useAiBtn.addEventListener('click', async () => {
+            if (!generatedAiPath) {
+                return;
+            }
+
+            useAiBtn.disabled = true;
+            try {
+                selectedAvatarPath.value = generatedAiPath;
+                if (avatarInput) {
+                    avatarInput.value = '';
+                }
+                clearDefaultSelection();
+                setPreview(asAsset(generatedAiPath), 'Avatar IA sélectionné');
+            } catch (error) {
+                alert(error.message);
+            } finally {
+                useAiBtn.disabled = false;
+            }
+        });
+
+        step2Form.addEventListener('submit', () => {
+            const existing = document.getElementById('preSelectedAvatarPath');
+            const hasFile = avatarInput && avatarInput.files && avatarInput.files.length > 0;
+
+            if (hasFile || !selectedAvatarPath.value) {
+                if (existing) {
+                    existing.remove();
+                }
+                if (!hasFile && !selectedAvatarPath.value && !(avatarInput && avatarInput.value)) {
+                    resetPreviewToInitial();
+                }
+                return;
+            }
+
+            let hidden = existing;
+            if (!hidden) {
+                hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.id = 'preSelectedAvatarPath';
+                hidden.name = 'preSelectedAvatarPath';
+                step2Form.appendChild(hidden);
+            }
+            hidden.value = selectedAvatarPath.value;
+        });
+    </script>
+{% endblock %}

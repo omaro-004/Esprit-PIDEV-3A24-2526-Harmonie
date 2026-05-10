@@ -1,0 +1,2727 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Activités — Harmony{% endblock %}
+
+{% block stylesheets %}
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  /* Palette principale */
+  --pu:#7C5CFC;--pu-dk:#5B3FDB;--pu-lt:#A78BFA;--pu-pale:#EEE8FF;
+  --pu-ghost:#F5F2FF;--pu-deep:#120A2E;
+  --tx:#0F0A2A;--tx-mid:#3D3570;--tx-muted:#8B82B8;
+  --border:rgba(124,92,252,.1);--white:#FFFFFF;
+  --bg:#F0EDFF;
+  --shadow:0 8px 32px rgba(124,92,252,.14);
+  --shadow-lg:0 24px 64px rgba(124,92,252,.22);
+  --card-r:22px;
+  /* Catégories */
+  --cardio:#FF4D6D;--cardio-lt:#FFF0F3;
+  --force:#3B82F6;--force-lt:#EFF6FF;
+  --souplesse:#10B981;--souplesse-lt:#ECFDF5;
+  --endurance:#F59E0B;--endurance-lt:#FFFBEB;
+  --perte:#EF4444;--perte-lt:#FEF2F2;
+  /* Sections */
+  --homme:#3B82F6;--femme:#EC4899;
+}
+
+html,body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--tx);overflow-x:hidden}
+
+/* ─────────────── HERO PHOTO PLEIN ECRAN ─────────────── */
+.hero{
+  position:relative;
+  height:100vh;
+  min-height:600px;
+  overflow:hidden;
+}
+/* Photo de fond plein écran */
+.hero-bg-img{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;object-position:center 30%;
+  z-index:0;
+}
+/* Overlay dégradé sombre sur la photo pour lisibilité du texte */
+.hero-overlay{
+  position:absolute;inset:0;z-index:1;
+  background:
+    linear-gradient(180deg,rgba(12,6,30,.45) 0%,rgba(18,10,46,.6) 50%,rgba(12,6,30,.85) 100%);
+}
+/* Grain subtil */
+.hero-noise{
+  position:absolute;inset:0;z-index:2;opacity:.03;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+/* Grille décorative */
+.hero-grid{
+  position:absolute;inset:0;z-index:2;
+  background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);
+  background-size:50px 50px;
+}
+/* Fondu vers la page en bas */
+.hero-bottom-fade{
+  position:absolute;bottom:0;left:0;right:0;height:180px;z-index:3;
+  background:linear-gradient(to bottom,transparent,var(--bg));
+}
+/* Contenu centré verticalement */
+.hero-content{
+  position:absolute;inset:0;z-index:4;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 60px 60px;gap:40px;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,.12);backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,.2);border-radius:40px;
+  padding:7px 18px;font-size:11px;font-weight:700;
+  color:rgba(255,255,255,.9);letter-spacing:.8px;
+  text-transform:uppercase;margin-bottom:18px;
+}
+.hero-badge-dot{width:7px;height:7px;border-radius:50%;background:#34D399;animation:pulse-dot 2s infinite}
+@keyframes pulse-dot{0%,100%{box-shadow:0 0 0 0 rgba(52,211,153,.5)}70%{box-shadow:0 0 0 8px rgba(52,211,153,0)}}
+.hero-title{
+  font-family:'Outfit',sans-serif;font-size:58px;font-weight:900;
+  line-height:1.02;color:white;letter-spacing:-2.5px;margin-bottom:16px;
+  text-shadow:0 6px 32px rgba(0,0,0,.5);
+}
+.hero-title em{
+  font-style:normal;
+  background:linear-gradient(90deg,#C084FC,#818CF8,#38BDF8);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero-sub{font-size:16px;color:rgba(255,255,255,.65);font-weight:400;line-height:1.65;max-width:460px}
+
+/* Indicateur scroll-down */
+.hero-scroll-hint{
+  position:absolute;bottom:100px;left:50%;transform:translateX(-50%);
+  z-index:5;display:flex;flex-direction:column;align-items:center;gap:8px;
+  animation:bounce-down 2.2s ease infinite;
+}
+.hero-scroll-hint span{font-size:10px;color:rgba(255,255,255,.5);font-weight:600;letter-spacing:1px;text-transform:uppercase}
+.hero-scroll-arrow{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.25);display:grid;place-items:center;color:rgba(255,255,255,.55);font-size:14px}
+@keyframes bounce-down{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(8px)}}
+
+/* Stats dans le hero */
+.hero-stats{display:flex;gap:14px;flex-shrink:0;align-items:stretch}
+.hstat{
+  background:rgba(255,255,255,.09);backdrop-filter:blur(24px);
+  border:1px solid rgba(255,255,255,.16);border-radius:22px;
+  padding:22px 26px;text-align:center;min-width:116px;
+  transition:all .25s;position:relative;overflow:hidden;
+  box-shadow:0 8px 32px rgba(0,0,0,.2);
+}
+.hstat::before{
+  content:'';position:absolute;inset:0;border-radius:22px;
+  background:linear-gradient(135deg,rgba(255,255,255,.1),transparent);
+  pointer-events:none;
+}
+.hstat:hover{background:rgba(255,255,255,.16);transform:translateY(-5px);box-shadow:0 22px 44px rgba(0,0,0,.25)}
+.hstat-icon{font-size:24px;margin-bottom:7px;display:block}
+.hstat-val{
+  font-family:'Outfit',sans-serif;font-size:36px;font-weight:900;
+  color:white;line-height:1;display:block;
+}
+.hstat-lbl{font-size:9.5px;color:rgba(255,255,255,.55);margin-top:6px;text-transform:uppercase;letter-spacing:.8px;font-weight:600}
+.hstat.gold .hstat-val{background:linear-gradient(135deg,#FCD34D,#F59E0B);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hstat.teal .hstat-val{background:linear-gradient(135deg,#34D399,#0D9488);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hstat.rose .hstat-val{background:linear-gradient(135deg,#FB7185,#F43F5E);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* ─────────────── LAYOUT ─────────────── */
+.page{max-width:1340px;margin:0 auto;padding:28px 40px 120px;display:grid;grid-template-columns:1fr 380px;gap:28px;align-items:start}
+.main-col{display:flex;flex-direction:column;gap:24px}
+.side-col{display:flex;flex-direction:column;gap:24px;position:sticky;top:76px}
+
+/* ─────────────── CARDS ─────────────── */
+.card{
+  background:var(--white);border:1px solid rgba(124,92,252,.08);
+  border-radius:var(--card-r);overflow:hidden;
+  box-shadow:0 2px 20px rgba(124,92,252,.07);
+  transition:box-shadow .2s;
+}
+.card:hover{box-shadow:0 4px 28px rgba(124,92,252,.1)}
+.card-head{
+  padding:18px 26px 16px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.card-title{
+  font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;
+  color:var(--tx);display:flex;align-items:center;gap:10px;
+}
+.card-body{padding:22px 26px}
+.pill-tag{
+  font-size:10px;color:var(--tx-muted);background:var(--pu-ghost);
+  padding:4px 12px;border-radius:20px;font-weight:600;
+  border:1px solid var(--border);letter-spacing:.3px;
+}
+
+/* ─────────────── SECTION TABS ─────────────── */
+.section-tabs{
+  display:flex;gap:0;padding:0 24px;
+  border-bottom:2px solid var(--border);background:var(--white);
+}
+.section-tab-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:14px 22px;border:none;background:transparent;
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;
+  color:var(--tx-muted);cursor:pointer;
+  border-bottom:3px solid transparent;margin-bottom:-2px;
+  transition:all .2s;white-space:nowrap;
+}
+.section-tab-btn:hover{color:var(--pu)}
+.section-tab-btn.active{color:var(--pu);border-bottom-color:var(--pu)}
+.section-tab-btn.active.homme{color:var(--homme);border-bottom-color:var(--homme)}
+.section-tab-btn.active.femme{color:var(--femme);border-bottom-color:var(--femme)}
+.tab-count{
+  font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;
+  background:var(--pu-ghost);color:var(--tx-muted);min-width:22px;text-align:center;
+}
+.section-tab-btn.active .tab-count{background:rgba(124,92,252,.15);color:var(--pu)}
+.section-tab-btn.active.homme .tab-count{background:rgba(59,130,246,.15);color:var(--homme)}
+.section-tab-btn.active.femme .tab-count{background:rgba(236,72,153,.15);color:var(--femme)}
+
+/* ─────────────── FILTER BAR ─────────────── */
+.cat-filters{display:flex;gap:8px;flex-wrap:wrap;padding:14px 24px}
+.cat-btn{
+  display:inline-flex;align-items:center;gap:6px;padding:8px 18px;
+  border-radius:40px;border:1.5px solid var(--border);
+  background:var(--white);font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:12px;font-weight:700;color:var(--tx-mid);
+  cursor:pointer;transition:all .2s;white-space:nowrap;
+}
+.cat-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(124,92,252,.12)}
+.cat-btn.active.all{background:linear-gradient(135deg,#7C5CFC,#A78BFA);border-color:transparent;color:white;box-shadow:0 4px 18px rgba(124,92,252,.35)}
+.cat-btn.active.cardio{background:linear-gradient(135deg,#FF4D6D,#FF758C);border-color:transparent;color:white;box-shadow:0 4px 18px rgba(255,77,109,.35)}
+.cat-btn.active.force{background:linear-gradient(135deg,#3B82F6,#60A5FA);border-color:transparent;color:white;box-shadow:0 4px 18px rgba(59,130,246,.35)}
+.cat-btn.active.souplesse{background:linear-gradient(135deg,#10B981,#34D399);border-color:transparent;color:white;box-shadow:0 4px 18px rgba(16,185,129,.35)}
+.cat-btn.active.endurance{background:linear-gradient(135deg,#F59E0B,#FBBF24);border-color:transparent;color:white;box-shadow:0 4px 18px rgba(245,158,11,.35)}
+.cat-btn.active.perte{background:linear-gradient(135deg,#EF4444,#F87171);border-color:transparent;color:white;box-shadow:0 4px 18px rgba(239,68,68,.35)}
+
+/* ─────────────── EXERCISE GRID ─────────────── */
+.lib-header{padding:18px 26px 0;display:flex;align-items:center;justify-content:space-between}
+.lib-search{display:flex;align-items:center;gap:8px;padding:12px 24px}
+.lib-search input{
+  flex:1;padding:10px 16px 10px 42px;border:1.5px solid var(--border);
+  border-radius:40px;font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:13px;color:var(--tx);background:var(--pu-ghost);
+  outline:none;transition:all .2s;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%238B82B8' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:14px center;background-size:16px;
+}
+.lib-search input:focus{border-color:var(--pu);background-color:white;box-shadow:0 0 0 3px rgba(124,92,252,.1)}
+.ex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:16px;padding:4px 24px 20px}
+
+/* ─────────────── EXERCISE CARD avec PHOTO ─────────────── */
+.ex-card{
+  background:var(--white);border:1.5px solid var(--border);
+  border-radius:20px;overflow:hidden;cursor:pointer;
+  transition:all .25s cubic-bezier(.34,1.56,.64,1);position:relative;
+}
+.ex-card:hover{transform:translateY(-6px) scale(1.015);box-shadow:0 20px 45px rgba(124,92,252,.18)}
+.ex-card.selected{border-color:var(--pu);box-shadow:0 0 0 3px rgba(124,92,252,.22),0 14px 34px rgba(124,92,252,.16)}
+.ex-card.selected::after{
+  content:'✓';position:absolute;top:10px;left:10px;
+  width:24px;height:24px;background:var(--pu);border-radius:50%;
+  color:white;font-size:12px;font-weight:800;display:grid;place-items:center;z-index:10;
+  box-shadow:0 2px 8px rgba(124,92,252,.4);
+}
+/* Thumbnail avec photo de fond */
+.ex-thumb{
+  height:120px;display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+}
+.ex-thumb-img{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;transition:transform .4s ease;
+  filter:brightness(.75) saturate(1.2);
+}
+.ex-card:hover .ex-thumb-img{transform:scale(1.08)}
+.ex-thumb-overlay{
+  position:absolute;inset:0;
+}
+/* Overlays colorés selon catégorie */
+.ex-thumb.cardio    .ex-thumb-overlay{background:linear-gradient(135deg,rgba(255,77,109,.55),rgba(255,120,130,.35))}
+.ex-thumb.force     .ex-thumb-overlay{background:linear-gradient(135deg,rgba(59,130,246,.55),rgba(96,165,250,.35))}
+.ex-thumb.souplesse .ex-thumb-overlay{background:linear-gradient(135deg,rgba(16,185,129,.55),rgba(52,211,153,.35))}
+.ex-thumb.endurance .ex-thumb-overlay{background:linear-gradient(135deg,rgba(245,158,11,.55),rgba(251,191,36,.35))}
+.ex-thumb.perte     .ex-thumb-overlay{background:linear-gradient(135deg,rgba(239,68,68,.55),rgba(248,113,113,.35))}
+/* Icon flottant */
+.ex-thumb-icon{
+  font-size:40px;z-index:2;position:relative;
+  filter:drop-shadow(0 3px 8px rgba(0,0,0,.3));
+  transition:transform .22s;
+}
+.ex-card:hover .ex-thumb-icon{transform:scale(1.2) rotate(-8deg)}
+.ex-badge{
+  position:absolute;top:8px;right:8px;z-index:5;
+  font-size:9px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;
+  padding:3px 9px;border-radius:20px;
+  backdrop-filter:blur(8px);color:white;
+  background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.3);
+}
+/* Badge section homme/femme */
+.ex-gender-badge{
+  position:absolute;top:8px;left:8px;z-index:5;
+  font-size:10px;padding:2px 7px;border-radius:20px;
+  font-weight:700;backdrop-filter:blur(8px);
+  background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.25);color:white;
+}
+.ex-gender-badge.homme{background:rgba(59,130,246,.7)}
+.ex-gender-badge.femme{background:rgba(236,72,153,.7)}
+/* Body */
+.ex-body{padding:12px 14px 6px}
+.ex-name{
+  font-family:'Outfit',sans-serif;font-size:13.5px;font-weight:700;
+  color:var(--tx);margin-bottom:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.ex-type{font-size:10.5px;color:var(--tx-muted);font-weight:500}
+.ex-actions{display:flex;gap:6px;padding:8px 14px 12px}
+.btn-video{
+  flex:1;padding:7px 6px;border-radius:12px;border:none;
+  background:linear-gradient(135deg,#7C5CFC,#9B7FFF);
+  color:white;font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:11px;font-weight:700;cursor:pointer;
+  transition:all .18s;display:flex;align-items:center;justify-content:center;gap:5px;
+  box-shadow:0 3px 10px rgba(124,92,252,.3);
+}
+.btn-video:hover{box-shadow:0 5px 18px rgba(124,92,252,.5);transform:translateY(-1px)}
+.btn-fav{
+  flex:1;padding:7px 6px;border-radius:12px;
+  background:var(--pu-ghost);color:var(--tx-muted);
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:700;
+  cursor:pointer;transition:all .18s;display:flex;align-items:center;
+  justify-content:center;gap:4px;border:1.5px solid var(--border);
+}
+.btn-fav:hover{background:var(--pu-pale);color:var(--pu);border-color:rgba(124,92,252,.2)}
+.btn-fav.active{
+  background:linear-gradient(135deg,#FCD34D,#F59E0B);
+  color:white;border-color:transparent;
+  box-shadow:0 3px 10px rgba(245,158,11,.35);
+}
+
+/* ─────────────── VIDEO MODAL — FIX YOUTUBE ─────────────── */
+.video-modal-inner{
+  background:var(--white);border-radius:24px;
+  width:100%;max-width:700px;overflow:hidden;
+  animation:slideUp .28s cubic-bezier(.34,1.56,.64,1);
+}
+.video-modal-head{
+  padding:18px 24px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(135deg,var(--pu-deep),#3A1F8A);
+}
+.video-modal-title{
+  font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;color:white;
+  display:flex;align-items:center;gap:10px;
+}
+.video-modal-close{
+  width:32px;height:32px;border-radius:10px;border:none;
+  background:rgba(255,255,255,.15);cursor:pointer;font-size:14px;
+  display:grid;place-items:center;color:white;transition:all .15s;
+}
+.video-modal-close:hover{background:rgba(255,255,255,.25)}
+.video-wrap{
+  width:100%;padding-top:56.25%;background:#0F0A2A;
+  position:relative;overflow:hidden;
+}
+.video-wrap iframe{
+  position:absolute;inset:0;width:100%;height:100%;border:none;
+}
+/* Fallback si pas d'embed disponible */
+.video-fallback{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:16px;
+  background:linear-gradient(135deg,#120A2E,#1E1050);color:white;text-align:center;padding:20px;
+}
+.video-fallback h3{font-family:'Outfit',sans-serif;font-size:18px;font-weight:700}
+.video-fallback p{font-size:13px;color:rgba(255,255,255,.65);max-width:320px;line-height:1.6}
+.btn-open-youtube{
+  display:inline-flex;align-items:center;gap:9px;padding:12px 24px;
+  border-radius:14px;border:none;text-decoration:none;
+  background:linear-gradient(135deg,#FF0000,#CC0000);
+  color:white;font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:14px;font-weight:700;cursor:pointer;
+  box-shadow:0 6px 20px rgba(255,0,0,.35);transition:all .2s;
+}
+.btn-open-youtube:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(255,0,0,.5)}
+
+/* ─────────────── LOG FORM ─────────────── */
+.log-card{
+  background:var(--white);border-radius:var(--card-r);overflow:hidden;
+  border:1.5px solid rgba(124,92,252,.12);box-shadow:var(--shadow);
+}
+.log-header{
+  padding:22px 28px 18px;
+  background:linear-gradient(135deg,var(--pu-deep) 0%,#2A1570 60%,#4B2DB0 100%);
+  display:flex;align-items:center;gap:16px;
+}
+.log-header-icon{
+  width:50px;height:50px;border-radius:16px;
+  background:rgba(255,255,255,.15);display:grid;place-items:center;
+  font-size:24px;flex-shrink:0;
+}
+.log-header-text h3{font-family:'Outfit',sans-serif;font-size:17px;font-weight:800;color:white}
+.log-header-text p{font-size:12px;color:rgba(255,255,255,.55);margin-top:3px}
+.log-steps{
+  display:flex;gap:0;padding:0 28px;
+  background:var(--pu-ghost);border-bottom:1px solid var(--border);
+}
+.log-step{
+  flex:1;padding:12px 16px;display:flex;align-items:center;gap:9px;
+  font-size:11.5px;font-weight:700;color:var(--tx-muted);
+  position:relative;cursor:default;
+}
+.log-step::after{content:'›';position:absolute;right:-2px;font-size:18px;color:var(--border)}
+.log-step:last-child::after{display:none}
+.step-num{
+  width:24px;height:24px;border-radius:50%;background:var(--border);
+  display:grid;place-items:center;font-size:11px;font-weight:800;
+  color:var(--tx-muted);flex-shrink:0;
+}
+.log-step.active .step-num{background:var(--pu);color:white}
+.log-step.active{color:var(--pu)}
+.log-step.done .step-num{background:#10B981;color:white}
+.log-body{padding:24px 28px}
+.sel-ex-banner{
+  display:none;padding:14px 18px;border-radius:16px;margin-bottom:20px;
+  background:linear-gradient(135deg,var(--pu-pale),var(--pu-ghost));
+  border:1.5px solid rgba(124,92,252,.18);
+  align-items:center;gap:14px;
+}
+.sel-ex-banner.show{display:flex;animation:fadeUp .28s ease}
+.sel-ex-emoji{font-size:32px;filter:drop-shadow(0 3px 7px rgba(0,0,0,.1))}
+.sel-ex-info{flex:1}
+.sel-ex-name{font-family:'Outfit',sans-serif;font-size:15px;font-weight:800;color:var(--pu)}
+.sel-ex-type{font-size:11.5px;color:var(--tx-muted);margin-top:3px}
+.sel-ex-badge{
+  font-size:10px;background:var(--pu);color:white;
+  padding:2px 10px;border-radius:20px;font-weight:700;margin-top:5px;display:inline-block;
+}
+.log-form{display:flex;flex-direction:column;gap:14px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group.full{grid-column:1/-1}
+.flabel{
+  font-size:11px;font-weight:800;color:var(--tx-mid);
+  text-transform:uppercase;letter-spacing:.6px;
+  display:flex;align-items:center;gap:5px;
+}
+.finput{
+  padding:11px 15px;border:1.5px solid var(--border);border-radius:13px;
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:13.5px;color:var(--tx);
+  background:var(--pu-ghost);outline:none;transition:all .2s;width:100%;
+}
+.finput:focus{border-color:var(--pu);background:white;box-shadow:0 0 0 3px rgba(124,92,252,.1)}
+.finput.error{border-color:var(--cardio);background:#FFF5F5}
+textarea.finput{resize:vertical;min-height:72px;line-height:1.6}
+.err-msg{font-size:11px;color:var(--cardio);display:none;font-weight:700;align-items:center;gap:4px}
+.err-msg.show{display:flex}
+.btn-log{
+  width:100%;padding:15px;border-radius:15px;border:none;
+  background:linear-gradient(135deg,var(--pu) 0%,#9B59B6 50%,#6366F1 100%);
+  color:white;font-family:'Outfit',sans-serif;font-size:16px;font-weight:800;
+  cursor:pointer;transition:all .22s;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  position:relative;overflow:hidden;
+  box-shadow:0 8px 24px rgba(124,92,252,.4);margin-top:6px;
+}
+.btn-log::after{
+  content:'';position:absolute;top:-50%;left:-80%;width:60%;height:200%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);
+  transform:skewX(-15deg);transition:left .55s;
+}
+.btn-log:hover::after{left:120%}
+.btn-log:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(124,92,252,.5)}
+.btn-log:disabled{background:var(--tx-muted);cursor:not-allowed;transform:none;box-shadow:none}
+
+
+/* ─────────────── SESSIONS HISTORY ─────────────── */
+.timeline{display:flex;flex-direction:column;gap:0;position:relative}
+.timeline::before{
+  content:'';position:absolute;left:18px;top:0;bottom:0;width:2px;
+  background:linear-gradient(to bottom,var(--pu),rgba(124,92,252,.08));
+  border-radius:2px;
+}
+.session-block{
+  margin-left:44px;margin-bottom:16px;border-radius:20px;overflow:hidden;
+  background:var(--white);border:1px solid rgba(124,92,252,.08);
+  box-shadow:0 2px 16px rgba(124,92,252,.05);transition:all .22s;position:relative;
+}
+.session-block::before{
+  content:'';position:absolute;left:-32px;top:18px;
+  width:13px;height:13px;border-radius:50%;
+  background:var(--pu);border:3px solid var(--pu-ghost);
+  box-shadow:0 0 0 3px rgba(124,92,252,.2);z-index:1;
+}
+.session-block:hover{box-shadow:0 8px 30px rgba(124,92,252,.1)}
+.session-head{
+  padding:14px 20px;
+  background:linear-gradient(90deg,var(--pu-ghost) 0%,white 100%);
+  display:flex;align-items:center;justify-content:space-between;
+  cursor:pointer;border-bottom:1px solid rgba(124,92,252,.06);
+}
+.session-date-group{display:flex;flex-direction:column;gap:2px}
+.session-date-big{font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;color:var(--pu)}
+.session-date-rel{font-size:10.5px;color:var(--tx-muted);font-weight:500}
+.session-tags{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.session-tag{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px}
+.session-tag.ex{background:var(--pu-pale);color:var(--pu)}
+.session-tag.time{background:#ECFDF5;color:#065F46}
+.session-tag.cal{background:#FFFBEB;color:#92400E}
+.session-actions{display:flex;align-items:center;gap:8px}
+.btn-del-session{
+  padding:5px 12px;border-radius:10px;border:1.5px solid rgba(239,68,68,.22);
+  background:transparent;color:#DC2626;font-size:11px;font-weight:700;
+  font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:all .18s;
+  display:flex;align-items:center;gap:5px;
+}
+.btn-del-session:hover{background:#FEE2E2;border-color:#DC2626}
+.session-chevron{
+  width:26px;height:26px;border-radius:8px;background:var(--pu-ghost);
+  display:grid;place-items:center;color:var(--tx-muted);font-size:10px;
+  transition:all .2s;border:1px solid var(--border);
+}
+.session-chevron.open{transform:rotate(180deg);background:var(--pu-pale);color:var(--pu)}
+.session-exercises{display:none;padding:12px 16px 14px}
+.session-exercises.open{display:block;animation:fadeUp .22s ease}
+.ex-row{
+  display:flex;align-items:center;gap:12px;padding:10px 14px;
+  border-radius:14px;margin-bottom:7px;background:var(--pu-ghost);
+  border:1.5px solid transparent;transition:all .18s;
+}
+.ex-row:last-child{margin-bottom:0}
+.ex-row:hover{background:white;border-color:rgba(124,92,252,.14);box-shadow:0 3px 14px rgba(124,92,252,.07)}
+.ex-row-dot{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:20px;flex-shrink:0}
+.ex-row-dot.cardio{background:linear-gradient(135deg,#FFE4E8,#FFCCD5)}
+.ex-row-dot.force{background:linear-gradient(135deg,#DBEAFE,#BFDBFE)}
+.ex-row-dot.souplesse{background:linear-gradient(135deg,#D1FAE5,#A7F3D0)}
+.ex-row-dot.endurance{background:linear-gradient(135deg,#FEF3C7,#FDE68A)}
+.ex-row-dot.perte{background:linear-gradient(135deg,#FEE2E2,#FECACA)}
+.ex-row-info{flex:1;min-width:0}
+.ex-row-name{font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ex-row-meta{display:flex;gap:10px;margin-top:3px;flex-wrap:wrap}
+.ex-meta-tag{font-size:11px;color:var(--tx-muted);display:flex;align-items:center;gap:3px;font-weight:600}
+.ex-row-actions{display:flex;gap:6px;flex-shrink:0}
+.btn-edit-ex{
+  width:32px;height:32px;border-radius:10px;border:1.5px solid rgba(59,130,246,.25);
+  background:rgba(59,130,246,.07);cursor:pointer;display:grid;place-items:center;
+  font-size:14px;transition:all .18s;color:var(--force);
+}
+.btn-edit-ex:hover{background:rgba(59,130,246,.18);border-color:var(--force);transform:translateY(-1px)}
+.btn-del-ex{
+  width:32px;height:32px;border-radius:10px;border:1.5px solid rgba(239,68,68,.2);
+  background:rgba(239,68,68,.06);cursor:pointer;display:grid;place-items:center;
+  font-size:14px;transition:all .18s;color:#DC2626;
+}
+.btn-del-ex:hover{background:rgba(239,68,68,.15);border-color:#DC2626;transform:translateY(-1px)}
+
+/* ─────────────── STATS INNOVANTES ─────────────── */
+.stats-card{
+  background:var(--white);border-radius:var(--card-r);overflow:hidden;
+  border:1px solid rgba(124,92,252,.08);
+  box-shadow:0 2px 20px rgba(124,92,252,.07);
+}
+.stats-header{
+  padding:20px 22px 16px;
+  background:linear-gradient(135deg,#1E1050 0%,#3A1F8A 50%,#5B3FDB 100%);
+  position:relative;overflow:hidden;
+}
+.stats-header::before{
+  content:'';position:absolute;right:-20px;top:-20px;
+  width:120px;height:120px;border-radius:50%;
+  background:rgba(255,255,255,.07);
+}
+.stats-header::after{
+  content:'';position:absolute;right:40px;bottom:-30px;
+  width:80px;height:80px;border-radius:50%;
+  background:rgba(255,255,255,.05);
+}
+.stats-header-title{
+  font-family:'Outfit',sans-serif;font-size:16px;font-weight:800;
+  color:white;display:flex;align-items:center;gap:9px;position:relative;z-index:1;
+}
+.stats-header-sub{font-size:11px;color:rgba(255,255,255,.5);margin-top:3px;position:relative;z-index:1}
+/* KPI Cards redesignées */
+.stats-kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 14px 6px}
+.kpi{
+  border-radius:18px;padding:16px 14px;text-align:left;
+  position:relative;overflow:hidden;cursor:default;
+  transition:all .22s cubic-bezier(.34,1.56,.64,1);
+}
+.kpi:hover{transform:translateY(-3px) scale(1.02)}
+.kpi::before{
+  content:'';position:absolute;right:-10px;top:-10px;
+  width:70px;height:70px;border-radius:50%;
+  background:rgba(255,255,255,.12);
+}
+.kpi.purple{background:linear-gradient(135deg,#7C5CFC,#9B7FFF);color:white}
+.kpi.teal{background:linear-gradient(135deg,#0D9488,#34D399);color:white}
+.kpi.amber{background:linear-gradient(135deg,#D97706,#FBBF24);color:white}
+.kpi.blue{background:linear-gradient(135deg,#1D4ED8,#60A5FA);color:white}
+.kpi-icon-wrap{
+  width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.22);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;margin-bottom:10px;
+}
+.kpi-val{
+  font-family:'Outfit',sans-serif;font-size:26px;font-weight:900;
+  line-height:1;color:white;
+}
+.kpi-lbl{font-size:10px;color:rgba(255,255,255,.7);margin-top:4px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+/* Graphique donut */
+.chart-section{padding:8px 16px 14px}
+.chart-section-title{
+  font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;
+  color:var(--tx-muted);text-transform:uppercase;letter-spacing:.6px;
+  margin-bottom:10px;padding:0 2px;
+}
+.chart-wrap{position:relative;display:flex;align-items:center;gap:14px}
+.chart-canvas-wrap{position:relative;flex-shrink:0;width:120px;height:120px}
+.chart-canvas-wrap canvas{width:120px!important;height:120px!important}
+.chart-center-label{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;pointer-events:none;
+}
+.chart-center-val{
+  font-family:'Outfit',sans-serif;font-size:22px;font-weight:900;color:var(--tx);
+}
+.chart-center-lbl{font-size:10px;color:var(--tx-muted);font-weight:700;letter-spacing:.3px}
+.chart-legend-list{flex:1;display:flex;flex-direction:column;gap:7px}
+.legend-row{display:flex;align-items:center;gap:8px;cursor:pointer;padding:3px 4px;border-radius:8px;transition:background .15s}
+.legend-row:hover{background:var(--pu-ghost)}
+.legend-swatch{width:9px;height:9px;border-radius:3px;flex-shrink:0}
+.legend-label{font-size:11px;font-weight:600;color:var(--tx-mid);flex:1}
+.legend-val{
+  font-family:'JetBrains Mono',monospace;font-size:11px;
+  font-weight:600;color:var(--tx-muted);
+}
+/* Progress bar mini */
+.legend-bar-track{height:3px;background:rgba(124,92,252,.1);border-radius:3px;overflow:hidden;margin-top:2px}
+.legend-bar-fill{height:100%;border-radius:3px;transition:width .8s cubic-bezier(.34,1.56,.64,1)}
+/* Weekly progress */
+.weekly-section{padding:2px 16px 16px}
+.weekly-title{
+  font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;
+  color:var(--tx-muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;
+}
+.weekly-bars{display:flex;gap:6px;align-items:flex-end;height:60px}
+.weekly-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%}
+.weekly-bar-inner{width:100%;border-radius:6px 6px 0 0;min-height:4px;transition:height .6s ease;background:linear-gradient(180deg,var(--pu-lt),var(--pu))}
+.weekly-bar-inner.today{background:linear-gradient(180deg,#34D399,#059669)}
+.weekly-bar-label{font-size:9px;font-weight:700;color:var(--tx-muted);letter-spacing:.3px}
+.weekly-bar-wrap:hover .weekly-bar-inner{filter:brightness(1.1)}
+
+/* ─────────────── FAVORIS REDESIGNÉS ─────────────── */
+.fav-card{
+  background:var(--white);border-radius:var(--card-r);overflow:hidden;
+  border:1px solid rgba(124,92,252,.08);
+  box-shadow:0 2px 20px rgba(124,92,252,.07);
+}
+.fav-card-header{
+  padding:16px 20px 14px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border);
+}
+.fav-card-title{
+  font-family:'Outfit',sans-serif;font-size:15px;font-weight:800;
+  color:var(--tx);display:flex;align-items:center;gap:9px;
+}
+.fav-count-badge{
+  font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;
+  background:linear-gradient(135deg,#FCD34D,#F59E0B);color:white;
+}
+.fav-body{padding:12px 14px}
+/* État vide redesigné */
+.fav-empty{
+  text-align:center;padding:28px 16px;
+  background:linear-gradient(135deg,var(--pu-ghost),white);
+  border-radius:16px;margin:4px 0;
+}
+.fav-empty-emoji{font-size:40px;margin-bottom:10px;display:block;opacity:.6}
+.fav-empty-title{
+  font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;
+  color:var(--tx);margin-bottom:6px;
+}
+.fav-empty-sub{font-size:12px;color:var(--tx-muted);line-height:1.5}
+/* Items favoris */
+.fav-grid{display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto;padding-right:2px}
+.fav-grid::-webkit-scrollbar{width:4px}
+.fav-grid::-webkit-scrollbar-thumb{background:var(--pu-pale);border-radius:4px}
+.fav-item{
+  display:flex;align-items:center;gap:12px;padding:11px 14px;
+  border-radius:14px;border:1.5px solid transparent;
+  background:var(--pu-ghost);transition:all .2s;cursor:default;
+  position:relative;overflow:hidden;
+}
+.fav-item::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  border-radius:3px 0 0 3px;
+}
+.fav-item.cardio::before{background:var(--cardio)}
+.fav-item.force::before{background:var(--force)}
+.fav-item.souplesse::before{background:var(--souplesse)}
+.fav-item.endurance::before{background:var(--endurance)}
+.fav-item.perte::before{background:var(--perte)}
+.fav-item:hover{
+  background:white;border-color:rgba(124,92,252,.14);
+  box-shadow:0 4px 16px rgba(124,92,252,.1);transform:translateX(2px);
+}
+.fav-emoji{
+  font-size:24px;flex-shrink:0;
+  background:white;width:40px;height:40px;
+  border-radius:12px;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+.fav-info{flex:1;min-width:0}
+.fav-name{
+  font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;
+  color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.fav-meta{display:flex;align-items:center;gap:6px;margin-top:3px}
+.fav-cat-pill{
+  display:inline-block;font-size:9.5px;padding:1.5px 8px;
+  border-radius:20px;font-weight:700;
+}
+.fav-cat-pill.cardio{background:#FFE4E8;color:#BE123C}
+.fav-cat-pill.force{background:#DBEAFE;color:#1E40AF}
+.fav-cat-pill.souplesse{background:#D1FAE5;color:#065F46}
+.fav-cat-pill.endurance{background:#FEF3C7;color:#92400E}
+.fav-cat-pill.perte{background:#FEE2E2;color:#991B1B}
+/* Actions favoris */
+.fav-actions{display:flex;flex-direction:column;gap:4px;align-items:center;flex-shrink:0}
+.btn-fav-select{
+  font-size:9.5px;font-weight:700;padding:3px 8px;border-radius:8px;border:none;
+  background:var(--pu);color:white;cursor:pointer;transition:all .15s;
+  font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap;
+}
+.btn-fav-select:hover{background:var(--pu-dk);transform:scale(1.05)}
+.btn-fav-remove{
+  width:22px;height:22px;border-radius:6px;border:none;
+  background:transparent;cursor:pointer;color:var(--tx-muted);
+  font-size:10px;display:grid;place-items:center;transition:all .15s;
+}
+.btn-fav-remove:hover{background:#FEE2E2;color:#DC2626}
+/* Quick add bar */
+.fav-quickadd{
+  padding:10px 14px 4px;
+  border-top:1px solid var(--border);margin-top:6px;
+}
+.fav-quickadd-hint{
+  font-size:10.5px;color:var(--tx-muted);font-weight:600;
+  display:flex;align-items:center;gap:6px;
+}
+
+/* ─────────────── MODALS ─────────────── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(18,10,46,.7);
+  backdrop-filter:blur(10px);z-index:1000;display:none;
+  align-items:center;justify-content:center;padding:20px;
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--white);border-radius:26px;width:100%;max-width:520px;
+  overflow:hidden;animation:slideUp .28s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes slideUp{from{opacity:0;transform:translateY(28px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+.modal-head{
+  padding:20px 26px 16px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.modal-title{font-family:'Outfit',sans-serif;font-size:17px;font-weight:800;color:var(--tx)}
+.modal-close{
+  width:32px;height:32px;border-radius:10px;border:none;
+  background:var(--pu-ghost);cursor:pointer;font-size:14px;
+  display:grid;place-items:center;color:var(--tx-muted);transition:all .15s;
+}
+.modal-close:hover{background:var(--pu-pale);color:var(--pu)}
+.modal-body{padding:24px 26px}
+.edit-form{display:flex;flex-direction:column;gap:13px}
+.edit-row{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+/* Delete modal */
+.del-modal-inner{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center}
+.del-icon-wrap{
+  width:68px;height:68px;border-radius:50%;
+  background:linear-gradient(135deg,#FEE2E2,#FECACA);
+  display:grid;place-items:center;font-size:30px;
+  box-shadow:0 4px 18px rgba(239,68,68,.2);
+}
+.del-title{font-family:'Outfit',sans-serif;font-size:17px;font-weight:800;color:var(--tx);margin-bottom:4px}
+.del-sub{font-size:13px;color:var(--tx-mid)}
+.del-warn{font-size:11px;color:var(--tx-muted);margin-top:4px}
+.del-btns{display:flex;gap:10px;width:100%;margin-top:4px}
+.btn-cancel{
+  flex:1;padding:12px;border-radius:13px;border:1.5px solid var(--border);
+  background:var(--white);font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:13.5px;font-weight:700;color:var(--tx-mid);cursor:pointer;transition:background .15s;
+}
+.btn-cancel:hover{background:var(--pu-ghost)}
+.btn-delete{
+  flex:1;padding:12px;border-radius:13px;border:none;
+  background:linear-gradient(135deg,#EF4444,#DC2626);
+  font-family:'Outfit',sans-serif;font-size:14px;font-weight:800;color:white;
+  cursor:pointer;transition:all .18s;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  box-shadow:0 4px 16px rgba(239,68,68,.3);
+}
+.btn-delete:hover{box-shadow:0 8px 22px rgba(239,68,68,.4);transform:translateY(-1px)}
+
+/* ─────────────── TOAST ─────────────── */
+.toast{
+  position:fixed;bottom:28px;right:28px;z-index:2000;
+  padding:14px 20px;border-radius:16px;font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:13px;font-weight:700;display:flex;align-items:center;gap:10px;
+  transform:translateY(90px);opacity:0;
+  transition:all .3s cubic-bezier(.34,1.56,.64,1);max-width:360px;
+  box-shadow:0 10px 28px rgba(0,0,0,.14);
+}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:white;color:#065F46;border:2px solid #A7F3D0}
+.toast.error{background:white;color:#991B1B;border:2px solid #FCA5A5}
+.toast.info{background:white;color:var(--pu-dk);border:2px solid rgba(124,92,252,.3)}
+
+/* ─────────────── PDF BAR ─────────────── */
+.pdf-bar{
+  position:fixed;bottom:32px;left:50%;transform:translateX(-50%);
+  display:flex;gap:12px;align-items:center;z-index:999;
+}
+.btn-pdf-server{
+  padding:14px 30px;border-radius:40px;border:none;
+  background:linear-gradient(135deg,#4C1D95,#7C5CFC);
+  color:white;font-family:'Outfit',sans-serif;font-size:14px;font-weight:800;
+  cursor:pointer;display:flex;align-items:center;gap:10px;
+  box-shadow:0 10px 32px rgba(76,29,149,.5);transition:all .22s;
+  border:1px solid rgba(255,255,255,.2);text-decoration:none;letter-spacing:.2px;
+}
+.btn-pdf-server:hover{transform:translateY(-3px);box-shadow:0 16px 40px rgba(76,29,149,.6)}
+
+/* ─────────────── QR BUTTON & MODAL ─────────────── */
+.btn-qr-session{
+  padding:5px 12px;border-radius:10px;border:1.5px solid rgba(124,92,252,.25);
+  background:var(--pu-ghost);color:var(--pu);font-size:11px;font-weight:700;
+  font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:all .18s;
+  display:flex;align-items:center;gap:5px;
+}
+.btn-qr-session:hover{background:linear-gradient(135deg,var(--pu),var(--pu-lt));color:white;border-color:transparent;box-shadow:0 4px 14px rgba(124,92,252,.35)}
+.qr-modal-body{display:flex;flex-direction:column;align-items:center;gap:18px;padding:8px 0}
+.qr-img-wrap{
+  width:240px;height:240px;border-radius:22px;overflow:hidden;
+  border:3px solid rgba(124,92,252,.15);
+  box-shadow:0 10px 32px rgba(124,92,252,.2);
+  background:white;display:flex;align-items:center;justify-content:center;
+}
+.qr-img-wrap img{width:100%;height:100%;object-fit:contain}
+.qr-placeholder{font-size:13px;color:var(--tx-muted);text-align:center;padding:20px}
+.qr-session-info{text-align:center}
+.qr-session-date{font-family:'Outfit',sans-serif;font-size:15px;font-weight:800;color:var(--pu)}
+.qr-session-meta{font-size:12px;color:var(--tx-muted);margin-top:4px;font-weight:600}
+.qr-hint{font-size:11.5px;color:var(--tx-muted);text-align:center;max-width:260px;line-height:1.6}
+.btn-wa{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:14px 30px;border-radius:15px;border:none;
+  background:linear-gradient(135deg,#25D366,#128C7E);
+  color:white;font-family:'Outfit',sans-serif;font-size:14px;font-weight:800;
+  cursor:pointer;transition:all .22s;width:100%;
+  box-shadow:0 8px 22px rgba(37,211,102,.35);text-decoration:none;
+}
+.btn-wa:hover{box-shadow:0 12px 30px rgba(37,211,102,.5);transform:translateY(-2px)}
+
+/* ─────────────── EMPTY STATES ─────────────── */
+.empty{text-align:center;padding:40px 20px;color:var(--tx-muted)}
+.empty-icon{font-size:44px;margin-bottom:12px;opacity:.4}
+.empty-txt{font-size:13px;font-weight:600}
+
+/* ─────────────── ANIMATIONS ─────────────── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.fade{animation:fadeUp .4s ease both}
+.d1{animation-delay:.08s}.d2{animation-delay:.16s}.d3{animation-delay:.24s}
+
+/* ─────────────── RESPONSIVE ─────────────── */
+@media(max-width:1100px){.page{grid-template-columns:1fr;padding:22px 20px 120px}.side-col{position:static}}
+@media(max-width:680px){
+  .hero-content{flex-direction:column;align-items:flex-start;padding:0 24px 80px;gap:20px}
+  .hero-title{font-size:38px}
+  .hero-stats{flex-wrap:wrap;gap:10px}
+  .form-row,.edit-row{grid-template-columns:1fr}
+  .ex-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+  .log-steps{display:none}
+  .hero-scroll-hint{bottom:80px}
+}
+
+/* ═══════════════════════════════════════════════════
+   BODY MODEL MINI CARD (sidebar)
+   ═══════════════════════════════════════════════════ */
+.bm-mini-card{
+  background:var(--white);border-radius:var(--card-r);overflow:hidden;
+  border:1px solid rgba(124,92,252,.08);
+  box-shadow:0 2px 20px rgba(124,92,252,.07);
+}
+.bm-mini-header{
+  padding:16px 20px 14px;
+  background:linear-gradient(135deg,#1E1050 0%,#3A1F8A 60%,#5B3FDB 100%);
+  position:relative;overflow:hidden;
+}
+.bm-mini-header::before{
+  content:'';position:absolute;right:-15px;top:-15px;width:90px;height:90px;
+  border-radius:50%;background:rgba(255,255,255,.07);
+}
+.bm-mini-title{
+  font-family:'Outfit',sans-serif;font-size:14px;font-weight:800;
+  color:white;display:flex;align-items:center;gap:8px;position:relative;z-index:1;
+}
+.bm-mini-sub{font-size:10.5px;color:rgba(255,255,255,.5);margin-top:3px;position:relative;z-index:1}
+
+.bm-mini-body{padding:14px 16px 16px;display:flex;flex-direction:column;align-items:center;gap:12px}
+
+/* Mini silhouette SVG */
+.bm-mini-svg-wrap{
+  position:relative;width:130px;height:auto;
+  filter:drop-shadow(0 4px 20px rgba(124,92,252,.2));
+}
+.bm-mini-svg-wrap svg{width:130px;display:block}
+
+/* Zones mini cliquables */
+.bm-zone-mini{
+  cursor:pointer;
+  transition:opacity .2s,filter .2s;
+}
+.bm-zone-mini:hover{opacity:.85;filter:brightness(1.3)}
+.bm-zone-mini.selected{filter:drop-shadow(0 0 7px #7C5CFC)}
+
+/* Anneaux pulsants */
+.bm-pulse{
+  animation:bmPulse 2.2s ease-in-out infinite;
+  transform-origin:center;pointer-events:none;
+}
+.bm-pulse:nth-child(2){animation-delay:.5s}
+.bm-pulse:nth-child(3){animation-delay:1s}
+@keyframes bmPulse{
+  0%,100%{opacity:.7;r:6px}
+  50%{opacity:0;r:14px}
+}
+
+/* Légende mini */
+.bm-mini-legend{
+  display:flex;gap:6px;flex-wrap:wrap;justify-content:center;
+}
+.bm-mini-legend-item{
+  font-size:9px;color:var(--tx-muted);display:flex;align-items:center;gap:3px;font-weight:600;
+}
+.bm-mini-dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+
+/* Bouton CTA */
+.btn-open-body-model{
+  width:100%;padding:13px 16px;border-radius:14px;border:none;
+  background:linear-gradient(135deg,#7C5CFC 0%,#9B7FFF 50%,#6366F1 100%);
+  color:white;font-family:'Outfit',sans-serif;font-size:13px;font-weight:800;
+  cursor:pointer;transition:all .22s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  box-shadow:0 6px 20px rgba(124,92,252,.38);position:relative;overflow:hidden;
+}
+.btn-open-body-model::after{
+  content:'';position:absolute;top:-50%;left:-80%;width:60%;height:200%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);
+  transform:skewX(-15deg);transition:left .5s;
+}
+.btn-open-body-model:hover::after{left:120%}
+.btn-open-body-model:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(124,92,252,.5)}
+.btn-open-body-model .bm-btn-icon{font-size:18px}
+.btn-open-body-model .bm-btn-text{display:flex;flex-direction:column;align-items:flex-start}
+.btn-open-body-model .bm-btn-main{font-size:13px;font-weight:800}
+.btn-open-body-model .bm-btn-hint{font-size:9.5px;opacity:.75;font-weight:500}
+
+/* Hint text */
+.bm-mini-hint{font-size:10.5px;color:var(--tx-muted);text-align:center;line-height:1.5}
+
+/* ═══════════════════════════════════════════════════
+   BODY MODEL MODAL (full screen)
+   ═══════════════════════════════════════════════════ */
+.bm-modal-overlay{
+  position:fixed;inset:0;background:rgba(18,10,46,.82);
+  backdrop-filter:blur(14px);z-index:2000;
+  display:none;align-items:center;justify-content:center;padding:16px;
+}
+.bm-modal-overlay.open{display:flex;animation:bmModalIn .3s ease}
+@keyframes bmModalIn{from{opacity:0}to{opacity:1}}
+
+.bm-modal-box{
+  background:#FFFFFF;border-radius:28px;width:100%;max-width:1000px;
+  max-height:92vh;overflow:hidden;display:flex;flex-direction:column;
+  box-shadow:0 32px 80px rgba(18,10,46,.45);
+  animation:slideUp .3s cubic-bezier(.34,1.56,.64,1);
+}
+
+.bm-modal-head{
+  padding:18px 26px;border-bottom:1px solid rgba(124,92,252,.1);
+  background:linear-gradient(135deg,#120A2E,#3A1F8A);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.bm-modal-title{
+  font-family:'Outfit',sans-serif;font-size:18px;font-weight:800;color:white;
+  display:flex;align-items:center;gap:10px;
+}
+.bm-modal-close{
+  width:34px;height:34px;border-radius:10px;border:none;
+  background:rgba(255,255,255,.15);cursor:pointer;font-size:16px;
+  display:grid;place-items:center;color:white;transition:all .15s;
+}
+.bm-modal-close:hover{background:rgba(255,255,255,.25)}
+
+.bm-modal-content{
+  display:grid;grid-template-columns:280px 1fr;
+  flex:1;overflow:hidden;
+}
+@media(max-width:700px){.bm-modal-content{grid-template-columns:1fr}}
+
+/* Left panel : silhouette */
+.bm-left-panel{
+  padding:18px 14px;border-right:1px solid rgba(124,92,252,.08);
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+  background:linear-gradient(180deg,#F5F2FF,#FFFFFF);
+  overflow-y:auto;
+}
+.bm-panel-title{
+  font-size:11px;font-weight:800;color:var(--tx-muted);
+  text-transform:uppercase;letter-spacing:.7px;
+}
+.bm-context-row{display:flex;gap:8px;width:100%;flex-wrap:wrap}
+.bm-select{
+  flex:1;min-width:100px;
+  padding:8px 10px;border-radius:10px;border:1.5px solid var(--border);
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:11.5px;
+  color:var(--tx);background:white;outline:none;transition:all .2s;cursor:pointer;
+}
+.bm-select:focus{border-color:var(--pu);box-shadow:0 0 0 3px rgba(124,92,252,.1)}
+
+.bm-svg-wrap{position:relative;width:100%;max-width:220px;margin:0 auto}
+.bm-svg-wrap svg{width:100%;display:block}
+
+/* Zones cliquables dans modal */
+.bm-zone{cursor:pointer;transition:opacity .18s,filter .18s}
+.bm-zone:hover{opacity:.82;filter:brightness(1.25)}
+.bm-zone.selected{filter:drop-shadow(0 0 9px #7C5CFC);opacity:1}
+
+/* Tooltip */
+#bmTooltip{
+  position:absolute;background:rgba(18,10,46,.92);
+  color:white;padding:4px 10px;border-radius:7px;font-size:11px;
+  pointer-events:none;display:none;border:1px solid #7C5CFC;
+  white-space:nowrap;z-index:100;
+}
+
+.bm-legend{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.bm-legend-item{font-size:9.5px;color:var(--tx-muted);display:flex;align-items:center;gap:3px;font-weight:600}
+.bm-legend-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+
+/* Right panel : results */
+.bm-right-panel{padding:18px 22px;overflow-y:auto;display:flex;flex-direction:column;gap:0}
+
+.bm-empty-state{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:100%;min-height:260px;color:var(--tx-muted);text-align:center;gap:12px;padding:20px;
+}
+.bm-empty-icon{font-size:48px;opacity:.35}
+.bm-empty-title{font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;color:var(--tx)}
+.bm-empty-sub{font-size:12px;line-height:1.6;max-width:260px}
+
+.bm-loader{
+  display:none;flex-direction:column;align-items:center;
+  justify-content:center;min-height:200px;gap:12px;color:var(--tx-muted);
+}
+.bm-spinner{
+  width:40px;height:40px;border-radius:50%;
+  border:4px solid rgba(124,92,252,.15);border-top-color:var(--pu);
+  animation:spin 1s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.bm-loader-text{font-size:12px;font-weight:600}
+
+.bm-result{display:none;flex-direction:column;gap:14px}
+
+.bm-result-header{
+  display:flex;align-items:center;gap:12px;padding-bottom:14px;
+  border-bottom:1px solid var(--border);
+}
+.bm-result-icon{
+  width:46px;height:46px;border-radius:14px;
+  background:linear-gradient(135deg,var(--pu-pale),var(--pu-ghost));
+  display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;
+  box-shadow:0 4px 14px rgba(124,92,252,.2);
+}
+.bm-result-zone{font-family:'Outfit',sans-serif;font-size:16px;font-weight:800;color:var(--tx);margin:0}
+.bm-result-ctx{font-size:11px;color:var(--tx-muted);margin:0}
+
+.bm-advice-section{background:var(--pu-ghost);border-radius:14px;padding:12px 14px}
+.bm-advice-label{
+  font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;
+  color:var(--tx-muted);margin-bottom:8px;display:flex;align-items:center;gap:5px;
+}
+.bm-advice-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:5px}
+.bm-advice-list li{
+  padding:7px 10px;border-radius:9px;font-size:12px;line-height:1.5;
+  background:white;border-left:3px solid var(--pu);color:var(--tx);
+}
+.bm-advice-list li::before{content:'→ ';color:var(--pu);font-weight:700}
+.bm-advice-list.danger li{border-left-color:#EF4444}
+.bm-advice-list.danger li::before{color:#EF4444}
+.bm-advice-list.success li{border-left-color:#10B981}
+.bm-advice-list.success li::before{color:#10B981}
+.bm-advice-list.warn li{border-left-color:#F59E0B}
+.bm-advice-list.warn li::before{color:#F59E0B}
+
+.bm-duree-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:#FFFBEB;border:1.5px solid rgba(245,158,11,.3);
+  color:#D97706;padding:6px 14px;border-radius:99px;
+  font-size:12px;font-weight:700;
+}
+.bm-alert{
+  background:#FEF2F2;border:1.5px solid rgba(239,68,68,.2);
+  border-radius:12px;padding:10px 14px;font-size:12px;line-height:1.6;color:#7F1D1D;
+}
+.btn-bm-reset{
+  padding:10px 16px;border-radius:11px;border:1.5px solid var(--border);
+  background:var(--white);color:var(--tx-muted);font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;width:100%;margin-top:4px;
+}
+.btn-bm-reset:hover{border-color:var(--pu);color:var(--pu);background:var(--pu-ghost)}
+
+/* QR button mini */
+.btn-qr-session{
+  padding:5px 12px;border-radius:10px;border:1.5px solid rgba(124,92,252,.22);
+  background:transparent;color:var(--pu);font-size:11px;font-weight:700;
+  font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:all .18s;
+  display:flex;align-items:center;gap:5px;
+}
+.btn-qr-session:hover{background:var(--pu-pale);border-color:var(--pu)}
+</style>
+{% endblock %}
+
+{% block body %}
+{% include '_planning_topbar.html.twig' %}
+
+{# ══════════════ HERO PHOTO PLEIN ECRAN ══════════════ #}
+<div class="hero">
+  {# Photo de fond sport/fitness Unsplash — haute résolution #}
+  <img
+    class="hero-bg-img"
+    src="https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=1800&q=85&auto=format&fit=crop"
+    alt="Salle de sport — Harmony"
+    loading="eager">
+  <div class="hero-overlay"></div>
+  <div class="hero-noise"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-bottom-fade"></div>
+
+  {# Contenu : texte à gauche, stats à droite #}
+  <div class="hero-content">
+    <div class="hero-left">
+      <div class="hero-badge">
+        <span class="hero-badge-dot"></span>
+        Journal de Sport · Harmony
+      </div>
+      <h1 class="hero-title">🏋️ Journal<br>d'<em>Exercices</em></h1>
+      <p class="hero-sub">Planifiez, suivez et progressez — connecté à votre base de données.</p>
+    </div>
+    <div class="hero-stats">
+      <div class="hstat gold">
+        <span class="hstat-icon">🏆</span>
+        <span class="hstat-val" id="statSeances">{{ stats.sessions }}</span>
+        <span class="hstat-lbl">Séances</span>
+      </div>
+      <div class="hstat teal">
+        <span class="hstat-icon">⏱️</span>
+        <span class="hstat-val" id="statMinutes">{{ stats.minutes }}</span>
+        <span class="hstat-lbl">Minutes</span>
+      </div>
+      <div class="hstat rose">
+        <span class="hstat-icon">🔥</span>
+        <span class="hstat-val" id="statCalories">{{ stats.calories }}</span>
+        <span class="hstat-lbl">Calories</span>
+      </div>
+    </div>
+  </div>
+
+  {# Indicateur de défilement #}
+  <div class="hero-scroll-hint">
+    <div class="hero-scroll-arrow">▼</div>
+    <span>Défiler</span>
+  </div>
+</div>
+
+{# ══════════════ PAGE GRID ══════════════ #}
+<div class="page">
+<div class="main-col">
+
+  {# ── SECTION TABS + FILTRES ── #}
+  {% set countHomme = 0 %}
+  {% set countFemme = 0 %}
+  {% for ex in exercices %}
+    {% if '_homme' in ex.typeExercice|lower %}{% set countHomme = countHomme + 1 %}
+    {% elseif '_femme' in ex.typeExercice|lower %}{% set countFemme = countFemme + 1 %}
+    {% endif %}
+  {% endfor %}
+
+  <div class="card fade">
+    <div class="section-tabs" id="sectionTabs">
+      <button class="section-tab-btn active" data-section="all" onclick="switchSection('all',this)">
+        🌟 Tous <span class="tab-count" id="tabCountAll">{{ exercices|length }}</span>
+      </button>
+      <button class="section-tab-btn homme" data-section="homme" onclick="switchSection('homme',this)">
+        💪 Homme <span class="tab-count" id="tabCountHomme">{{ countHomme }}</span>
+      </button>
+      <button class="section-tab-btn femme" data-section="femme" onclick="switchSection('femme',this)">
+        🌸 Femme <span class="tab-count" id="tabCountFemme">{{ countFemme }}</span>
+      </button>
+    </div>
+    <div class="cat-filters" id="catFiltersBar">
+      <button class="cat-btn active all" data-cat="all" data-cls="all">🌟 Tous</button>
+      <button class="cat-btn" data-cat="Cardio" data-cls="cardio">🔴 Cardio</button>
+      <button class="cat-btn" data-cat="Force" data-cls="force">💪 Force</button>
+      <button class="cat-btn" data-cat="Souplesse" data-cls="souplesse">🌿 Souplesse</button>
+      <button class="cat-btn" data-cat="Endurance" data-cls="endurance">⚡ Endurance</button>
+      <button class="cat-btn" data-cat="Perte" data-cls="perte">🔥 Perte de poids</button>
+    </div>
+  </div>
+
+  {# ── BIBLIOTHÈQUE ── #}
+  <div class="card fade d1">
+    <div class="lib-header">
+      <div class="card-title">📚 Bibliothèque d'Exercices</div>
+      <span class="pill-tag" id="libSectionLabel">Tous les exercices</span>
+    </div>
+    <div class="lib-search">
+      <input type="text" id="searchInput" placeholder="Rechercher un exercice..." oninput="liveSearch(this.value)">
+    </div>
+    <div style="padding:0">
+      <div class="ex-grid" id="exerciseGrid">
+        {% for ex in exercices %}
+          {% set cat = ex.typeExercice|lower %}
+          {% set cls = 'force' %}
+          {% if 'cardio' in cat %}{% set cls = 'cardio' %}
+          {% elseif 'souplesse' in cat %}{% set cls = 'souplesse' %}
+          {% elseif 'endurance' in cat %}{% set cls = 'endurance' %}
+          {% elseif 'perte' in cat %}{% set cls = 'perte' %}
+          {% endif %}
+          {% set icon = '🏃' %}
+          {% if 'cardio' in cat %}{% set icon = '🏃' %}
+          {% elseif 'force' in cat and 'femme' in cat %}{% set icon = '🧘‍♀️' %}
+          {% elseif 'force' in cat %}{% set icon = '💪' %}
+          {% elseif 'souplesse' in cat and 'femme' in cat %}{% set icon = '💃' %}
+          {% elseif 'souplesse' in cat %}{% set icon = '🧘' %}
+          {% elseif 'endurance' in cat %}{% set icon = '⚡' %}
+          {% elseif 'perte' in cat %}{% set icon = '🔥' %}
+          {% endif %}
+          {% set sectionData = 'neutre' %}
+          {% if '_homme' in cat %}{% set sectionData = 'homme' %}
+          {% elseif '_femme' in cat %}{% set sectionData = 'femme' %}
+          {% endif %}
+          {# Photos Unsplash selon catégorie et genre — format portrait sport #}
+          {% set photoUrl = '' %}
+          {% if 'cardio' in cat and 'femme' in cat %}
+            {% set photoUrl = 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&q=80&auto=format&fit=crop' %}
+          {% elseif 'cardio' in cat %}
+            {% set photoUrl = 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&q=80&auto=format&fit=crop' %}
+          {% elseif 'force' in cat and 'femme' in cat %}
+            {% set photoUrl = 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=400&q=80&auto=format&fit=crop' %}
+          {% elseif 'force' in cat %}
+            {% set photoUrl = 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=400&q=80&auto=format&fit=crop' %}
+          {% elseif 'souplesse' in cat and 'femme' in cat %}
+            {% set photoUrl = 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=400&q=80&auto=format&fit=crop' %}
+          {% elseif 'souplesse' in cat %}
+            {% set photoUrl = 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&q=80&auto=format&fit=crop' %}
+          {% elseif 'endurance' in cat and 'femme' in cat %}
+            {% set photoUrl = 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=400&q=80&auto=format&fit=crop' %}
+          {% elseif 'endurance' in cat %}
+            {% set photoUrl = 'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=400&q=80&auto=format&fit=crop' %}
+          {% elseif 'perte' in cat and 'femme' in cat %}
+            {% set photoUrl = 'https://images.unsplash.com/photo-1571731956672-f2b94d7dd0cb?w=400&q=80&auto=format&fit=crop' %}
+          {% elseif 'perte' in cat %}
+            {% set photoUrl = 'https://images.unsplash.com/photo-1470468969717-61d5d54fd036?w=400&q=80&auto=format&fit=crop' %}
+          {% else %}
+            {% set photoUrl = 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&q=80&auto=format&fit=crop' %}
+          {% endif %}
+          <div class="ex-card"
+            data-id="{{ ex.id }}"
+            data-name="{{ ex.nomExercice }}"
+            data-type="{{ ex.typeExercice }}"
+            data-icon="{{ icon }}"
+            data-video="{{ ex.videoExercice }}"
+            data-cat="{{ ex.typeExercice }}"
+            data-section="{{ sectionData }}"
+            onclick="selectExercise(this)">
+            <div class="ex-thumb {{ cls }}">
+              <img class="ex-thumb-img"
+                src="{{ photoUrl }}"
+                alt="{{ ex.nomExercice }}"
+                loading="lazy"
+                onerror="this.style.display='none'">
+              <div class="ex-thumb-overlay"></div>
+              <span class="ex-thumb-icon">{{ icon }}</span>
+              <span class="ex-badge">{{ ex.typeExercice|replace({'_homme':'','_femme':'','_':' '})|trim|split(' ')|first }}</span>
+              {% if sectionData == 'homme' %}
+                <span class="ex-gender-badge homme">♂</span>
+              {% elseif sectionData == 'femme' %}
+                <span class="ex-gender-badge femme">♀</span>
+              {% endif %}
+            </div>
+            <div class="ex-body">
+              <div class="ex-name" title="{{ ex.nomExercice }}">{{ ex.nomExercice }}</div>
+              <div class="ex-type">{{ ex.typeExercice|replace({'_homme':' ♂','_femme':' ♀','_':' '}) }}</div>
+            </div>
+            <div class="ex-actions">
+              {% if ex.videoExercice and 'http' in ex.videoExercice %}
+                <button class="btn-video" onclick="event.stopPropagation();openVideo('{{ ex.videoExercice|e('html_attr') }}','{{ ex.nomExercice|e('html_attr') }}')">▶ Vidéo</button>
+              {% else %}
+                <button class="btn-video" onclick="event.stopPropagation();showToast('info','⚠ Vidéo non disponible')">▶ Vidéo</button>
+              {% endif %}
+              <button class="btn-fav fav-btn"
+                data-id="{{ ex.id }}"
+                data-name="{{ ex.nomExercice|e('html_attr') }}"
+                data-type="{{ ex.typeExercice|e('html_attr') }}"
+                data-icon="{{ icon }}"
+                data-cls="{{ cls }}"
+                onclick="event.stopPropagation();toggleFav(this)">⭐ Fav</button>
+            </div>
+          </div>
+        {% else %}
+          <div class="empty" style="grid-column:1/-1"><div class="empty-icon">🔍</div><div class="empty-txt">Aucun exercice en base de données</div></div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  {# ── LOG FORM ── #}
+  <div class="log-card fade d2">
+    <div class="log-header">
+      <div class="log-header-icon">✏️</div>
+      <div class="log-header-text">
+        <h3>Enregistrer dans une Séance</h3>
+        <p>Sélectionnez un exercice puis remplissez les détails</p>
+      </div>
+    </div>
+    <div class="log-steps">
+      <div class="log-step active" id="step1"><div class="step-num">1</div> Choisir exercice</div>
+      <div class="log-step" id="step2"><div class="step-num">2</div> Détails</div>
+      <div class="log-step" id="step3"><div class="step-num">3</div> Enregistrer</div>
+    </div>
+    <div class="log-body">
+      <span class="err-msg" id="err-exercice" style="margin-bottom:8px">⚠ Veuillez sélectionner un exercice ci-dessus.</span>
+      <div class="sel-ex-banner" id="selectedInfo">
+        <div class="sel-ex-emoji" id="selectedIcon">🏃</div>
+        <div class="sel-ex-info">
+          <div class="sel-ex-name" id="selectedName">—</div>
+          <div class="sel-ex-type" id="selectedType">—</div>
+          <span class="sel-ex-badge" id="selectedBadge"></span>
+        </div>
+      </div>
+      <form class="log-form" id="logForm" novalidate>
+        <input type="hidden" id="exerciseId" value="">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="flabel"><span>⏱</span> Durée (minutes) *</label>
+            <span class="err-msg" id="err-duree">⚠ Durée requise (1–300 min)</span>
+            <input type="number" id="duree" class="finput" placeholder="Ex : 30" min="1" max="300">
+          </div>
+          <div class="form-group">
+            <label class="flabel"><span>📅</span> Date de séance *</label>
+            <span class="err-msg" id="err-date">⚠ Date requise</span>
+            <input type="date" id="dateSeance" class="finput">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="flabel"><span>🔥</span> Calories brûlées</label>
+            <input type="number" id="calories" class="finput" placeholder="Estimées" min="0">
+          </div>
+          <div class="form-group">
+            <label class="flabel"><span>⚖</span> Poids (kg)</label>
+            <input type="number" id="poids" class="finput" placeholder="Ex : 60" min="0" step="0.5">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="flabel"><span>🔁</span> Séries</label>
+            <input type="number" id="series" class="finput" placeholder="Ex : 4" min="0">
+          </div>
+          <div class="form-group">
+            <label class="flabel"><span>🔢</span> Répétitions</label>
+            <input type="number" id="reps" class="finput" placeholder="Ex : 12" min="0">
+          </div>
+        </div>
+        <div class="form-group full">
+          <label class="flabel"><span>📝</span> Notes</label>
+          <textarea id="notes" class="finput" placeholder="Observations, sensations personnelles..."></textarea>
+        </div>
+        <button type="submit" class="btn-log" id="submitBtn">
+          <span>💾</span> Enregistrer dans la séance
+        </button>
+      </form>
+    </div>
+  </div>
+
+
+  {# ── HISTORIQUE ── #}
+  <div class="card fade d3">
+    <div class="card-head">
+      <div class="card-title">📊 Historique des Séances</div>
+      <span class="pill-tag" id="histCount">{{ grouped|length }} séance{{ grouped|length != 1 ? 's' : '' }}</span>
+    </div>
+    <div class="card-body">
+      <div class="timeline" id="sessionsList">
+        {% if grouped is empty %}
+          <div class="empty"><div class="empty-icon">📋</div><div class="empty-txt">Aucune séance enregistrée.</div></div>
+        {% else %}
+          {% for date, acts in grouped %}
+            {% set totalMin = 0 %}{% set totalCal = 0 %}
+            {% for a in acts %}
+              {% set totalMin = totalMin + a.dureeMinutes %}
+              {% set totalCal = totalCal + (a.caloriesBrulees ?: 0) %}
+            {% endfor %}
+            <div class="session-block" id="session-{{ date|replace({'-':''}) }}">
+              <div class="session-head" onclick="toggleSession(this)">
+                <div class="session-date-group">
+                  <div class="session-date-big">📅 {{ date|date('d/m/Y') }}</div>
+                  <div class="session-date-rel">{{ acts|length }} exercice{{ acts|length != 1 ? 's' : '' }}</div>
+                </div>
+                <div class="session-tags">
+                  <span class="session-tag ex">{{ acts|length }} ex.</span>
+                  <span class="session-tag time">⏱ {{ totalMin }} min</span>
+                  {% if totalCal > 0 %}<span class="session-tag cal">🔥 {{ totalCal }} kcal</span>{% endif %}
+                </div>
+                <div class="session-actions">
+                  <button class="btn-qr-session" onclick="event.stopPropagation();openQR('{{ date }}')">📲 QR</button>
+                  <button class="btn-del-session" onclick="event.stopPropagation();deleteSession('{{ date }}')">🗑 Sup.</button>
+                  <div class="session-chevron" id="chev-{{ date|replace({'-':''}) }}">▼</div>
+                </div>
+              </div>
+              <div class="session-exercises" id="sexs-{{ date|replace({'-':''}) }}">
+                {% for a in acts %}
+                  {% set cat = a.exercice.typeExercice|lower %}
+                  {% set icon = '🏃' %}{% set cls = 'force' %}
+                  {% if 'cardio' in cat %}{% set icon = '🏃' %}{% set cls = 'cardio' %}
+                  {% elseif 'force' in cat and 'femme' in cat %}{% set icon = '🧘‍♀️' %}{% set cls = 'force' %}
+                  {% elseif 'force' in cat %}{% set icon = '💪' %}{% set cls = 'force' %}
+                  {% elseif 'souplesse' in cat and 'femme' in cat %}{% set icon = '💃' %}{% set cls = 'souplesse' %}
+                  {% elseif 'souplesse' in cat %}{% set icon = '🧘' %}{% set cls = 'souplesse' %}
+                  {% elseif 'endurance' in cat %}{% set icon = '⚡' %}{% set cls = 'endurance' %}
+                  {% elseif 'perte' in cat %}{% set icon = '🔥' %}{% set cls = 'perte' %}
+                  {% endif %}
+                  <div class="ex-row" id="exrow-{{ a.id }}">
+                    <div class="ex-row-dot {{ cls }}">{{ icon }}</div>
+                    <div class="ex-row-info">
+                      <div class="ex-row-name">{{ a.exercice.nomExercice }}</div>
+                      <div class="ex-row-meta">
+                        <span class="ex-meta-tag">⏱ {{ a.dureeMinutes }} min</span>
+                        {% if a.caloriesBrulees %}<span class="ex-meta-tag">🔥 {{ a.caloriesBrulees }} kcal</span>{% endif %}
+                        {% if a.nbSeries %}<span class="ex-meta-tag">✖ {{ a.nbSeries }}×{{ a.nbRepetitions ?: '?' }}</span>{% endif %}
+                        {% if a.poids %}<span class="ex-meta-tag">⚖ {{ a.poids }} kg</span>{% endif %}
+                      </div>
+                      {% if a.notes %}<div style="font-size:11px;color:var(--tx-muted);margin-top:3px;font-style:italic">"{{ a.notes }}"</div>{% endif %}
+                    </div>
+                    <div class="ex-row-actions">
+                      <button class="btn-edit-ex" title="Modifier"
+                        onclick="openEdit({{ a.id }},{{ a.dureeMinutes }},{{ a.caloriesBrulees ?: 0 }},{{ a.nbSeries ?: 0 }},{{ a.nbRepetitions ?: 0 }},{{ a.poids ?: 0 }},'{{ a.notes|e('html_attr') }}')">✏️</button>
+                      <button class="btn-del-ex" title="Supprimer"
+                        onclick="event.stopPropagation();openDeleteModal({{ a.id }},'{{ a.exercice.nomExercice|e('html_attr') }}')">🗑</button>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>{# /main-col #}
+
+{# ── SIDE COLUMN ── #}
+<div class="side-col">
+
+  {# ── STATS INNOVANTES ── #}
+  <div class="stats-card fade">
+    <div class="stats-header">
+      <div class="stats-header-title">📈 Mes Statistiques</div>
+      <div class="stats-header-sub">Vue d'ensemble de vos performances</div>
+    </div>
+    <div class="stats-kpis">
+      <div class="kpi purple">
+        <div class="kpi-icon-wrap">🏆</div>
+        <div class="kpi-val" id="sideSeances">{{ stats.sessions }}</div>
+        <div class="kpi-lbl">Séances totales</div>
+      </div>
+      <div class="kpi teal">
+        <div class="kpi-icon-wrap">⏱️</div>
+        <div class="kpi-val" id="sideMin">{{ stats.minutes }}</div>
+        <div class="kpi-lbl">Minutes actives</div>
+      </div>
+      <div class="kpi amber">
+        <div class="kpi-icon-wrap">🔥</div>
+        <div class="kpi-val" id="sideCal">{{ stats.calories }}</div>
+        <div class="kpi-lbl">Calories brûlées</div>
+      </div>
+      <div class="kpi blue">
+        <div class="kpi-icon-wrap">💪</div>
+        <div class="kpi-val" id="sideTotal">0</div>
+        <div class="kpi-lbl">Exercices logués</div>
+      </div>
+    </div>
+    <div class="chart-section">
+      <div class="chart-section-title">Répartition par catégorie</div>
+      <div class="chart-wrap">
+        <div class="chart-canvas-wrap">
+          <canvas id="catChart"></canvas>
+          <div class="chart-center-label">
+            <span class="chart-center-val" id="chartTotalEx">0</span>
+            <span class="chart-center-lbl">exercices</span>
+          </div>
+        </div>
+        <div class="chart-legend-list" id="chartLegend"></div>
+      </div>
+    </div>
+    <div class="weekly-section">
+      <div class="weekly-title">Activité — 7 derniers jours</div>
+      <div class="weekly-bars" id="weeklyBars">
+        {# Filled by JS #}
+      </div>
+    </div>
+  </div>
+
+  {# ══════════════════════════════════════════════
+     MINI MODÈLE CORPOREL — Blessures & Récupération
+     ══════════════════════════════════════════════ #}
+  <div class="bm-mini-card fade d1">
+    <div class="bm-mini-header">
+      <div class="bm-mini-title">🩻 Récupération & Blessures</div>
+      <div class="bm-mini-sub">IA médicale · Conseils personnalisés</div>
+    </div>
+    <div class="bm-mini-body">
+      <p class="bm-mini-hint">Cliquez sur une zone ou utilisez le bouton pour obtenir des conseils de récupération générés par l'IA Groq.</p>
+
+      {# ── Silhouette SVG mini interactive avec anneaux pulsants ── #}
+      <div class="bm-mini-svg-wrap">
+        <svg viewBox="0 0 200 500" xmlns="http://www.w3.org/2000/svg">
+          {# Corps de base #}
+          <ellipse cx="100" cy="62" rx="21" ry="25" fill="#E8E3FF"/>
+          <rect x="72" y="84" width="56" height="90" rx="8" fill="#E8E3FF"/>
+          <rect x="42" y="86" width="28" height="72" rx="10" fill="#E8E3FF"/>
+          <rect x="130" y="86" width="28" height="72" rx="10" fill="#E8E3FF"/>
+          <rect x="38" y="154" width="26" height="58" rx="10" fill="#E8E3FF"/>
+          <rect x="136" y="154" width="26" height="58" rx="10" fill="#E8E3FF"/>
+          <rect x="74" y="174" width="24" height="100" rx="8" fill="#E8E3FF"/>
+          <rect x="102" y="174" width="24" height="100" rx="8" fill="#E8E3FF"/>
+          <rect x="74" y="272" width="24" height="96" rx="8" fill="#E8E3FF"/>
+          <rect x="102" y="272" width="24" height="96" rx="8" fill="#E8E3FF"/>
+          <ellipse cx="86" cy="374" rx="17" ry="8" fill="#E8E3FF"/>
+          <ellipse cx="114" cy="374" rx="17" ry="8" fill="#E8E3FF"/>
+
+          {# Zones cliquables mini #}
+          <ellipse class="bm-zone-mini" cx="100" cy="60" rx="21" ry="23"
+            fill="#6366f1" opacity="0.72"
+            data-zone="tete" data-label="Tête / Nuque" onclick="quickZoneSelect(this)"/>
+          <ellipse class="bm-zone-mini" cx="63" cy="95" rx="17" ry="13"
+            fill="#a78bfa" opacity="0.78"
+            data-zone="epaule_gauche" data-label="Épaule gauche" onclick="quickZoneSelect(this)"/>
+          <ellipse class="bm-zone-mini" cx="137" cy="95" rx="17" ry="13"
+            fill="#a78bfa" opacity="0.78"
+            data-zone="epaule_droite" data-label="Épaule droite" onclick="quickZoneSelect(this)"/>
+          <rect class="bm-zone-mini" x="80" y="86" width="40" height="38" rx="6"
+            fill="#60a5fa" opacity="0.65"
+            data-zone="thorax" data-label="Thorax" onclick="quickZoneSelect(this)"/>
+          <rect class="bm-zone-mini" x="82" y="124" width="36" height="36" rx="6"
+            fill="#34d399" opacity="0.58"
+            data-zone="abdomen" data-label="Abdomen / Core" onclick="quickZoneSelect(this)"/>
+          <rect class="bm-zone-mini" x="82" y="160" width="36" height="14" rx="5"
+            fill="#fb923c" opacity="0.72"
+            data-zone="dos_bas" data-label="Lombaires" onclick="quickZoneSelect(this)"/>
+          <ellipse class="bm-zone-mini" cx="51" cy="161" rx="13" ry="11"
+            fill="#f472b6" opacity="0.8"
+            data-zone="coude_gauche" data-label="Coude gauche" onclick="quickZoneSelect(this)"/>
+          <ellipse class="bm-zone-mini" cx="149" cy="161" rx="13" ry="11"
+            fill="#f472b6" opacity="0.8"
+            data-zone="coude_droit" data-label="Coude droit" onclick="quickZoneSelect(this)"/>
+          <ellipse class="bm-zone-mini" cx="83" cy="183" rx="15" ry="12"
+            fill="#fbbf24" opacity="0.75"
+            data-zone="hanche_gauche" data-label="Hanche gauche" onclick="quickZoneSelect(this)"/>
+          <ellipse class="bm-zone-mini" cx="117" cy="183" rx="15" ry="12"
+            fill="#fbbf24" opacity="0.75"
+            data-zone="hanche_droite" data-label="Hanche droite" onclick="quickZoneSelect(this)"/>
+          <ellipse class="bm-zone-mini" cx="86" cy="278" rx="14" ry="12"
+            fill="#ef4444" opacity="0.82"
+            data-zone="genou_gauche" data-label="Genou gauche" onclick="quickZoneSelect(this)"/>
+          <ellipse class="bm-zone-mini" cx="114" cy="278" rx="14" ry="12"
+            fill="#ef4444" opacity="0.82"
+            data-zone="genou_droit" data-label="Genou droit" onclick="quickZoneSelect(this)"/>
+          <ellipse class="bm-zone-mini" cx="86" cy="368" rx="12" ry="9"
+            fill="#10b981" opacity="0.85"
+            data-zone="cheville_gauche" data-label="Cheville gauche" onclick="quickZoneSelect(this)"/>
+          <ellipse class="bm-zone-mini" cx="114" cy="368" rx="12" ry="9"
+            fill="#10b981" opacity="0.85"
+            data-zone="cheville_droite" data-label="Cheville droite" onclick="quickZoneSelect(this)"/>
+
+          {# Anneaux pulsants sur les zones sensibles #}
+          <circle class="bm-pulse" cx="100" cy="60" r="6" fill="none" stroke="#6366f1" stroke-width="2" opacity="0.7"/>
+          <circle class="bm-pulse" cx="86" cy="278" r="6" fill="none" stroke="#ef4444" stroke-width="2" opacity="0.7"/>
+          <circle class="bm-pulse" cx="114" cy="278" r="6" fill="none" stroke="#ef4444" stroke-width="2" opacity="0.7"/>
+          <circle class="bm-pulse" cx="83" cy="161" r="5" fill="none" stroke="#fb923c" stroke-width="2" opacity="0.65"/>
+          <circle class="bm-pulse" cx="100" cy="95" r="5" fill="none" stroke="#60a5fa" stroke-width="1.5" opacity="0.55"/>
+
+          {# Labels mini #}
+          <text x="100" y="63" text-anchor="middle" fill="white" font-size="7" font-weight="700" pointer-events="none">Tête</text>
+          <text x="100" y="108" text-anchor="middle" fill="white" font-size="5.5" pointer-events="none">Thorax</text>
+          <text x="86" y="281" text-anchor="middle" fill="white" font-size="5" font-weight="700" pointer-events="none">Genou</text>
+          <text x="114" y="281" text-anchor="middle" fill="white" font-size="5" font-weight="700" pointer-events="none">Genou</text>
+        </svg>
+      </div>
+
+      {# Légende #}
+      <div class="bm-mini-legend">
+        <span class="bm-mini-legend-item"><span class="bm-mini-dot" style="background:#6366f1"></span>Tête</span>
+        <span class="bm-mini-legend-item"><span class="bm-mini-dot" style="background:#60a5fa"></span>Torse</span>
+        <span class="bm-mini-legend-item"><span class="bm-mini-dot" style="background:#ef4444"></span>Genoux</span>
+        <span class="bm-mini-legend-item"><span class="bm-mini-dot" style="background:#10b981"></span>Chevilles</span>
+      </div>
+
+      {# Bouton principal #}
+      <button class="btn-open-body-model" onclick="openBodyModel()">
+        <span class="bm-btn-icon">🩻</span>
+        <div class="bm-btn-text">
+          <span class="bm-btn-main">Consulter le modèle corporel</span>
+          <span class="bm-btn-hint">20 zones · Conseils IA Groq</span>
+        </div>
+      </button>
+    </div>
+  </div>{# /bm-mini-card #}
+
+  {# ── FAVORIS REDESIGNÉS ── #}
+  <div class="fav-card fade d1">
+    <div class="fav-card-header">
+      <div class="fav-card-title">⭐ Mes Favoris</div>
+      <span class="fav-count-badge" id="favCount">0</span>
+    </div>
+    <div class="fav-body">
+      <div class="fav-grid" id="favList">
+        <div class="fav-empty" id="favEmpty">
+          <span class="fav-empty-emoji">⭐</span>
+          <div class="fav-empty-title">Aucun favori encore</div>
+          <div class="fav-empty-sub">Cliquez sur ⭐ dans la bibliothèque pour sauvegarder vos exercices préférés ici.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>{# /side-col #}
+</div>{# /page #}
+
+{# ══ VIDEO MODAL — FIX YOUTUBE 100% ══ #}
+<div class="modal-overlay" id="videoModal">
+  <div class="video-modal-inner">
+    <div class="video-modal-head">
+      <div class="video-modal-title">▶ <span id="videoTitle">Démonstration</span></div>
+      <button class="video-modal-close" onclick="closeModal('videoModal')">✕</button>
+    </div>
+    <div class="video-wrap" id="videoWrap">
+      {# Contenu injecté par JS : iframe embed OU fallback bouton YouTube #}
+    </div>
+  </div>
+</div>
+
+{# ══ EDIT MODAL ══ #}
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">✏️ Modifier l'Exercice</div>
+      <button class="modal-close" onclick="closeModal('editModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form class="edit-form" id="editForm" novalidate>
+        <input type="hidden" id="editId">
+        <div class="edit-row">
+          <div class="form-group">
+            <label class="flabel">⏱ Durée (min) *</label>
+            <input type="number" id="editDuree" class="finput" min="1" max="300" placeholder="Ex: 30">
+            <span class="err-msg" id="err-edit-duree">⚠ Durée requise (1–300)</span>
+          </div>
+          <div class="form-group">
+            <label class="flabel">🔥 Calories</label>
+            <input type="number" id="editCalories" class="finput" min="0" placeholder="Ex: 200">
+          </div>
+        </div>
+        <div class="edit-row">
+          <div class="form-group">
+            <label class="flabel">🔁 Séries</label>
+            <input type="number" id="editSeries" class="finput" min="0" placeholder="Ex: 4">
+          </div>
+          <div class="form-group">
+            <label class="flabel">🔢 Répétitions</label>
+            <input type="number" id="editReps" class="finput" min="0" placeholder="Ex: 12">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="flabel">⚖ Poids (kg)</label>
+          <input type="number" id="editPoids" class="finput" min="0" step="0.5" placeholder="Ex: 60">
+        </div>
+        <div class="form-group">
+          <label class="flabel">📝 Notes</label>
+          <textarea id="editNotes" class="finput" style="min-height:60px"></textarea>
+        </div>
+        <button type="submit" class="btn-log">💾 Sauvegarder</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+{# ══ DELETE MODAL ══ #}
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-head">
+      <div class="modal-title" style="color:#DC2626">🗑 Supprimer l'exercice</div>
+      <button class="modal-close" onclick="closeModal('deleteModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="del-modal-inner">
+        <div class="del-icon-wrap">🗑</div>
+        <div>
+          <div class="del-title">Confirmer la suppression</div>
+          <div class="del-sub">Retirer <strong id="deleteExName" style="color:var(--pu)"></strong> de cette séance ?</div>
+          <div class="del-warn">⚠ Cette action est irréversible.</div>
+        </div>
+        <div class="del-btns">
+          <button class="btn-cancel" onclick="closeModal('deleteModal')">Annuler</button>
+          <button class="btn-delete" id="deleteConfirmBtn" onclick="confirmDelete()">🗑 Supprimer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ══ TOAST ══ #}
+<div class="toast" id="toast"></div>
+
+{# ══ PDF BAR ══ #}
+<div class="pdf-bar">
+  <a class="btn-pdf-server" href="/activites/bilan/pdf" target="_blank">
+    💜 Bilan PDF Harmony
+  </a>
+</div>
+
+{# ══ QR MODAL ══ #}
+<div class="modal-overlay" id="qrModal">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-head">
+      <div class="modal-title">📲 QR Code — Séance</div>
+      <button class="modal-close" onclick="closeModal('qrModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="qr-modal-body">
+        <div class="qr-img-wrap" id="qrImgWrap">
+          <span class="qr-placeholder">Chargement…</span>
+        </div>
+        <div class="qr-session-info">
+          <div class="qr-session-date" id="qrDate">—</div>
+          <div class="qr-session-meta" id="qrMeta">—</div>
+        </div>
+        <p class="qr-hint">📷 Scannez ce QR code pour partager cette séance sur WhatsApp 💜</p>
+        <a class="btn-wa" id="qrWaLink" href="#" target="_blank" rel="noopener">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M11.999 2c-5.514 0-9.999 4.486-9.999 10 0 1.76.463 3.413 1.27 4.855L2 22l5.293-1.254C8.66 21.527 10.297 22 11.999 22c5.514 0 10-4.486 10-10s-4.486-10-10-10zm0 18c-1.567 0-3.05-.432-4.33-1.185l-.31-.184-3.143.744.776-3.044-.202-.319C3.9 14.906 3.5 13.492 3.5 12 3.5 7.81 6.811 4.5 11.999 4.5S20.5 7.81 20.5 12c0 4.192-3.311 7.5-7.501 7.5z"/></svg>
+          Ouvrir sur WhatsApp
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{# ══════════════════════════════════════════════════════════
+   BODY MODEL MODAL COMPLET — 20 zones · Conseils IA Groq
+   ══════════════════════════════════════════════════════════ #}
+<div class="bm-modal-overlay" id="bmModalOverlay">
+  <div class="bm-modal-box">
+
+    {# Header #}
+    <div class="bm-modal-head">
+      <div class="bm-modal-title">
+        🩻 Modèle Corporel Interactif — Récupération &amp; Blessures
+      </div>
+      <button class="bm-modal-close" onclick="closeBodyModel()">✕</button>
+    </div>
+
+    {# Content : 2 colonnes #}
+    <div class="bm-modal-content">
+
+      {# ── Panneau gauche : silhouette ── #}
+      <div class="bm-left-panel">
+        <div class="bm-panel-title">🦾 Sélectionnez une zone</div>
+
+        {# Contexte #}
+        <div class="bm-context-row">
+          <select class="bm-select" id="bmTypeActivite">
+            <option value="musculation">Musculation</option>
+            <option value="cardio">Cardio</option>
+            <option value="yoga">Yoga</option>
+            <option value="natation">Natation</option>
+            <option value="course à pied">Course à pied</option>
+            <option value="cyclisme">Cyclisme</option>
+            <option value="football">Football</option>
+            <option value="basketball">Basketball</option>
+            <option value="tennis">Tennis</option>
+            <option value="arts martiaux">Arts martiaux</option>
+            <option value="crossfit">CrossFit</option>
+            <option value="général" selected>Général</option>
+          </select>
+          <select class="bm-select" id="bmIntensite">
+            <option value="légère">Légère</option>
+            <option value="modérée" selected>Modérée</option>
+            <option value="intense">Intense</option>
+          </select>
+        </div>
+
+        {# SVG grande silhouette anatomique #}
+        <div class="bm-svg-wrap">
+          <div id="bmTooltip"></div>
+          <svg viewBox="0 0 200 520" xmlns="http://www.w3.org/2000/svg" id="bmBodySvg">
+
+            <ellipse cx="100" cy="88" rx="22" ry="26" fill="#CBD5E1"/>
+            <rect x="70" y="110" width="60" height="95" rx="8" fill="#CBD5E1"/>
+            <rect x="40" y="112" width="28" height="75" rx="10" fill="#CBD5E1"/>
+            <rect x="132" y="112" width="28" height="75" rx="10" fill="#CBD5E1"/>
+            <rect x="36" y="182" width="26" height="60" rx="10" fill="#CBD5E1"/>
+            <rect x="138" y="182" width="26" height="60" rx="10" fill="#CBD5E1"/>
+            <rect x="72" y="205" width="26" height="110" rx="8" fill="#CBD5E1"/>
+            <rect x="102" y="205" width="26" height="110" rx="8" fill="#CBD5E1"/>
+            <rect x="72" y="312" width="26" height="100" rx="8" fill="#CBD5E1"/>
+            <rect x="102" y="312" width="26" height="100" rx="8" fill="#CBD5E1"/>
+            <ellipse cx="85" cy="416" rx="18" ry="9" fill="#CBD5E1"/>
+            <ellipse cx="115" cy="416" rx="18" ry="9" fill="#CBD5E1"/>
+
+            <ellipse class="bm-zone" cx="100" cy="65" rx="22" ry="24" fill="#6366f1" opacity="0.72" data-zone="tete" data-label="Tête / Nuque"/>
+            <circle cx="100" cy="65" r="7" fill="none" stroke="#818cf8" stroke-width="2" opacity="0.8" class="bm-pulse"/>
+            <text x="100" y="68" text-anchor="middle" fill="white" font-size="7" font-weight="700" pointer-events="none">Tête</text>
+
+            <rect class="bm-zone" x="88" y="88" width="24" height="22" rx="6" fill="#818cf8" opacity="0.75" data-zone="cou" data-label="Cou / Cervicales"/>
+            <text x="100" y="101" text-anchor="middle" fill="white" font-size="6.5" pointer-events="none">Cou</text>
+
+            <ellipse class="bm-zone" cx="62" cy="120" rx="18" ry="14" fill="#a78bfa" opacity="0.8" data-zone="epaule_gauche" data-label="Épaule gauche"/>
+            <text x="62" y="123" text-anchor="middle" fill="white" font-size="5.5" pointer-events="none">Ép.G</text>
+
+            <ellipse class="bm-zone" cx="138" cy="120" rx="18" ry="14" fill="#a78bfa" opacity="0.8" data-zone="epaule_droite" data-label="Épaule droite"/>
+            <text x="138" y="123" text-anchor="middle" fill="white" font-size="5.5" pointer-events="none">Ép.D</text>
+
+            <rect class="bm-zone" x="78" y="112" width="44" height="40" rx="6" fill="#60a5fa" opacity="0.65" data-zone="thorax" data-label="Thorax / Pectoraux"/>
+            <text x="100" y="134" text-anchor="middle" fill="white" font-size="5.5" pointer-events="none">Thorax</text>
+
+            <rect class="bm-zone" x="80" y="152" width="40" height="40" rx="6" fill="#34d399" opacity="0.55" data-zone="abdomen" data-label="Abdomen / Core"/>
+            <text x="100" y="174" text-anchor="middle" fill="white" font-size="5.5" pointer-events="none">Abdomen</text>
+
+            <rect class="bm-zone" x="80" y="192" width="40" height="15" rx="5" fill="#fb923c" opacity="0.72" data-zone="dos_bas" data-label="Lombaires"/>
+            <circle cx="100" cy="199" r="5" fill="none" stroke="#fb923c" stroke-width="2" opacity="0.8" class="bm-pulse"/>
+            <text x="100" y="202" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Lombaires</text>
+
+            <ellipse class="bm-zone" cx="49" cy="187" rx="13" ry="11" fill="#f472b6" opacity="0.8" data-zone="coude_gauche" data-label="Coude gauche"/>
+            <text x="49" y="190" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Coude</text>
+
+            <ellipse class="bm-zone" cx="151" cy="187" rx="13" ry="11" fill="#f472b6" opacity="0.8" data-zone="coude_droit" data-label="Coude droit"/>
+            <text x="151" y="190" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Coude</text>
+
+            <ellipse class="bm-zone" cx="49" cy="237" rx="11" ry="9" fill="#c084fc" opacity="0.85" data-zone="poignet_gauche" data-label="Poignet gauche"/>
+            <text x="49" y="240" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Poignet</text>
+
+            <ellipse class="bm-zone" cx="151" cy="237" rx="11" ry="9" fill="#c084fc" opacity="0.85" data-zone="poignet_droit" data-label="Poignet droit"/>
+            <text x="151" y="240" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Poignet</text>
+
+            <ellipse class="bm-zone" cx="81" cy="208" rx="16" ry="13" fill="#fbbf24" opacity="0.75" data-zone="hanche_gauche" data-label="Hanche gauche"/>
+            <text x="81" y="211" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Hanche</text>
+
+            <ellipse class="bm-zone" cx="119" cy="208" rx="16" ry="13" fill="#fbbf24" opacity="0.75" data-zone="hanche_droite" data-label="Hanche droite"/>
+            <text x="119" y="211" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Hanche</text>
+
+            <ellipse class="bm-zone" cx="85" cy="316" rx="15" ry="13" fill="#ef4444" opacity="0.82" data-zone="genou_gauche" data-label="Genou gauche"/>
+            <circle cx="85" cy="316" r="7" fill="none" stroke="#ef4444" stroke-width="2" opacity="0.8" class="bm-pulse"/>
+            <text x="85" y="319" text-anchor="middle" fill="white" font-size="5.5" font-weight="700" pointer-events="none">Genou</text>
+
+            <ellipse class="bm-zone" cx="115" cy="316" rx="15" ry="13" fill="#ef4444" opacity="0.82" data-zone="genou_droit" data-label="Genou droit"/>
+            <circle cx="115" cy="316" r="7" fill="none" stroke="#ef4444" stroke-width="2" opacity="0.8" class="bm-pulse" style="animation-delay:.6s"/>
+            <text x="115" y="319" text-anchor="middle" fill="white" font-size="5.5" font-weight="700" pointer-events="none">Genou</text>
+
+            <ellipse class="bm-zone" cx="85" cy="408" rx="13" ry="10" fill="#10b981" opacity="0.85" data-zone="cheville_gauche" data-label="Cheville gauche"/>
+            <text x="85" y="411" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Cheville</text>
+
+            <ellipse class="bm-zone" cx="115" cy="408" rx="13" ry="10" fill="#10b981" opacity="0.85" data-zone="cheville_droite" data-label="Cheville droite"/>
+            <text x="115" y="411" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Cheville</text>
+
+            <ellipse class="bm-zone" cx="85" cy="427" rx="16" ry="8" fill="#14b8a6" opacity="0.8" data-zone="pied_gauche" data-label="Pied gauche"/>
+            <text x="85" y="429" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Pied</text>
+
+            <ellipse class="bm-zone" cx="115" cy="427" rx="16" ry="8" fill="#14b8a6" opacity="0.8" data-zone="pied_droit" data-label="Pied droit"/>
+            <text x="115" y="429" text-anchor="middle" fill="white" font-size="5" pointer-events="none">Pied</text>
+
+          </svg>
+        </div>
+
+        <div class="bm-legend">
+          <span class="bm-legend-item"><span class="bm-legend-dot" style="background:#6366f1"></span>Tête/Cou</span>
+          <span class="bm-legend-item"><span class="bm-legend-dot" style="background:#60a5fa"></span>Torse</span>
+          <span class="bm-legend-item"><span class="bm-legend-dot" style="background:#f472b6"></span>Bras</span>
+          <span class="bm-legend-item"><span class="bm-legend-dot" style="background:#ef4444"></span>Genoux</span>
+          <span class="bm-legend-item"><span class="bm-legend-dot" style="background:#10b981"></span>Jambes</span>
+        </div>
+      </div>
+
+      {# ── Panneau droit : conseils IA ── #}
+      <div class="bm-right-panel" id="bmRightPanel">
+
+        <div class="bm-empty-state" id="bmEmptyState">
+          <div class="bm-empty-icon">🩺</div>
+          <div class="bm-empty-title">Aucune zone sélectionnée</div>
+          <div class="bm-empty-sub">Cliquez sur une zone colorée de la silhouette pour recevoir des conseils de récupération personnalisés par l'IA Groq (LLaMA-3).</div>
+        </div>
+
+        <div class="bm-loader" id="bmLoader">
+          <div class="bm-spinner"></div>
+          <div class="bm-loader-text">L'IA analyse votre blessure…</div>
+        </div>
+
+        <div class="bm-result" id="bmResult">
+          <div class="bm-result-header">
+            <div class="bm-result-icon" id="bmResIcon">🦴</div>
+            <div>
+              <p class="bm-result-zone" id="bmResZone">Zone</p>
+              <p class="bm-result-ctx"  id="bmResCtx">Contexte</p>
+            </div>
+          </div>
+
+          <div class="bm-advice-section">
+            <div class="bm-advice-label">🧊 Traitements immédiats</div>
+            <ul class="bm-advice-list danger" id="bmResTrait"></ul>
+          </div>
+
+          <div class="bm-advice-section">
+            <div class="bm-advice-label">🏃 Exercices de récupération</div>
+            <ul class="bm-advice-list success" id="bmResExos"></ul>
+          </div>
+
+          <div class="bm-advice-section">
+            <div class="bm-advice-label">🥗 Nutrition anti-inflammatoire</div>
+            <ul class="bm-advice-list warn" id="bmResNutr"></ul>
+          </div>
+
+          <div class="bm-advice-section">
+            <div class="bm-advice-label">⏱ Durée estimée de récupération</div>
+            <div class="bm-duree-badge">⌚ <span id="bmResDuree">–</span></div>
+          </div>
+
+          <div class="bm-advice-section">
+            <div class="bm-advice-label">🚨 Quand consulter un médecin</div>
+            <div class="bm-alert" id="bmResConsulter">–</div>
+          </div>
+
+          <button class="btn-bm-reset" id="btnBmReset">↩ Sélectionner une autre zone</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ══ SCRIPTS ══ #}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// ══════════════════════════════════════════════════════
+// APIS & STATE
+// ══════════════════════════════════════════════════════
+const API = {
+  list:     '/activites/api/list',
+  add:      '/activites/api/add',
+  update:   id => `/activites/api/update/${id}`,
+  delete:   id => `/activites/api/delete/${id}`,
+  qr:       date => `/activites/qr/${date}`,
+  bilanPdf: '/activites/bilan/pdf',
+};
+
+let selectedExercise = null;
+let currentFilter    = 'all';
+let currentSection   = 'all';
+let editingId        = null;
+let _deleteTargetId  = null;
+let _catChart        = null;
+
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('dateSeance').value = new Date().toISOString().split('T')[0];
+
+  document.querySelectorAll('.cat-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.cat-btn').forEach(b =>
+        b.classList.remove('active','all','cardio','force','souplesse','endurance','perte'));
+      btn.classList.add('active', btn.dataset.cls);
+      currentFilter = btn.dataset.cat;
+      applyFilters();
+    });
+  });
+
+  document.getElementById('logForm').addEventListener('submit', handleLogSubmit);
+  document.getElementById('editForm').addEventListener('submit', handleEditSubmit);
+
+  const avatarBtn = document.getElementById('avatarBtn');
+  const profileDropdown = document.getElementById('profileDropdown');
+  if (avatarBtn && profileDropdown) {
+    avatarBtn.addEventListener('click', e => { e.stopPropagation(); profileDropdown.classList.toggle('open'); });
+    document.addEventListener('click', () => profileDropdown.classList.remove('open'));
+  }
+
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(overlay.id); });
+  });
+
+  initFavs();
+  initChart();
+  updateSideTotal();
+  animateCounters();
+  buildWeeklyBars();
+});
+
+// ══════════════════════════════════════════════════════
+// FIX YOUTUBE — Conversion URL → embed
+// YouTube bloque les iframes sur des URLs normales (watch?v=…).
+// Il faut utiliser https://www.youtube.com/embed/VIDEO_ID
+// Cette fonction extrait l'ID et construit l'URL embed correcte.
+// ══════════════════════════════════════════════════════
+
+/**
+ * extractYouTubeId(url)
+ * Extrait l'ID d'une vidéo YouTube depuis n'importe quel format :
+ *   - https://www.youtube.com/watch?v=ID
+ *   - https://youtu.be/ID
+ *   - https://www.youtube.com/embed/ID
+ *   - https://youtube.com/shorts/ID
+ * Retourne null si l'URL n'est pas une URL YouTube reconnue.
+ */
+function extractYouTubeId(url) {
+  if (!url) return null;
+  // Patterns possibles
+  const patterns = [
+    /[?&]v=([a-zA-Z0-9_-]{11})/,          // watch?v=ID
+    /youtu\.be\/([a-zA-Z0-9_-]{11})/,      // youtu.be/ID
+    /embed\/([a-zA-Z0-9_-]{11})/,          // embed/ID
+    /shorts\/([a-zA-Z0-9_-]{11})/,         // shorts/ID
+    /\/v\/([a-zA-Z0-9_-]{11})/,            // /v/ID
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match && match[1]) return match[1];
+  }
+  return null;
+}
+
+/**
+ * openVideo(url, name)
+ * Ouvre la modale vidéo.
+ * - Si c'est une URL YouTube : affiche un iframe embed (contourne le blocage)
+ * - Sinon : affiche un iframe normal (Vimeo, etc.)
+ * - Si l'embed échoue : affiche un bouton pour ouvrir dans un nouvel onglet
+ */
+function openVideo(url, name) {
+  const wrap = document.getElementById('videoWrap');
+  document.getElementById('videoTitle').textContent = name;
+  openModal('videoModal');
+
+  const ytId = extractYouTubeId(url);
+
+  if (ytId) {
+    // URL embed YouTube avec paramètres optimaux
+    const embedUrl = `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
+    wrap.innerHTML = `
+      <iframe
+        src="${embedUrl}"
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen
+        referrerpolicy="strict-origin-when-cross-origin"
+        title="${name}"
+        style="position:absolute;inset:0;width:100%;height:100%;border:none;">
+      </iframe>`;
+  } else if (url && url.startsWith('http')) {
+    // Autre plateforme vidéo (Vimeo, etc.)
+    wrap.innerHTML = `
+      <iframe
+        src="${url}"
+        frameborder="0"
+        allow="autoplay; fullscreen; picture-in-picture"
+        allowfullscreen
+        title="${name}"
+        style="position:absolute;inset:0;width:100%;height:100%;border:none;">
+      </iframe>`;
+  } else {
+    // Pas d'URL valide — fallback avec bouton
+    wrap.innerHTML = `
+      <div class="video-fallback">
+        <div style="font-size:52px">🎥</div>
+        <h3>${name}</h3>
+        <p>La vidéo ne peut pas être lue directement ici.<br>Cliquez pour l'ouvrir sur YouTube.</p>
+        <a class="btn-open-youtube" href="${url || '#'}" target="_blank" rel="noopener">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
+            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+          </svg>
+          Ouvrir sur YouTube
+        </a>
+      </div>`;
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// SECTION TABS
+// ══════════════════════════════════════════════════════
+function switchSection(section, btn) {
+  currentSection = section;
+  document.querySelectorAll('.section-tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const labels = { all: 'Tous les exercices', homme: 'Exercices Homme ♂', femme: 'Exercices Femme ♀' };
+  const lbl = document.getElementById('libSectionLabel');
+  if (lbl) lbl.textContent = labels[section] || 'Tous les exercices';
+  currentFilter = 'all';
+  document.querySelectorAll('.cat-btn').forEach(b =>
+    b.classList.remove('active','all','cardio','force','souplesse','endurance','perte'));
+  const allBtn = document.querySelector('.cat-btn[data-cat="all"]');
+  if (allBtn) allBtn.classList.add('active','all');
+  applyFilters();
+}
+
+function applyFilters() {
+  const search = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+  document.querySelectorAll('.ex-card').forEach(card => {
+    const cardSection = card.dataset.section || 'neutre';
+    const cardCat     = (card.dataset.cat || '').toLowerCase();
+    const cardName    = (card.dataset.name || '').toLowerCase();
+    let sectionOk = true;
+    if (currentSection === 'homme') sectionOk = (cardSection === 'homme');
+    else if (currentSection === 'femme') sectionOk = (cardSection === 'femme');
+    const catOk  = (currentFilter === 'all') || cardCat.includes(currentFilter.toLowerCase());
+    const nameOk = !search || cardName.includes(search);
+    card.style.display = (sectionOk && catOk && nameOk) ? '' : 'none';
+  });
+  updateTabCounts(search);
+}
+
+function updateTabCounts(search) {
+  search = (search || '').toLowerCase().trim();
+  let cAll = 0, cH = 0, cF = 0;
+  document.querySelectorAll('.ex-card').forEach(card => {
+    const s = card.dataset.section || 'neutre';
+    const n = (card.dataset.name || '').toLowerCase();
+    if (search && !n.includes(search)) return;
+    cAll++;
+    if (s === 'homme') cH++;
+    else if (s === 'femme') cF++;
+  });
+  const ta = document.getElementById('tabCountAll');
+  const th = document.getElementById('tabCountHomme');
+  const tf = document.getElementById('tabCountFemme');
+  if (ta) ta.textContent = cAll;
+  if (th) th.textContent = cH;
+  if (tf) tf.textContent = cF;
+}
+
+function liveSearch(val) { applyFilters(); }
+
+
+// ══════════════════════════════════════════════════════
+// ANIMATED COUNTERS
+// ══════════════════════════════════════════════════════
+function animateCounters() {
+  ['statSeances','statMinutes','statCalories','sideSeances','sideMin','sideCal'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const target = parseInt(el.textContent) || 0;
+    if (!target) return;
+    let start = 0;
+    const step = Math.ceil(target/40);
+    const iv = setInterval(() => { start = Math.min(start+step,target); el.textContent=start; if(start>=target) clearInterval(iv); }, 25);
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// WEEKLY BARS — 7 derniers jours
+// ══════════════════════════════════════════════════════
+function buildWeeklyBars() {
+  const wrap = document.getElementById('weeklyBars');
+  if (!wrap) return;
+  // On lit les sessions depuis le DOM (ex-row dans les session-blocks)
+  const sessionBlocks = document.querySelectorAll('.session-block');
+  const counts = {};
+  sessionBlocks.forEach(block => {
+    const dateEl = block.querySelector('.session-date-big');
+    if (!dateEl) return;
+    const text = dateEl.textContent.replace('📅','').trim();
+    // format dd/mm/yyyy
+    const parts = text.split('/');
+    if (parts.length===3) {
+      const key = `${parts[2]}-${parts[1]}-${parts[0]}`;
+      counts[key] = (counts[key]||0) + (block.querySelectorAll('.ex-row').length);
+    }
+  });
+  const days = ['Lu','Ma','Me','Je','Ve','Sa','Di'];
+  const today = new Date();
+  const maxVal = Math.max(...Object.values(counts), 1);
+  wrap.innerHTML = '';
+  for (let i=6; i>=0; i--) {
+    const d = new Date(today); d.setDate(today.getDate()-i);
+    const key = d.toISOString().split('T')[0];
+    const dayLbl = days[d.getDay()===0?6:d.getDay()-1];
+    const val = counts[key]||0;
+    const pct = Math.round((val/maxVal)*100);
+    const isToday = (i===0);
+    const barDiv = document.createElement('div');
+    barDiv.className = 'weekly-bar-wrap';
+    barDiv.title = `${key} : ${val} exercice${val!==1?'s':''}`;
+    barDiv.innerHTML = `
+      <div class="weekly-bar-inner${isToday?' today':''}" style="height:${Math.max(pct,5)}%"></div>
+      <span class="weekly-bar-label">${dayLbl}</span>`;
+    wrap.appendChild(barDiv);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// CHART DONUT
+// ══════════════════════════════════════════════════════
+function initChart() {
+  const cats = { Cardio:0, Force:0, Souplesse:0, Endurance:0, Perte:0 };
+  document.querySelectorAll('.ex-row').forEach(row => {
+    const dot = row.querySelector('.ex-row-dot');
+    if (!dot) return;
+    if (dot.classList.contains('cardio'))       cats.Cardio++;
+    else if (dot.classList.contains('force'))     cats.Force++;
+    else if (dot.classList.contains('souplesse')) cats.Souplesse++;
+    else if (dot.classList.contains('endurance')) cats.Endurance++;
+    else if (dot.classList.contains('perte'))     cats.Perte++;
+  });
+  const colors  = ['#FF4D6D','#3B82F6','#10B981','#F59E0B','#EF4444'];
+  const labels  = Object.keys(cats);
+  const data    = Object.values(cats);
+  const total   = data.reduce((a,b)=>a+b,0);
+
+  // Centre label
+  const cval = document.getElementById('chartTotalEx');
+  if (cval) cval.textContent = total;
+
+  const ctx = document.getElementById('catChart')?.getContext('2d');
+  if (!ctx) return;
+  _catChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{ data, backgroundColor:colors, borderColor:'#fff', borderWidth:3, hoverOffset:10 }]
+    },
+    options: {
+      responsive:false, cutout:'70%',
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: c => ` ${c.label}: ${c.raw}` } } },
+      animation:{ animateRotate:true, duration:800 }
+    }
+  });
+
+  const legend = document.getElementById('chartLegend');
+  if (!legend) return;
+  legend.innerHTML = '';
+  const maxD = Math.max(...data,1);
+  labels.forEach((lbl,i) => {
+    const pct = total ? Math.round(data[i]/total*100) : 0;
+    const row = document.createElement('div');
+    row.className = 'legend-row';
+    row.innerHTML = `
+      <div class="legend-swatch" style="background:${colors[i]}"></div>
+      <span class="legend-label">${lbl}</span>
+      <span class="legend-val">${data[i]}</span>`;
+    // Bar de progression sous le row
+    const barTrack = document.createElement('div');
+    barTrack.style.cssText = 'grid-column:1/-1;';
+    row.appendChild(barTrack);
+    legend.appendChild(row);
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// SELECT EXERCISE
+// ══════════════════════════════════════════════════════
+function selectExercise(el) {
+  document.querySelectorAll('.ex-card.selected').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedExercise = { id:el.dataset.id, name:el.dataset.name, type:el.dataset.type, icon:el.dataset.icon, video:el.dataset.video };
+  document.getElementById('exerciseId').value = selectedExercise.id;
+  const info = document.getElementById('selectedInfo');
+  info.classList.add('show');
+  document.getElementById('selectedIcon').textContent  = selectedExercise.icon;
+  document.getElementById('selectedName').textContent  = selectedExercise.name;
+  document.getElementById('selectedType').textContent  = (selectedExercise.type||'').replace(/_/g,' ');
+  document.getElementById('selectedBadge').textContent = (selectedExercise.type||'').split(' ')[0];
+  document.getElementById('err-exercice').classList.remove('show');
+  document.getElementById('step1').querySelector('.step-num').style.cssText = 'background:#10B981;color:white';
+  document.getElementById('step2').classList.add('active');
+  showToast('info', selectedExercise.icon + ' ' + selectedExercise.name + ' sélectionné');
+  document.getElementById('logForm').scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+// ══════════════════════════════════════════════════════
+// LOG FORM
+// ══════════════════════════════════════════════════════
+async function handleLogSubmit(e) {
+  e.preventDefault();
+  let valid = true;
+  const exId = document.getElementById('exerciseId').value;
+  const errEx = document.getElementById('err-exercice');
+  if (!exId) { errEx.classList.add('show'); valid=false; } else errEx.classList.remove('show');
+  const dureeEl = document.getElementById('duree');
+  const duree   = parseInt(dureeEl.value);
+  const errDur  = document.getElementById('err-duree');
+  if (!duree||duree<1||duree>300) { dureeEl.classList.add('error'); errDur.classList.add('show'); valid=false; }
+  else { dureeEl.classList.remove('error'); errDur.classList.remove('show'); }
+  const dateEl = document.getElementById('dateSeance');
+  const date   = dateEl.value;
+  const errDt  = document.getElementById('err-date');
+  if (!date) { dateEl.classList.add('error'); errDt.classList.add('show'); valid=false; }
+  else { dateEl.classList.remove('error'); errDt.classList.remove('show'); }
+  if (!valid) return;
+  const btn = document.getElementById('submitBtn');
+  btn.disabled=true; btn.innerHTML='⏳ Enregistrement...';
+  const payload = {
+    exercice_id:exId, duree_minutes:duree, date_activite:date,
+    calories_brulees:parseInt(document.getElementById('calories').value)||null,
+    poids:parseFloat(document.getElementById('poids').value)||null,
+    nb_series:parseInt(document.getElementById('series').value)||null,
+    nb_repetitions:parseInt(document.getElementById('reps').value)||null,
+    notes:document.getElementById('notes').value.trim()||null,
+  };
+  try {
+    const res = await fetch(API.add,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const data = await res.json();
+    if (data.success) { showToast('success','✅ Exercice ajouté !'); updateStats(data.stats); setTimeout(()=>location.reload(),800); }
+    else {
+      if (data.errors) Object.entries(data.errors).forEach(([k,msg])=>{ const el=document.getElementById('err-'+k); if(el){el.textContent='⚠ '+msg;el.classList.add('show');} });
+      showToast('error','⚠ Erreur enregistrement.');
+    }
+  } catch { showToast('error','⚠ Erreur réseau.'); }
+  finally { btn.disabled=false; btn.innerHTML='<span>💾</span> Enregistrer dans la séance'; }
+}
+
+// ══════════════════════════════════════════════════════
+// EDIT
+// ══════════════════════════════════════════════════════
+function openEdit(id,duree,cal,ser,reps,poids,notes) {
+  editingId=id;
+  document.getElementById('editId').value=id;
+  document.getElementById('editDuree').value=duree||'';
+  document.getElementById('editCalories').value=cal||'';
+  document.getElementById('editSeries').value=ser||'';
+  document.getElementById('editReps').value=reps||'';
+  document.getElementById('editPoids').value=poids||'';
+  document.getElementById('editNotes').value=notes||'';
+  openModal('editModal');
+}
+
+async function handleEditSubmit(e) {
+  e.preventDefault();
+  const dureeEl=document.getElementById('editDuree');
+  const duree=parseInt(dureeEl.value);
+  const errEl=document.getElementById('err-edit-duree');
+  if (!duree||duree<1||duree>300) { dureeEl.classList.add('error'); errEl.classList.add('show'); return; }
+  dureeEl.classList.remove('error'); errEl.classList.remove('show');
+  const payload = {
+    duree_minutes:duree,
+    calories_brulees:document.getElementById('editCalories').value||null,
+    nb_series:document.getElementById('editSeries').value||null,
+    nb_repetitions:document.getElementById('editReps').value||null,
+    poids:document.getElementById('editPoids').value||null,
+    notes:document.getElementById('editNotes').value.trim()||null,
+  };
+  try {
+    const res=await fetch(API.update(editingId),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const data=await res.json();
+    if (data.success) { showToast('success','✏️ Modifié !'); updateStats(data.stats); closeModal('editModal'); setTimeout(()=>location.reload(),600); }
+    else showToast('error','⚠ Erreur modification.');
+  } catch { showToast('error','⚠ Erreur réseau.'); }
+}
+
+// ══════════════════════════════════════════════════════
+// DELETE EXERCISE
+// ══════════════════════════════════════════════════════
+function openDeleteModal(id,name) {
+  _deleteTargetId=id;
+  document.getElementById('deleteExName').textContent=name;
+  openModal('deleteModal');
+}
+
+async function confirmDelete() {
+  if (!_deleteTargetId) return;
+  const btn=document.getElementById('deleteConfirmBtn');
+  btn.innerHTML='⏳ Suppression...'; btn.disabled=true;
+  try {
+    const res=await fetch(API.delete(_deleteTargetId),{method:'POST'});
+    const data=await res.json();
+    if (data.success) { closeModal('deleteModal'); showToast('error','🗑 Exercice supprimé'); updateStats(data.stats); setTimeout(()=>location.reload(),500); }
+    else showToast('error','⚠ Erreur suppression.');
+  } catch { showToast('error','⚠ Erreur réseau.'); }
+  finally { btn.innerHTML='🗑 Supprimer'; btn.disabled=false; _deleteTargetId=null; }
+}
+
+// ══════════════════════════════════════════════════════
+// DELETE SESSION
+// ══════════════════════════════════════════════════════
+async function deleteSession(date) {
+  if (!confirm('Supprimer toute la séance du '+formatDate(date)+' ?')) return;
+  try {
+    const res=await fetch(API.list);
+    const all=await res.json();
+    const session=all.sessions.find(s=>s.date===date);
+    if (!session) { showToast('error','Séance introuvable.'); return; }
+    for (const ex of session.exercises) await fetch(API.delete(ex.id),{method:'POST'});
+    showToast('error','🗑 Séance supprimée');
+    setTimeout(()=>location.reload(),600);
+  } catch { showToast('error','⚠ Erreur réseau.'); }
+}
+
+// ══════════════════════════════════════════════════════
+// SESSION ACCORDION
+// ══════════════════════════════════════════════════════
+function toggleSession(headEl) {
+  const block=headEl.closest('.session-block');
+  block.querySelector('.session-exercises').classList.toggle('open');
+  block.querySelector('.session-chevron').classList.toggle('open');
+}
+
+// ══════════════════════════════════════════════════════
+// STATS UPDATE
+// ══════════════════════════════════════════════════════
+function updateStats(stats) {
+  if (!stats) return;
+  ['statSeances','sideSeances'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=stats.sessions;});
+  ['statMinutes','sideMin'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=stats.minutes;});
+  ['statCalories','sideCal'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=stats.calories;});
+}
+
+function updateSideTotal() {
+  const el=document.getElementById('sideTotal');
+  if (el) el.textContent=document.querySelectorAll('.ex-row').length;
+}
+
+// ══════════════════════════════════════════════════════
+// MODALS
+// ══════════════════════════════════════════════════════
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  // Nettoie l'iframe vidéo pour stopper la lecture
+  if (id==='videoModal') {
+    const wrap=document.getElementById('videoWrap');
+    if (wrap) wrap.innerHTML='';
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// FAVOURITES — version améliorée avec sélection rapide
+// ══════════════════════════════════════════════════════
+const FAV_KEY = 'harmony_favs_v2';
+function loadFavs() { try { return JSON.parse(localStorage.getItem(FAV_KEY))||{}; } catch { return {}; } }
+function saveFavs(favs) { localStorage.setItem(FAV_KEY,JSON.stringify(favs)); }
+
+function toggleFav(btn) {
+  const { id, name, type, icon, cls } = btn.dataset;
+  const favs = loadFavs();
+  if (favs[id]) {
+    delete favs[id];
+    btn.classList.remove('active'); btn.innerHTML='⭐ Fav';
+    showToast('info','Retiré des favoris');
+  } else {
+    favs[id] = { id, name, type, icon, cls:cls||'force' };
+    btn.classList.add('active'); btn.innerHTML='★ Favori';
+    showToast('success','⭐ '+name+' ajouté aux favoris !');
+  }
+  saveFavs(favs);
+  renderFavList(favs);
+}
+
+function removeFav(id) {
+  const favs=loadFavs();
+  delete favs[id]; saveFavs(favs);
+  const btn=document.querySelector(`.fav-btn[data-id="${id}"]`);
+  if (btn) { btn.classList.remove('active'); btn.innerHTML='⭐ Fav'; }
+  renderFavList(favs);
+}
+
+/**
+ * selectFromFav(id)
+ * Sélectionne un exercice depuis les favoris — simule un clic sur la carte.
+ */
+function selectFromFav(id) {
+  const card = document.querySelector(`.ex-card[data-id="${id}"]`);
+  if (card) {
+    // Affiche l'exercice dans la grille et le sélectionne
+    card.style.display = '';
+    selectExercise(card);
+    card.scrollIntoView({ behavior:'smooth', block:'center' });
+    showToast('info', '📌 Exercice sélectionné depuis les favoris');
+  } else {
+    showToast('info','⚠ Exercice non visible. Choisissez "Tous" puis réessayez.');
+  }
+}
+
+function renderFavList(favs) {
+  const list  = document.getElementById('favList');
+  const empty = document.getElementById('favEmpty');
+  const badge = document.getElementById('favCount');
+  const keys  = Object.keys(favs);
+  if (badge) badge.textContent = keys.length;
+  if (keys.length===0) {
+    list.innerHTML=''; list.appendChild(empty); empty.style.display=''; return;
+  }
+  list.innerHTML='';
+  keys.forEach(id => {
+    const f    = favs[id];
+    const cls  = f.cls||getCls(f.type||'');
+    const item = document.createElement('div');
+    item.className = `fav-item ${cls}`;
+    item.innerHTML = `
+      <div class="fav-emoji">${f.icon||'💪'}</div>
+      <div class="fav-info">
+        <div class="fav-name" title="${f.name}">${f.name}</div>
+        <div class="fav-meta">
+          <span class="fav-cat-pill ${cls}">${(f.type||'').replace(/_homme/i,'').replace(/_femme/i,'').replace(/_/g,' ').trim().split(' ')[0]||'Sport'}</span>
+        </div>
+      </div>
+      <div class="fav-actions">
+        <button class="btn-fav-select" onclick="selectFromFav('${id}')" title="Sélectionner">+ Ajouter</button>
+        <button class="btn-fav-remove" onclick="removeFav('${id}')" title="Retirer">✕</button>
+      </div>`;
+    list.appendChild(item);
+  });
+}
+
+function getCls(type) {
+  const t=(type||'').toLowerCase();
+  if (t.includes('cardio'))     return 'cardio';
+  if (t.includes('souplesse'))  return 'souplesse';
+  if (t.includes('endurance'))  return 'endurance';
+  if (t.includes('perte'))      return 'perte';
+  return 'force';
+}
+
+function initFavs() {
+  const favs=loadFavs();
+  document.querySelectorAll('.fav-btn').forEach(btn=>{
+    if (favs[btn.dataset.id]) { btn.classList.add('active'); btn.innerHTML='★ Favori'; }
+  });
+  renderFavList(favs);
+}
+
+// ══════════════════════════════════════════════════════
+// QR CODE
+// ══════════════════════════════════════════════════════
+async function openQR(date) {
+  const wrap=document.getElementById('qrImgWrap');
+  const waLink=document.getElementById('qrWaLink');
+  document.getElementById('qrDate').textContent='—';
+  document.getElementById('qrMeta').textContent='—';
+  wrap.innerHTML='<span class="qr-placeholder">Chargement…</span>';
+  waLink.href='#';
+  openModal('qrModal');
+  let res;
+  try {
+    res=await fetch(API.qr(date),{method:'GET',credentials:'include',headers:{'Accept':'application/json','X-Requested-With':'XMLHttpRequest'}});
+  } catch {
+    wrap.innerHTML='<div style="color:#EF4444;font-size:13px;text-align:center;padding:20px">⚠ Serveur injoignable.</div>';
+    showToast('error','⚠ Serveur injoignable.'); return;
+  }
+  if (res.status===401) { wrap.innerHTML='<div style="color:#EF4444;padding:20px;text-align:center">⚠ Session expirée.<br><a href="/login" style="color:var(--pu)">Reconnexion</a></div>'; return; }
+  if (res.status===404) { wrap.innerHTML='<div style="color:#F59E0B;padding:20px;text-align:center">📭 Aucune activité pour cette date.</div>'; return; }
+  const ct=res.headers.get('Content-Type')||'';
+  if (!ct.includes('application/json')) { wrap.innerHTML='<div style="color:#EF4444;padding:20px;text-align:center">⚠ Erreur serveur ('+res.status+').</div>'; return; }
+  let data;
+  try { data=await res.json(); } catch { wrap.innerHTML='<div style="color:#EF4444;padding:20px;text-align:center">⚠ Réponse invalide.</div>'; return; }
+  if (!data.success) { wrap.innerHTML='<div style="color:#EF4444;padding:20px;text-align:center">⚠ '+(data.message||'Erreur')+'</div>'; return; }
+  wrap.innerHTML=`<img src="${data.qr}" alt="QR Code ${data.dateLabel}" style="width:100%;height:100%;object-fit:contain">`;
+  document.getElementById('qrDate').textContent='📅 '+data.dateLabel;
+  document.getElementById('qrMeta').textContent=data.nbEx+' exercice'+(data.nbEx!==1?'s':'')+' · '+data.totalMin+' min'+(data.totalCal>0?' · '+data.totalCal+' kcal':'');
+  waLink.href=data.waUrl;
+  showToast('success','📲 QR Code généré !');
+}
+
+// ══════════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════════
+function formatDate(d) {
+  if (!d) return '';
+  return new Date(d+'T00:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+}
+
+function showToast(type,msg) {
+  const t=document.getElementById('toast');
+  t.className='toast '+type; t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+
+// ══════════════════════════════════════════════════════
+// BODY MODEL — MODÈLE CORPOREL INTERACTIF
+// ══════════════════════════════════════════════════════
+
+// Mapping zone → emoji
+const BM_ICONS = {
+  tete:'🧠',cou:'🦴',
+  epaule_gauche:'💪',epaule_droite:'💪',
+  coude_gauche:'🦾',coude_droit:'🦾',
+  poignet_gauche:'✋',poignet_droit:'✋',
+  dos_haut:'🔙',dos_bas:'🔙',thorax:'🫀',abdomen:'🫃',
+  hanche_gauche:'🦵',hanche_droite:'🦵',
+  genou_gauche:'🦿',genou_droit:'🦿',
+  cheville_gauche:'👟',cheville_droite:'👟',
+  pied_gauche:'🦶',pied_droit:'🦶',
+};
+
+// Ouvrir le modal du modèle corporel
+function openBodyModel() {
+  document.getElementById('bmModalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  initBmZones();
+}
+
+// Fermer le modal
+function closeBodyModel() {
+  document.getElementById('bmModalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// Clic depuis le mini SVG dans la sidebar → ouvre le modal + lance la zone
+function quickZoneSelect(el) {
+  openBodyModel();
+  // Attendre que le modal soit rendu puis lancer
+  setTimeout(() => {
+    const zone  = el.dataset.zone;
+    const label = el.dataset.label;
+    // Activer la zone dans la grande silhouette
+    const target = document.querySelector('#bmBodySvg .bm-zone[data-zone="' + zone + '"]');
+    if (target) {
+      document.querySelectorAll('#bmBodySvg .bm-zone').forEach(z => z.classList.remove('selected'));
+      target.classList.add('selected');
+    }
+    fetchBmAdvice(zone, label);
+  }, 80);
+}
+
+// Initialiser les zones cliquables + tooltip dans le modal
+function initBmZones() {
+  const zones   = document.querySelectorAll('#bmBodySvg .bm-zone');
+  const tooltip = document.getElementById('bmTooltip');
+
+  zones.forEach(zone => {
+    // Ne pas ré-attacher si déjà initialisé
+    if (zone._bmInited) return;
+    zone._bmInited = true;
+
+    zone.addEventListener('mouseenter', e => {
+      tooltip.textContent = zone.dataset.label;
+      tooltip.style.display = 'block';
+      positionBmTooltip(e, tooltip);
+    });
+    zone.addEventListener('mousemove', e => positionBmTooltip(e, tooltip));
+    zone.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+    zone.addEventListener('click', () => {
+      zones.forEach(z => z.classList.remove('selected'));
+      zone.classList.add('selected');
+      fetchBmAdvice(zone.dataset.zone, zone.dataset.label);
+    });
+  });
+
+  // Fermer en cliquant hors du modal
+  const overlay = document.getElementById('bmModalOverlay');
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) closeBodyModel();
+  });
+}
+
+function positionBmTooltip(e, tooltip) {
+  const wrap = document.querySelector('.bm-svg-wrap');
+  if (!wrap) return;
+  const rect = wrap.getBoundingClientRect();
+  tooltip.style.left = (e.clientX - rect.left + 12) + 'px';
+  tooltip.style.top  = (e.clientY - rect.top  - 32) + 'px';
+}
+
+// Appel AJAX vers BlessureController
+async function fetchBmAdvice(articulation, label) {
+  const emptyState = document.getElementById('bmEmptyState');
+  const loader     = document.getElementById('bmLoader');
+  const result     = document.getElementById('bmResult');
+
+  emptyState.style.display = 'none';
+  result.style.display     = 'none';
+  loader.style.display     = 'flex';
+
+  const typeActivite = document.getElementById('bmTypeActivite')?.value || 'général';
+  const intensite    = document.getElementById('bmIntensite')?.value    || 'modérée';
+
+  try {
+    const res = await fetch('{{ path("blessure_conseil") }}', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ articulation, typeActivite, intensite }),
+    });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.error || 'Erreur inconnue');
+    displayBmResult(json.data, label);
+  } catch (err) {
+    loader.style.display     = 'none';
+    emptyState.style.display = 'flex';
+    showToast('error', '⚠ ' + err.message);
+  }
+}
+
+function displayBmResult(data, label) {
+  document.getElementById('bmLoader').style.display = 'none';
+
+  document.getElementById('bmResIcon').textContent = BM_ICONS[data.articulation] || '🩹';
+  document.getElementById('bmResZone').textContent = data.label || label;
+
+  const typeActivite = document.getElementById('bmTypeActivite')?.value || 'général';
+  const intensite    = document.getElementById('bmIntensite')?.value    || 'modérée';
+  document.getElementById('bmResCtx').textContent  =
+    typeActivite.charAt(0).toUpperCase() + typeActivite.slice(1) + ' · Intensité ' + intensite;
+
+  bmFillList('bmResTrait',  data.traitements);
+  bmFillList('bmResExos',   data.exercices_recuperation);
+  bmFillList('bmResNutr',   data.conseils_nutrition);
+
+  document.getElementById('bmResDuree').textContent    = data.duree_recuperation || '–';
+  document.getElementById('bmResConsulter').textContent = data.quand_consulter   || '–';
+
+  const resultEl = document.getElementById('bmResult');
+  resultEl.style.display = 'flex';
+}
+
+function bmFillList(ulId, items) {
+  const ul = document.getElementById(ulId);
+  ul.innerHTML = '';
+  if (!Array.isArray(items) || items.length === 0) {
+    ul.innerHTML = '<li>Aucune donnée disponible.</li>'; return;
+  }
+  items.forEach(item => {
+    const li = document.createElement('li');
+    li.textContent = item;
+    ul.appendChild(li);
+  });
+}
+
+// Bouton reset
+document.addEventListener('DOMContentLoaded', () => {
+  const btnReset = document.getElementById('btnBmReset');
+  if (btnReset) {
+    btnReset.addEventListener('click', () => {
+      document.querySelectorAll('#bmBodySvg .bm-zone').forEach(z => z.classList.remove('selected'));
+      document.getElementById('bmResult').style.display     = 'none';
+      document.getElementById('bmEmptyState').style.display = 'flex';
+    });
+  }
+});
+
+</script>
+{% endblock %}

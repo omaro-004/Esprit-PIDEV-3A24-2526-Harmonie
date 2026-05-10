@@ -1,0 +1,61 @@
+doctrine:
+    dbal:
+        url: '%env(resolve:DATABASE_URL)%'
+        # server_version OBLIGATOIRE avec MySQL 8.x — sans cela Doctrine
+        # utilise un driver de plateforme générique qui fait échouer les INSERT
+        # silencieusement (pas d'exception visible, pas d'écriture en BDD).
+        server_version: '10.4.32-MariaDB'
+        options:
+            1002: "SET time_zone = '+00:00'"
+        schema_filter: '/^(user|conversation|message)$/'
+        profiling_collect_backtrace: '%kernel.debug%'
+        # Ensure profiler collects queries in dev.
+        logging: '%kernel.debug%'
+        profiling: '%kernel.debug%'
+        use_savepoints: true
+    orm:
+        auto_generate_proxy_classes: true
+        enable_lazy_ghost_objects: true
+        report_fields_where_declared: true
+        validate_xml_mapping: false
+        naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
+        auto_mapping: true
+        mappings:
+            App:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Entity'
+                prefix: 'App\Entity'
+                alias: App
+        controller_resolver:
+            auto_mapping: false
+
+when@test:
+    doctrine:
+        dbal:
+            dbname_suffix: '_test%env(default::TEST_TOKEN)%'
+
+when@dev:
+    doctrine:
+        dbal:
+            profiling_collect_schema_errors: true
+
+when@prod:
+    doctrine:
+        orm:
+            auto_generate_proxy_classes: false
+            proxy_dir: '%kernel.build_dir%/doctrine/orm/Proxies'
+            query_cache_driver:
+                type: pool
+                pool: doctrine.system_cache_pool
+            result_cache_driver:
+                type: pool
+                pool: doctrine.result_cache_pool
+
+    framework:
+        cache:
+            pools:
+                doctrine.result_cache_pool:
+                    adapter: cache.app
+                doctrine.system_cache_pool:
+                    adapter: cache.system

@@ -1,0 +1,949 @@
+{% extends 'base.html.twig' %}
+{% block title %}Forum — Harmony{% endblock %}
+
+
+{% block stylesheets %}
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Clash+Display:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+    --ink:#0D0D14;--ink-mid:#3A3A52;--ink-muted:#8A8AA8;
+    --surface:#F4F3FF;--card:#FFFFFF;
+    --v:#6C47FF;--v2:#8B6BFF;--v3:#EDE9FF;
+    --accent:#FF6B6B;--accent2:#FFD93D;--accent3:#6BCB77;
+    --border:rgba(108,71,255,.1);
+    --font-head:'Clash Display',sans-serif;
+    --font-body:'DM Sans',sans-serif;
+    --shadow:0 4px 24px rgba(108,71,255,.12);
+    --shadow-lg:0 12px 48px rgba(108,71,255,.18);
+}
+html,body{font-family:var(--font-body);background:var(--surface);color:var(--ink);min-height:100vh;}
+
+
+/* ── TOPBAR ── */
+.topbar{position:sticky;top:0;z-index:300;background:rgba(244,243,255,.85);
+    backdrop-filter:blur(16px);border-bottom:1px solid var(--border);
+    height:60px;display:flex;align-items:center;padding:0 32px;gap:6px;}
+.topbar-logo{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:28px;}
+.logo-mark{width:32px;height:32px;border-radius:9px;object-fit:contain;}
+.logo-name{font-family:var(--font-head);font-size:17px;font-weight:600;color:var(--ink);}
+.nav-links{display:flex;align-items:center;gap:2px;flex:1;}
+.nav-link{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;
+    border-radius:8px;font-size:13px;font-weight:500;color:var(--ink-mid);
+    text-decoration:none;transition:all .15s;}
+.nav-link:hover{background:var(--v3);color:var(--v);}
+.nav-link.active{background:var(--v);color:white;font-weight:600;}
+.topbar-right{display:flex;align-items:center;gap:10px;margin-left:auto;}
+.logout-btn{padding:6px 14px;border-radius:8px;border:1.5px solid rgba(255,107,107,.25);
+    background:transparent;color:var(--accent);font-size:13px;font-weight:500;cursor:pointer;
+    transition:all .15s;}
+.logout-btn:hover{background:rgba(255,107,107,.08);}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--v),var(--v2));
+    color:white;font-family:var(--font-head);font-weight:600;font-size:13px;
+    display:grid;place-items:center;cursor:pointer;}
+
+
+/* ── PAGE ── */
+.page{max-width:1180px;margin:0 auto;padding:40px 32px 80px;}
+
+
+
+
+/* Bouton IA HERO — ultra visible */
+.btn-ai-hero{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:12px 22px;
+    background:linear-gradient(135deg,#FFD93D,#FF6B6B);
+    color:#1a0a00;border:none;border-radius:12px;
+    font-size:13px;font-weight:700;cursor:pointer;
+    font-family:var(--font-body);
+    box-shadow:0 4px 20px rgba(255,217,61,.4);
+    transition:all .2s;white-space:nowrap;
+}
+.btn-ai-hero:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(255,217,61,.5);}
+
+
+.btn-new-cat{
+    display:inline-flex;align-items:center;gap:7px;
+    padding:12px 20px;background:white;color:var(--ink);
+    border-radius:12px;font-size:13px;font-weight:700;
+    text-decoration:none;transition:all .2s;white-space:nowrap;
+    box-shadow:0 2px 12px rgba(0,0,0,.12);
+}
+.btn-new-cat:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.18);}
+
+
+
+/* ── AI BANNER ── */
+.ai-banner{
+    background:linear-gradient(135deg,#1a0a2e 0%,#2D1B8C 50%,var(--v) 100%);
+    border-radius:16px;padding:20px 28px;margin-bottom:28px;
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    border:1px solid rgba(108,71,255,.3);
+}
+.ai-banner-left{display:flex;align-items:center;gap:14px;}
+.ai-badge{width:44px;height:44px;background:linear-gradient(135deg,#FFD93D,#FF6B6B);
+    border-radius:12px;display:grid;place-items:center;font-size:20px;flex-shrink:0;}
+.ai-banner-title{font-family:var(--font-head);font-size:15px;font-weight:600;color:white;}
+.ai-banner-sub{font-size:12px;color:rgba(255,255,255,.6);margin-top:2px;}
+.ai-features{display:flex;gap:8px;flex-wrap:wrap;}
+.ai-feat-chip{
+    display:inline-flex;align-items:center;gap:5px;
+    padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;
+    border:1.5px solid;transition:all .2s;cursor:default;
+}
+.chip-summary{background:rgba(107,203,119,.15);color:#6BCB77;border-color:rgba(107,203,119,.3);}
+.chip-translate{background:rgba(255,217,61,.15);color:#FFD93D;border-color:rgba(255,217,61,.3);}
+.chip-sentiment{background:rgba(255,107,107,.15);color:#FF6B6B;border-color:rgba(255,107,107,.3);}
+.chip-image{background:rgba(139,107,255,.15);color:#8B6BFF;border-color:rgba(139,107,255,.3);}
+
+
+/* ── GRID CATÉGORIES ── */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.section-title{font-family:var(--font-head);font-size:20px;font-weight:600;color:var(--ink);}
+.section-count{font-size:13px;color:var(--ink-muted);}
+
+
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;}
+
+
+.cat-card{
+    background:var(--card);border:1.5px solid var(--border);
+    border-radius:18px;overflow:hidden;
+    display:flex;flex-direction:column;
+    transition:all .2s;position:relative;
+    box-shadow:0 2px 8px rgba(108,71,255,.06);
+}
+.cat-card:hover{border-color:var(--v);transform:translateY(-4px);box-shadow:var(--shadow-lg);}
+
+
+.cat-card-accent{height:4px;background:linear-gradient(90deg,var(--v),var(--v2));transition:all .2s;}
+.cat-card:hover .cat-card-accent{background:linear-gradient(90deg,#FFD93D,var(--v));}
+
+
+.cat-card-body{padding:20px;flex:1;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:10px;}
+.cat-icon-wrap{width:46px;height:46px;background:var(--v3);border-radius:13px;
+    display:grid;place-items:center;font-size:22px;transition:all .2s;}
+.cat-card:hover .cat-icon-wrap{background:var(--v);transform:rotate(-5deg);}
+.cat-name{font-family:var(--font-head);font-size:15px;font-weight:600;color:var(--ink);line-height:1.3;}
+.cat-desc{font-size:12.5px;color:var(--ink-muted);line-height:1.6;flex:1;}
+.cat-meta{display:inline-flex;align-items:center;gap:4px;
+    font-size:11px;color:var(--v);font-weight:600;
+    background:var(--v3);padding:4px 10px;border-radius:20px;width:fit-content;}
+
+
+.cat-card-footer{
+    display:flex;gap:6px;padding:12px 20px 16px;
+    border-top:1px solid var(--v3);
+}
+.btn-edit{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;
+    background:var(--v3);color:var(--v);border:none;border-radius:8px;
+    font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .15s;}
+.btn-edit:hover{background:var(--v);color:white;}
+.btn-delete{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;
+    background:rgba(255,107,107,.1);color:var(--accent);border:none;border-radius:8px;
+    font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;}
+.btn-delete:hover{background:var(--accent);color:white;}
+
+
+/* ── MODALE CONFIRM ── */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:1000;
+    background:rgba(13,13,20,.6);backdrop-filter:blur(8px);
+    align-items:center;justify-content:center;}
+.modal-box{background:white;border-radius:20px;padding:36px 40px;
+    max-width:380px;width:90%;box-shadow:var(--shadow-lg);}
+
+
+/* ── MODALE IMAGE IA ── */
+#imageModal{display:none;position:fixed;inset:0;z-index:1000;
+    background:rgba(13,13,20,.7);backdrop-filter:blur(10px);
+    align-items:center;justify-content:center;}
+.image-modal-box{background:white;border-radius:24px;padding:36px;
+    max-width:560px;width:90%;box-shadow:var(--shadow-lg);
+    max-height:90vh;overflow-y:auto;}
+.style-chip{padding:6px 14px;border:1.5px solid var(--border);border-radius:20px;
+    font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-body);
+    background:white;color:var(--ink-mid);transition:all .15s;}
+.style-chip.active{background:var(--v);color:white;border-color:var(--v);}
+.prompt-example{padding:4px 12px;background:var(--v3);color:var(--v);
+    border:none;border-radius:20px;font-size:11px;font-weight:600;
+    cursor:pointer;font-family:var(--font-body);transition:all .15s;}
+.prompt-example:hover{background:var(--v);color:white;}
+
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.fade{animation:fadeUp .4s ease both;}
+
+/* ── HERO PLEIN ÉCRAN — comme activités ── */
+.hero {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;      /* plein écran comme activités */
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+    /* SUPPRIMER border-radius et margin-bottom */
+    border-radius: 0;
+    margin-bottom: 0;
+}
+
+.hero-bg-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    z-index: 0;
+}
+
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        135deg,
+        rgba(13,13,20,.85) 0%,
+        rgba(45,27,140,.75) 50%,
+        rgba(108,71,255,.4) 100%
+    );
+    z-index: 1;
+}
+/* ← FUMÉE EN BAS — */
+.hero-bottom-fade {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 260px;
+    background: linear-gradient(
+        to top,
+        #F4F3FF 0%,        /* même couleur que --surface de ta page */
+        rgba(244,243,255,.85) 30%,
+        rgba(244,243,255,.4) 60%,
+        transparent 100%
+    );
+    z-index: 3;
+    pointer-events: none;
+}
+
+.hero-noise {
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    z-index: 2;
+    pointer-events: none;
+}
+
+
+.hero-bottom-fade {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 180px;
+    background: linear-gradient(to top, rgba(13,13,20,.7), transparent);
+    z-index: 2;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 3;
+    width: 100%;
+    max-width: 1180px;      /* aligné avec .page */
+    margin: 0 auto;
+    padding: 0 32px 60px;   /* padding bottom pour espace bas */
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: flex-end;
+    gap: 32px;
+}
+
+.hero-scroll-hint {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: rgba(255,255,255,.5);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    animation: bounce 2s infinite;
+}
+/* ── BADGE ── */
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.25);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255,255,255,.9);
+    letter-spacing: .6px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    width: fit-content;
+}
+
+.hero-badge-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #6BCB77;
+    animation: pulse-dot 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50%       { transform: translateX(-50%) translateY(-8px); }
+}
+
+/* ── TITRE ── */
+.hero-title {
+    font-family: var(--font-head);
+    font-size: 52px;
+    font-weight: 700;
+    color: white;
+    line-height: 1.1;
+    margin-bottom: 14px;
+    text-shadow: 0 2px 20px rgba(0,0,0,.3);
+}
+
+.hero-title em {
+    font-style: normal;
+    background: linear-gradient(135deg, #FFD93D 0%, #FF6B6B 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ── SOUS-TITRE ── */
+.hero-sub {
+    color: rgba(255,255,255,.7);
+    font-size: 15px;
+    line-height: 1.7;
+    max-width: 440px;
+    margin-bottom: 28px;
+}
+
+/* ── BOUTONS ── */
+.hero-actions-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.btn-ai-hero {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 24px;
+    background: linear-gradient(135deg, #FFD93D, #FF6B6B);
+    color: #1a0a00;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: var(--font-body);
+    box-shadow: 0 4px 20px rgba(255,217,61,.45);
+    transition: all .2s;
+    white-space: nowrap;
+}
+.btn-ai-hero:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 28px rgba(255,217,61,.55);
+}
+
+.btn-new-cat {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 22px;
+    background: rgba(255,255,255,.15);
+    backdrop-filter: blur(10px);
+    color: white;
+    border: 1.5px solid rgba(255,255,255,.3);
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all .2s;
+    white-space: nowrap;
+}
+.btn-new-cat:hover {
+    background: rgba(255,255,255,.25);
+    transform: translateY(-3px);
+}
+
+/* ── STATS CARDS ── */
+.hero-stats-row {
+    display: flex;
+    gap: 14px;
+    align-items: flex-end;
+}
+
+.hstat {
+    background: rgba(255,255,255,.12);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 18px;
+    padding: 18px 22px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: 100px;
+    transition: all .2s;
+}
+.hstat:hover {
+    background: rgba(255,255,255,.2);
+    transform: translateY(-4px);
+}
+
+.hstat-icon { font-size: 24px; }
+
+.hstat-val {
+    font-family: var(--font-head);
+    font-size: 28px;
+    font-weight: 700;
+    color: white;
+    line-height: 1;
+    text-shadow: 0 2px 10px rgba(0,0,0,.2);
+}
+
+.hstat-lbl {
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(255,255,255,.6);
+    text-transform: uppercase;
+    letter-spacing: .8px;
+}
+
+.hstat.gold  { border-color: rgba(255,217,61,.4);  }
+.hstat.teal  { border-color: rgba(107,203,119,.4); }
+.hstat.rose  { border-color: rgba(255,107,107,.4); }
+/* ── LAYOUT PRINCIPAL ── */
+.forum-layout {
+    display: grid;
+    grid-template-columns: 1fr 260px;
+    gap: 24px;
+    align-items: start;
+}
+
+/* ── SIDEBAR DROITE ── */
+.forum-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: sticky;
+    top: 80px;
+}
+
+/* Carte IA */
+.side-card-ai {
+    background: #1a0a3e;
+    border-radius: 16px;
+    padding: 22px;
+    border: 1px solid rgba(108,71,255,.3);
+    position: relative;
+    overflow: hidden;
+}
+.side-card-ai::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: rgba(108,71,255,.2);
+    pointer-events: none;
+}
+.ai-sidebar-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(108,71,255,.3);
+    border: 1px solid rgba(108,71,255,.4);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #c4b5fd;
+    margin-bottom: 12px;
+    width: fit-content;
+}
+.ai-sidebar-title {
+    font-family: var(--font-head);
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 6px;
+    line-height: 1.3;
+}
+.ai-sidebar-sub {
+    font-size: 12px;
+    color: rgba(255,255,255,.5);
+    line-height: 1.6;
+    margin-bottom: 14px;
+}
+.ai-examples-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+.ai-example-chip {
+    font-size: 11px;
+    color: rgba(255,255,255,.45);
+    padding: 6px 10px;
+    background: rgba(255,255,255,.06);
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,.08);
+    cursor: pointer;
+    transition: background .15s;
+}
+.ai-example-chip:hover {
+    background: rgba(255,255,255,.12);
+    color: rgba(255,255,255,.8);
+}
+.btn-ai-sidebar {
+    width: 100%;
+    padding: 11px;
+    background: linear-gradient(135deg, #6C47FF, #4B2FCC);
+    color: white;
+    border: none;
+    border-radius: 11px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-body);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: opacity .15s;
+}
+.btn-ai-sidebar:hover { opacity: .88; }
+
+/* Carte Ajouter catégorie */
+.side-card-add {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 22px;
+    border: 1.5px solid var(--border);
+}
+.add-card-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 11px;
+    background: var(--v3);
+    display: grid;
+    place-items: center;
+    font-size: 20px;
+    margin-bottom: 14px;
+}
+.add-card-title {
+    font-family: var(--font-head);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 6px;
+}
+.add-card-sub {
+    font-size: 12px;
+    color: var(--ink-muted);
+    line-height: 1.6;
+    margin-bottom: 14px;
+}
+.add-tips-list {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-bottom: 16px;
+}
+.add-tip-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--ink-mid);
+}
+.add-tip-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--v);
+    flex-shrink: 0;
+}
+.btn-add-sidebar {
+    width: 100%;
+    padding: 11px;
+    background: var(--v3);
+    color: var(--v);
+    border: 1.5px solid rgba(108,71,255,.2);
+    border-radius: 11px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: var(--font-body);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: all .15s;
+}
+.btn-add-sidebar:hover {
+    background: var(--v);
+    color: white;
+}
+
+</style>
+{% endblock %}
+
+
+{% block body %}
+<header class="topbar">
+    <a href="{{ path('homepage') }}" class="topbar-logo">
+        <img src="{{ asset('images/logo.png') }}" class="logo-mark" alt="Harmony">
+        <span class="logo-name">Harmony</span>
+    </a>
+    <nav class="nav-links">
+        <a href="{{ path('activites') }}"  class="nav-link">🏋 Activités</a>
+        <a href="{{ path('forum') }}"      class="nav-link active">💬 Forum</a>
+        <a href="{{ path('taches') }}"     class="nav-link">📚 Tâches</a>
+        <a href="{{ path('evenements') }}" class="nav-link">📅 Événements</a>
+        <a href="{{ path('nutrition') }}"  class="nav-link">🥗 Nutrition</a>
+        <a href="{{ path('meditation') }}" class="nav-link">🧘 Méditation</a>
+        <a href="{{ path('journal') }}"    class="nav-link">📔 Journal</a>
+        <a href="{{ path('library') }}"    class="nav-link">📖 Library</a>
+    </nav>
+    <div class="topbar-right">
+        <button class="logout-btn">🚪 Déconnexion</button>
+        <div class="avatar">{{ app.user ? app.user.getUserPrenom()|first|upper : 'U' }}</div>
+    </div>
+</header>
+    {# ══════════════ HERO PHOTO PLEIN ÉCRAN ══════════════ #}
+    <div class="hero">
+    <img class="hero-bg-img"
+         src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1800&q=85&auto=format&fit=crop"
+         alt="Forum Communauté — Harmony"
+         loading="eager">
+
+    <div class="hero-overlay"></div>
+    <div class="hero-noise"></div>
+
+    {# ← FUMÉE BAS — transition fluide vers la page #}
+    <div class="hero-bottom-fade"></div>
+
+    <div class="hero-content">
+        <div class="hero-left">
+            <div class="hero-badge">
+                <span class="hero-badge-dot"></span>
+                Forum & Communauté · Harmony
+            </div>
+            <h1 class="hero-title">
+                💬 Forum &<br><em>Communauté</em>
+            </h1>
+            <p class="hero-sub">
+                Pose tes questions, partage tes connaissances.<br>
+                L'IA résume, traduit et analyse pour toi.
+            </p>
+            <div class="hero-actions-row">
+                <button onclick="openImageModal()" class="btn-ai-hero">
+                    🎨 Générer une image IA
+                </button>
+                <a href="{{ path('forum_categorie_new') }}" class="btn-new-cat">
+                    ➕ Nouvelle catégorie
+                </a>
+            </div>
+        </div>
+
+        <div class="hero-stats-row">
+            <div class="hstat gold">
+                <span class="hstat-icon">🗂️</span>
+                <span class="hstat-val">{{ categories|length }}</span>
+                <span class="hstat-lbl">Catégories</span>
+            </div>
+            <div class="hstat teal">
+                <span class="hstat-icon">📝</span>
+                <span class="hstat-val">{{ nb_posts }}</span>
+                <span class="hstat-lbl">Posts</span>
+            </div>
+            <div class="hstat rose">
+                <span class="hstat-icon">💬</span>
+                <span class="hstat-val">{{ nb_commentaires }}</span>
+                <span class="hstat-lbl">Commentaires</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="hero-scroll-hint">
+        <span style="font-size:16px;">▼</span>
+        <span>Défiler</span>
+    </div>
+</div>
+
+
+<main class="page">
+
+
+   
+
+   
+
+
+    {# ── LAYOUT PRINCIPAL ── #}
+    <div class="forum-layout">
+
+        {# ── GAUCHE : CATÉGORIES ── #}
+        <div>
+            <div class="section-header fade" style="animation-delay:.15s;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div class="section-title">📂 Catégories</div>
+                    <span style="font-size:12px;color:var(--ink-muted);background:var(--v3);
+                                padding:3px 10px;border-radius:20px;font-weight:600;">
+                        {{ categories|length }} espaces
+                    </span>
+                </div>
+            </div>
+
+            <div class="cat-grid">
+                {% for cat in categories %}
+                <div class="cat-card fade" style="animation-delay:{{ loop.index * 0.05 }}s;">
+                    <div class="cat-card-accent"></div>
+                    <a href="{{ path('forum_posts', {id: cat.idCategorie}) }}" class="cat-card-body">
+                        <div class="cat-icon-wrap">💬</div>
+                        <div class="cat-name">{{ cat.nomCategorie }}</div>
+                        {% if cat.description %}
+                            <div class="cat-desc">{{ cat.description }}</div>
+                        {% endif %}
+                        <div class="cat-meta">Voir les posts →</div>
+                    </a>
+                    <div class="cat-card-footer">
+                        <a href="{{ path('forum_categorie_edit', {id: cat.idCategorie}) }}" class="btn-edit">✏️ Modifier</a>
+                        <form method="POST"
+                            action="{{ path('forum_categorie_delete', {id: cat.idCategorie}) }}"
+                            class="delete-form" style="display:inline;">
+                            <button type="button" class="btn-delete"
+                                onclick="openModal(this, 'Supprimer la catégorie ?', 'Tous les posts associés seront supprimés.')">
+                                🗑 Supprimer
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% else %}
+                <p style="color:var(--ink-muted);grid-column:1/-1;text-align:center;padding:40px;">
+                    Aucune catégorie — commence par en créer une !
+                </p>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# ── DROITE : SIDEBAR ── #}
+        <div class="forum-sidebar">
+
+            {# Carte Génération Image IA #}
+            <div class="side-card-ai">
+                <div class="ai-sidebar-badge">✨ Propulsé par l'IA</div>
+                <div class="ai-sidebar-title">Génère une image avec l'IA</div>
+                <div class="ai-sidebar-sub">
+                    Décris ce que tu veux voir et l'IA crée ton image en quelques secondes.
+                </div>
+                <div class="ai-examples-list">
+                    <div class="ai-example-chip" onclick="setPrompt('A peaceful zen garden at sunset')">
+                        🌸 "A zen garden at sunset"
+                    </div>
+                    <div class="ai-example-chip" onclick="setPrompt('Neural network visualization, colorful')">
+                        🧬 "Neural network visualization"
+                    </div>
+                    <div class="ai-example-chip" onclick="setPrompt('Mountain landscape with purple sky')">
+                        🏔️ "Mountain landscape, purple sky"
+                    </div>
+                </div>
+                <button onclick="openImageModal()" class="btn-ai-sidebar">
+                    🎨 Générer une image
+                </button>
+            </div>
+
+            {# Carte Nouvelle Catégorie #}
+            <div class="side-card-add">
+                <div class="add-card-icon">🗂️</div>
+                <div class="add-card-title">Nouvelle catégorie</div>
+                <div class="add-card-sub">
+                    Organise le forum en créant un espace dédié à un sujet qui t'intéresse.
+                </div>
+                <div class="add-tips-list">
+                    <div class="add-tip-item">
+                        <span class="add-tip-dot"></span>
+                        Choisis un nom clair et court
+                    </div>
+                    <div class="add-tip-item">
+                        <span class="add-tip-dot"></span>
+                        Ajoute une description utile
+                    </div>
+                    <div class="add-tip-item">
+                        <span class="add-tip-dot"></span>
+                        Invite la communauté à poster
+                    </div>
+                </div>
+                <a href="{{ path('forum_categorie_new') }}" class="btn-add-sidebar">
+                    ➕ Créer une catégorie
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+
+
+</main>
+
+
+{# ── MODALE IMAGE IA ── #}
+<div id="imageModal" style="display:none;position:fixed;inset:0;z-index:1000;
+    background:rgba(13,13,20,.75);backdrop-filter:blur(10px);
+    align-items:center;justify-content:center;">
+    <div class="image-modal-box">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+            <div>
+                <div style="font-family:'Clash Display',sans-serif;font-size:20px;font-weight:600;color:#0D0D14;">
+                    🎨 Génération d'image IA
+                </div>
+                <div style="font-size:12px;color:#8A8AA8;margin-top:3px;">Stable Diffusion XL via HuggingFace</div>
+            </div>
+            <button onclick="closeImageModal()" style="width:32px;height:32px;border-radius:50%;
+                border:none;background:#EDE9FF;color:#6C47FF;font-size:16px;cursor:pointer;">✕</button>
+        </div>
+
+
+        <div style="margin-bottom:16px;">
+            <div style="font-size:12px;color:#8A8AA8;margin-bottom:8px;font-weight:600;">🎨 Style :</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;" id="styleBox">
+                {% set styles = {'': '✨ Aucun','photorealistic, 4k': '📷 Réaliste','digital art, vibrant': '🎨 Digital','oil painting, classic': '🖼️ Peinture','anime style, colorful': '🌸 Anime','watercolor, soft': '💧 Aquarelle'} %}
+                {% for styleValue, styleLabel in styles %}
+                <button onclick="selectStyle('{{ styleValue }}', this)" class="style-chip {{ styleValue == '' ? 'active' }}">{{ styleLabel }}</button>
+                {% endfor %}
+            </div>
+        </div>
+
+
+        <div style="margin-bottom:16px;">
+            <div style="font-size:12px;color:#8A8AA8;margin-bottom:8px;font-weight:600;">💡 Exemples :</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                {% for ex in ['A peaceful meditation garden','Students in a modern library','Neural network visualization','Mountain landscape at sunset'] %}
+                <button onclick="setPrompt('{{ ex }}')" class="prompt-example">{{ ex|slice(0,22) }}…</button>
+                {% endfor %}
+            </div>
+        </div>
+
+
+        <div style="margin-bottom:16px;">
+            <label style="display:block;font-size:13px;font-weight:600;color:#3A3A52;margin-bottom:7px;">
+                Description (en anglais) *
+            </label>
+            <textarea id="imagePrompt" rows="3"
+                placeholder="Ex: A beautiful purple forest with glowing trees..."
+                style="width:100%;padding:11px 14px;border:1.5px solid rgba(108,71,255,.2);
+                border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;
+                color:#0D0D14;outline:none;resize:vertical;box-sizing:border-box;"
+                onfocus="this.style.borderColor='#6C47FF'"
+                onblur="this.style.borderColor='rgba(108,71,255,.2)'"></textarea>
+        </div>
+
+
+        <button onclick="generateImage()" id="generateBtn"
+            style="width:100%;padding:13px;background:linear-gradient(135deg,#6C47FF,#4B2FCC);
+            color:white;border:none;border-radius:12px;font-size:14px;font-weight:600;
+            cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:16px;">
+            🎨 Générer l'image
+        </button>
+
+
+        <div id="imageLoading" style="display:none;text-align:center;padding:24px;">
+            <div style="font-size:36px;animation:spin 2s linear infinite;display:inline-block;">⚙️</div>
+            <div style="font-size:13px;color:#6C47FF;font-weight:600;margin-top:8px;">Génération en cours…</div>
+            <div style="font-size:11px;color:#8A8AA8;margin-top:4px;">10 à 30 secondes</div>
+        </div>
+
+
+        <div id="imageError" style="display:none;background:#FEF2F2;border:1px solid rgba(255,107,107,.2);
+            border-radius:10px;padding:12px;color:#FF6B6B;font-size:13px;margin-bottom:12px;"></div>
+
+
+        <div id="imageResult" style="display:none;">
+            <div style="font-size:13px;font-weight:600;color:#3A3A52;margin-bottom:10px;">✅ Image générée :</div>
+            <img id="generatedImg" src="" alt="Image IA" style="width:100%;border-radius:14px;
+                border:1px solid rgba(108,71,255,.15);margin-bottom:14px;">
+            <div style="display:flex;gap:10px;">
+                <a id="downloadBtn" href="#" download="harmony-ia.png"
+                style="flex:1;padding:10px;background:#EDE9FF;color:#6C47FF;border-radius:10px;
+                font-size:13px;font-weight:600;text-align:center;text-decoration:none;">💾 Télécharger</a>
+                <button onclick="resetModal()" style="flex:1;padding:10px;background:#F4F3FF;
+                color:#3A3A52;border:1.5px solid rgba(108,71,255,.15);border-radius:10px;
+                font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">🔄 Nouvelle</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<style>@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}</style>
+
+
+<script>
+let selectedStyle = '';
+function selectStyle(v, btn) {
+    selectedStyle = v;
+    document.querySelectorAll('#styleBox button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+}
+function openImageModal() { document.getElementById('imageModal').style.display = 'flex'; }
+function closeImageModal() { document.getElementById('imageModal').style.display = 'none'; }
+document.getElementById('imageModal').addEventListener('click', function(e) { if(e.target===this) closeImageModal(); });
+function setPrompt(t) { document.getElementById('imagePrompt').value = t; }
+async function generateImage() {
+    const prompt = document.getElementById('imagePrompt').value.trim();
+    if (!prompt) { showImgError('Merci de décrire l\'image.'); return; }
+    const btn = document.getElementById('generateBtn');
+    btn.disabled = true; btn.textContent = '⏳ Génération…';
+    document.getElementById('imageLoading').style.display = 'block';
+    document.getElementById('imageResult').style.display  = 'none';
+    document.getElementById('imageError').style.display   = 'none';
+    try {
+        const fd = new FormData();
+        fd.append('prompt', prompt); fd.append('style', selectedStyle);
+        const res  = await fetch('{{ path("forum_generate_image") }}', {method:'POST',body:fd});
+        const data = await res.json();
+        document.getElementById('imageLoading').style.display = 'none';
+        if (data.error) { showImgError(data.error); resetBtn(); return; }
+        const src = 'data:image/png;base64,' + data.image;
+        document.getElementById('generatedImg').src = src;
+        document.getElementById('downloadBtn').href = src;
+        document.getElementById('imageResult').style.display = 'block';
+        resetBtn();
+    } catch(e) { document.getElementById('imageLoading').style.display='none'; showImgError('Erreur réseau.'); resetBtn(); }
+}
+function showImgError(msg) { const el=document.getElementById('imageError'); el.textContent='❌ '+msg; el.style.display='block'; }
+function resetBtn() { const b=document.getElementById('generateBtn'); b.disabled=false; b.textContent='🎨 Générer l\'image'; }
+function resetModal() {
+    document.getElementById('imageResult').style.display='none';
+    document.getElementById('imageError').style.display='none';
+    document.getElementById('imagePrompt').value='';
+    selectedStyle='';
+    document.querySelectorAll('#styleBox button').forEach((b,i) => { b.classList.toggle('active',i===0); });
+}
+</script>
+{% endblock %}
+
+
+

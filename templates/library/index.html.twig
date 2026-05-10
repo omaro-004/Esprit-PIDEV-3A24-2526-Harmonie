@@ -1,0 +1,95 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Library - Harmony{% endblock %}
+
+{% block stylesheets %}
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --purple:       #6A5ACD;
+            --purple-dark:  #4B3B9E;
+            --purple-soft:  #8B7FD4;
+            --purple-pale:  #EDE8FA;
+            --purple-ghost: #F7F5FD;
+            --text:         #1C1733;
+            --text-mid:     #4A4570;
+            --text-muted:   #9590B8;
+            --border:       rgba(106,90,205,.12);
+            --white:        #FFFFFF;
+            --font-head:    'Syne', sans-serif;
+            --font-body:    'Inter', sans-serif;
+        }
+
+        html, body {
+            height: 100%;
+            font-family: var(--font-body);
+            background: var(--purple-ghost);
+            color: var(--text);
+        }
+
+        /* ── PAGE ── */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 48px 40px 80px;
+        }
+        .content-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            padding: 60px 40px;
+            text-align: center;
+        }
+        .page-title {
+            font-family: var(--font-head);
+            font-weight: 800;
+            font-size: 48px;
+            color: var(--purple);
+            margin-bottom: 16px;
+            letter-spacing: -.5px;
+        }
+        .page-description {
+            font-size: 16px;
+            font-weight: 300;
+            color: var(--text-mid);
+            line-height: 1.7;
+            max-width: 500px;
+            margin: 0 auto 28px;
+        }
+        .wip-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: .8px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            background: var(--purple-ghost);
+            border: 1px solid var(--border);
+            padding: 6px 16px;
+            border-radius: 20px;
+        }
+
+        @media (max-width: 640px) {
+            .topbar { padding: 0 20px; }
+            .nav-links { display: none; }
+            .container { padding: 24px 20px 60px; }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    {% include '_planning_topbar.html.twig' %}
+
+    <!-- ═══ PAGE ═════════════════════════════════════════════════════ -->
+    <div class="container">
+        <div class="content-card">
+            <h1 class="page-title">📖 Library</h1>
+            <p class="page-description">Accédez à votre bibliothèque de ressources et cours.</p>
+            <span class="wip-badge">🚧 En cours de développement</span>
+        </div>
+    </div>
+
+{% endblock %}

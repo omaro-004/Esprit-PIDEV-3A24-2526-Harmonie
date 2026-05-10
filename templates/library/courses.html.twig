@@ -1,0 +1,1732 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}My Courses - Harmony{% endblock %}
+
+{% block stylesheets %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --purple:       #6A5ACD;
+            --purple-dark:  #4B3B9E;
+            --purple-soft:  #8B7FD4;
+            --purple-pale:  #EDE8FA;
+            --purple-ghost: #F7F5FD;
+            --text:         #1C1733;
+            --text-mid:     #4A4570;
+            --text-muted:   #9590B8;
+            --border:       rgba(106,90,205,.12);
+            --white:        #FFFFFF;
+            --font-head:    'Syne', sans-serif;
+            --font-body:    'Inter', sans-serif;
+            --radius-sm: 8px; --radius-md: 12px;
+            --radius-lg: 16px; --radius-xl: 22px;
+            --shadow-sm: 0 2px 8px rgba(106,90,205,.08);
+            --shadow-md: 0 6px 24px rgba(106,90,205,.12);
+            --shadow-lg: 0 16px 48px rgba(106,90,205,.16);
+            --transition: 160ms cubic-bezier(.16,1,.3,1);
+        }
+
+        html, body { height: 100%; font-family: var(--font-body); background: var(--purple-ghost); color: var(--text); }
+
+        /* ── TOPBAR ───────────────────────────────────────────────── */
+        .topbar {
+            position: sticky; top: 0; z-index: 200;
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            height: 62px; display: flex; align-items: center;
+            padding: 0 40px; gap: 8px;
+        }
+        .topbar-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; margin-right: 32px; }
+        .logo-mark { width: 34px; height: 34px; border-radius: 10px; object-fit: contain; flex-shrink: 0; }
+        .nav-links { display: flex; align-items: center; gap: 2px; flex: 1; flex-wrap: nowrap; overflow-x: auto; }
+        .nav-link {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 7px 14px; border-radius: 9px;
+            font-size: 13.5px; font-weight: 500;
+            color: var(--text-mid); text-decoration: none; white-space: nowrap;
+            transition: background .15s, color .15s;
+        }
+        .nav-link:hover { background: var(--purple-pale); color: var(--purple); }
+        .nav-link.active { background: var(--purple-pale); color: var(--purple); font-weight: 600; }
+        .nav-link .nav-emoji { font-size: 14px; }
+        .topbar-right { display: flex; align-items: center; gap: 10px; margin-left: auto; flex-shrink: 0; }
+        .logout-btn {
+            padding: 7px 16px; border-radius: 9px;
+            border: 1.5px solid rgba(239,68,68,.2); background: transparent;
+            color: #E05252; font-family: var(--font-body); font-size: 13px; font-weight: 500;
+            cursor: pointer; transition: background .15s, border-color .15s; white-space: nowrap;
+        }
+        .logout-btn:hover { background: #FEF2F2; border-color: #E05252; }
+        .profile-wrap { position: relative; }
+        .avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: var(--purple); color: white;
+            font-family: var(--font-head); font-weight: 700; font-size: 14px;
+            display: grid; place-items: center; cursor: pointer;
+            border: 2px solid var(--purple-pale); transition: box-shadow .15s;
+        }
+        .avatar:hover { box-shadow: 0 0 0 3px rgba(106,90,205,.25); }
+        .profile-dropdown {
+            position: absolute; top: calc(100% + 10px); right: 0; width: 220px;
+            background: var(--white); border: 1px solid var(--border);
+            border-radius: 14px; box-shadow: 0 12px 40px rgba(0,0,0,.1);
+            padding: 16px; display: none; z-index: 500;
+        }
+        .profile-dropdown.open { display: block; }
+        .pd-name  { font-size: 14px; font-weight: 600; color: var(--text); }
+        .pd-email { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        .pd-divider { height: 1px; background: var(--border); margin: 12px 0; }
+        .pd-hint { font-size: 11px; color: var(--text-muted); font-style: italic; }
+
+        /* ── PAGE SHELL ───────────────────────────────────────────── */
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 40px 80px; }
+
+        /* ── PAGE HEADER ──────────────────────────────────────────── */
+        .page-header {
+            display: flex; align-items: center; gap: 16px;
+            margin-bottom: 28px;
+        }
+        .page-header-left { display: flex; align-items: center; gap: 12px; flex: 1; }
+        .page-icon {
+            width: 44px; height: 44px; border-radius: var(--radius-md);
+            background: var(--purple-pale);
+            display: grid; place-items: center; font-size: 22px; flex-shrink: 0;
+        }
+        .page-title {
+            font-family: var(--font-head); font-weight: 800;
+            font-size: clamp(1.5rem, 2.5vw, 2rem);
+            color: var(--text); letter-spacing: -.3px;
+        }
+        .page-header-actions { display: flex; align-items: center; gap: 10px; }
+
+        /* ── BUTTONS ──────────────────────────────────────────────── */
+        .btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 9px 18px; border-radius: var(--radius-md);
+            font-family: var(--font-body); font-size: 13.5px; font-weight: 500;
+            cursor: pointer; border: none; transition: background var(--transition), box-shadow var(--transition), transform var(--transition);
+            text-decoration: none;
+        }
+        .btn:active { transform: scale(.97); }
+        .btn-primary { background: var(--purple); color: #fff; box-shadow: 0 2px 12px rgba(106,90,205,.3); }
+        .btn-primary:hover { background: var(--purple-dark); box-shadow: 0 4px 18px rgba(106,90,205,.4); }
+        .btn-secondary {
+            background: var(--white); color: var(--text-mid);
+            border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+        }
+        .btn-secondary:hover { background: var(--purple-ghost); color: var(--purple); border-color: rgba(106,90,205,.2); }
+        .btn-ghost { background: none; color: var(--text-muted); border: 1px solid transparent; padding: 7px 12px; }
+        .btn-ghost:hover { background: var(--purple-pale); color: var(--purple); }
+        .btn-danger { background: #FEF2F2; color: #E05252; border: 1px solid rgba(239,68,68,.2); }
+        .btn-danger:hover { background: #FEE2E2; border-color: #E05252; }
+        .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+        /* ── TOOLBAR ──────────────────────────────────────────────── */
+        .toolbar {
+            display: flex; align-items: center; justify-content: flex-end;
+            gap: 8px; margin-bottom: 24px;
+        }
+        .view-toggle-group {
+            display: flex; gap: 2px;
+            background: var(--white); border: 1px solid var(--border);
+            border-radius: var(--radius-md); padding: 3px;
+        }
+        .view-toggle-btn {
+            display: grid; place-items: center;
+            width: 34px; height: 34px;
+            border: none; background: none; cursor: pointer;
+            border-radius: 8px; color: var(--text-muted);
+            transition: background var(--transition), color var(--transition);
+        }
+        .view-toggle-btn:hover { color: var(--purple); background: var(--purple-ghost); }
+        .view-toggle-btn.active { background: var(--purple-pale); color: var(--purple); }
+
+        /* ── GRID VIEW ────────────────────────────────────────────── */
+        .courses-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(min(260px,100%), 1fr));
+            gap: 20px;
+        }
+
+        /* ── COURSE CARD ──────────────────────────────────────────── */
+        .course-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            cursor: pointer; position: relative;
+            transition: box-shadow var(--transition), transform var(--transition);
+        }
+        .course-card:hover { box-shadow: var(--shadow-md); transform: translateY(-3px); }
+        .course-card:focus-visible { outline: 2px solid var(--purple); outline-offset: 3px; }
+
+        .course-card-image { width: 100%; height: 148px; object-fit: cover; display: block; }
+        .course-card-placeholder {
+            width: 100%; height: 148px;
+            background: var(--purple-ghost);
+            display: grid; place-items: center; font-size: 2.25rem;
+        }
+        .course-card-body { padding: 14px 16px 18px; }
+        .course-title { font-family: var(--font-head); font-size: 14.5px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+        .course-subtitle { font-size: 12px; color: var(--text-muted); font-weight: 400; }
+
+        .course-delete-btn {
+            position: absolute; top: 8px; right: 8px;
+            width: 28px; height: 28px; border-radius: 50%;
+            background: rgba(0,0,0,.45); backdrop-filter: blur(4px);
+            color: #fff; font-size: 12px; line-height: 1;
+            display: grid; place-items: center;
+            border: none; cursor: pointer;
+            opacity: 0; transition: opacity var(--transition), background var(--transition);
+        }
+        .course-card:hover .course-delete-btn { opacity: 1; }
+        .course-delete-btn:hover { background: #E05252; }
+
+        .saved-badge {
+            position: absolute; top: 8px; left: 8px;
+            background: rgba(0,0,0,.45); backdrop-filter: blur(4px);
+            color: #fff; font-size: 11px; font-weight: 500;
+            padding: 3px 10px; border-radius: 20px;
+        }
+
+        /* ── LIST VIEW ────────────────────────────────────────────── */
+        .courses-list { display: flex; flex-direction: column; gap: 8px; }
+        .course-list-item {
+            display: flex; align-items: center; gap: 14px;
+            padding: 12px 16px;
+            background: var(--white); border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: box-shadow var(--transition), background var(--transition);
+        }
+        .course-list-item:hover { background: var(--purple-ghost); box-shadow: var(--shadow-sm); }
+        .course-list-item:focus-visible { outline: 2px solid var(--purple); outline-offset: 2px; }
+
+        .course-list-thumb { width: 56px; height: 56px; border-radius: var(--radius-md); object-fit: cover; flex-shrink: 0; }
+        .course-list-placeholder {
+            width: 56px; height: 56px; border-radius: var(--radius-md);
+            background: var(--purple-ghost); display: grid; place-items: center;
+            font-size: 1.375rem; flex-shrink: 0;
+        }
+        .course-list-info { flex: 1; min-width: 0; }
+        .course-list-title { font-family: var(--font-head); font-size: 14px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .course-list-subject { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        .course-list-actions { flex-shrink: 0; }
+
+        /* ── EMPTY STATE ──────────────────────────────────────────── */
+        .empty-state {
+            grid-column: 1 / -1;
+            display: flex; flex-direction: column; align-items: center;
+            padding: 80px 40px; text-align: center;
+            background: var(--white); border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+        }
+        .empty-icon { font-size: 3rem; margin-bottom: 20px; }
+        .empty-state h3 { font-family: var(--font-head); font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
+        .empty-state p { font-size: 14px; color: var(--text-muted); max-width: 34ch; margin-bottom: 28px; line-height: 1.6; }
+
+        /* ── MODAL ────────────────────────────────────────────────── */
+        .modal-backdrop {
+            position: fixed; inset: 0; z-index: 400;
+            background: rgba(28,23,51,.45); backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none;
+            transition: opacity var(--transition);
+        }
+        .modal-backdrop.open { opacity: 1; pointer-events: all; }
+        .modal {
+            background: var(--white); border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            padding: 32px; width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto;
+            transform: translateY(20px); transition: transform var(--transition);
+        }
+        .modal-backdrop.open .modal { transform: translateY(0); }
+        .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+        .modal-title { font-family: var(--font-head); font-size: 18px; font-weight: 800; color: var(--text); }
+        .modal-close {
+            width: 32px; height: 32px; border-radius: 8px; border: none; background: none;
+            cursor: pointer; color: var(--text-muted); display: grid; place-items: center;
+            transition: background var(--transition), color var(--transition);
+        }
+        .modal-close:hover { background: var(--purple-pale); color: var(--purple); }
+
+        /* ── FORM ─────────────────────────────────────────────────── */
+        .form-group { margin-bottom: 18px; }
+        .form-label { display: block; font-size: 13px; font-weight: 600; color: var(--text-mid); margin-bottom: 7px; }
+        .form-required { color: #E05252; margin-left: 2px; }
+        .form-control {
+            width: 100%; padding: 9px 13px;
+            background: var(--purple-ghost); border: 1.5px solid var(--border);
+            border-radius: var(--radius-md); font-family: var(--font-body); font-size: 13.5px;
+            color: var(--text); outline: none;
+            transition: border-color var(--transition), box-shadow var(--transition);
+        }
+        .form-control::placeholder { color: var(--text-muted); }
+        .form-control:focus { border-color: var(--purple-soft); box-shadow: 0 0 0 3px rgba(106,90,205,.12); background: var(--white); }
+
+        .form-file-list {
+            min-height: 70px; max-height: 120px; overflow-y: auto;
+            background: var(--purple-ghost); border: 1.5px solid var(--border);
+            border-radius: var(--radius-md); padding: 8px;
+        }
+        .form-file-item {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 8px; padding: 5px 8px; border-radius: 7px;
+            font-size: 12px; color: var(--text-mid);
+        }
+        .form-file-item:hover { background: var(--purple-pale); }
+        .file-remove { color: var(--text-muted); cursor: pointer; background: none; border: none; font-size: 12px; padding: 2px 4px; }
+        .file-remove:hover { color: #E05252; }
+
+        .image-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .auto-gen-toggle {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 8px 14px; border-radius: var(--radius-md);
+            border: 1.5px solid var(--border); background: var(--white);
+            font-size: 13px; color: var(--text-muted); cursor: pointer;
+            transition: all var(--transition);
+        }
+        .auto-gen-toggle:hover, .auto-gen-toggle.active { border-color: var(--purple); color: var(--purple); background: var(--purple-ghost); }
+        .image-hint { font-size: 11.5px; color: var(--text-muted); margin-top: 6px; }
+
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 28px; }
+
+        /* ── TOAST ────────────────────────────────────────────────── */
+        .toast-container { position: fixed; bottom: 28px; right: 28px; z-index: 600; display: flex; flex-direction: column; gap: 8px; }
+        .toast {
+            padding: 12px 18px; border-radius: var(--radius-md);
+            font-size: 13.5px; font-weight: 500; box-shadow: var(--shadow-md);
+            animation: toastIn .2s ease;
+        }
+        .toast-success { background: #ECFDF5; color: #166534; border: 1px solid #BBF7D0; }
+        .toast-error   { background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
+        @keyframes toastIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+        /* ── RESPONSIVE ───────────────────────────────────────────── */
+        @media (max-width: 640px) {
+            .topbar { padding: 0 20px; }
+            .nav-links { display: none; }
+            .container { padding: 24px 20px 60px; }
+            .page-header { flex-wrap: wrap; }
+        }
+
+        /* ── CONTEXT MENU ─────────────────────────────────────────── */
+        .ctx-menu {
+            position: fixed; z-index: 800;
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            padding: 6px;
+            min-width: 192px;
+            display: none;
+            animation: ctxIn .12s ease;
+        }
+        .ctx-menu.open { display: block; }
+        @keyframes ctxIn { from { opacity:0; transform:scale(.96) translateY(-4px); } to { opacity:1; transform:none; } }
+
+        .ctx-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 12px; border-radius: 9px;
+            font-size: 13.5px; font-weight: 500;
+            color: var(--text-mid); cursor: pointer;
+            border: none; background: none; width: 100%; text-align: left;
+            transition: background var(--transition), color var(--transition);
+        }
+        .ctx-item:hover { background: var(--purple-pale); color: var(--purple); }
+        .ctx-item.ctx-danger { color: #E05252; }
+        .ctx-item.ctx-danger:hover { background: #FEF2F2; color: #E05252; }
+        .ctx-item.ctx-publish { color: #16a34a; }
+        .ctx-item.ctx-publish:hover { background: #f0fdf4; color: #16a34a; }
+        .ctx-sep { height: 1px; background: var(--border); margin: 4px 0; }
+
+        /* ── PENCIL BUTTON ON CARD ────────────────────────────────── */
+        .course-edit-btn {
+            position: absolute; top: 8px; right: 42px;
+            width: 28px; height: 28px; border-radius: 50%;
+            background: rgba(0,0,0,.45); backdrop-filter: blur(4px);
+            color: #fff; font-size: 12px; line-height: 1;
+            display: grid; place-items: center;
+            border: none; cursor: pointer;
+            opacity: 0; transition: opacity var(--transition), background var(--transition);
+        }
+        .course-card:hover .course-edit-btn { opacity: 1; }
+        .course-edit-btn:hover { background: var(--purple); }
+
+        /* list view pencil */
+        .course-list-edit-btn {
+            background: none; border: none; cursor: pointer;
+            color: var(--text-muted); padding: 6px 8px; border-radius: 8px;
+            font-size: 14px; line-height: 1;
+            transition: background var(--transition), color var(--transition);
+        }
+        .course-list-edit-btn:hover { background: var(--purple-pale); color: var(--purple); }
+
+        /* ── SEARCH & FILTER BAR ──────────────────────────────────── */
+        .search-filter-bar {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 20px; flex-wrap: wrap;
+        }
+        .search-wrap {
+            position: relative; flex: 1; min-width: 220px;
+        }
+        .search-icon {
+            position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+            color: var(--text-muted); pointer-events: none; display: flex;
+        }
+        .search-input {
+            width: 100%; padding: 9px 13px 9px 38px;
+            background: var(--white); border: 1.5px solid var(--border);
+            border-radius: var(--radius-md); font-family: var(--font-body);
+            font-size: 13.5px; color: var(--text); outline: none;
+            box-shadow: var(--shadow-sm);
+            transition: border-color var(--transition), box-shadow var(--transition);
+        }
+        .search-input::placeholder { color: var(--text-muted); }
+        .search-input:focus {
+            border-color: var(--purple-soft);
+            box-shadow: 0 0 0 3px rgba(106,90,205,.12);
+        }
+        .search-clear {
+            position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+            width: 20px; height: 20px; border-radius: 50%; border: none;
+            background: var(--text-muted); color: #fff; font-size: 10px;
+            cursor: pointer; display: none; place-items: center;
+            transition: background var(--transition);
+        }
+        .search-clear.visible { display: grid; }
+        .search-clear:hover { background: var(--purple); }
+        /* ── SUBJECT DROPDOWN ─────────────────────────────────────── */
+        .subject-dropdown-wrap {
+            position: relative; flex-shrink: 0;
+        }
+        .subject-dropdown-trigger {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 9px 13px; min-width: 180px;
+            background: var(--white); border: 1.5px solid var(--border);
+            border-radius: var(--radius-md); font-family: var(--font-body);
+            font-size: 13.5px; color: var(--text-mid); cursor: pointer;
+            box-shadow: var(--shadow-sm);
+            transition: border-color var(--transition), box-shadow var(--transition);
+            user-select: none;
+        }
+        .subject-dropdown-trigger:hover,
+        .subject-dropdown-trigger.open {
+            border-color: var(--purple-soft);
+            box-shadow: 0 0 0 3px rgba(106,90,205,.1);
+            color: var(--text);
+        }
+        .subject-dropdown-trigger.has-value { color: var(--purple); font-weight: 500; }
+        .sdt-label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sdt-chevron {
+            flex-shrink: 0; transition: transform var(--transition);
+        }
+        .subject-dropdown-trigger.open .sdt-chevron { transform: rotate(180deg); }
+        .sdt-clear {
+            flex-shrink: 0; width: 16px; height: 16px; border-radius: 50%;
+            background: var(--text-muted); color: #fff; font-size: 9px;
+            border: none; cursor: pointer; display: none; place-items: center;
+            transition: background var(--transition);
+        }
+        .sdt-clear.visible { display: grid; }
+        .sdt-clear:hover { background: var(--purple); }
+
+        .subject-dropdown-panel {
+            position: absolute; top: calc(100% + 6px); left: 0;
+            width: 240px; z-index: 300;
+            background: var(--white); border: 1.5px solid var(--border);
+            border-radius: var(--radius-lg); box-shadow: var(--shadow-md);
+            padding: 8px;
+            opacity: 0; pointer-events: none; transform: translateY(-6px);
+            transition: opacity var(--transition), transform var(--transition);
+        }
+        .subject-dropdown-panel.open {
+            opacity: 1; pointer-events: all; transform: translateY(0);
+        }
+        .sdp-search-wrap { position: relative; margin-bottom: 6px; }
+        .sdp-search-icon {
+            position: absolute; left: 9px; top: 50%; transform: translateY(-50%);
+            color: var(--text-muted); pointer-events: none; display: flex;
+        }
+        .sdp-search {
+            width: 100%; padding: 7px 10px 7px 30px;
+            background: var(--purple-ghost); border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm); font-family: var(--font-body);
+            font-size: 13px; color: var(--text); outline: none;
+            transition: border-color var(--transition);
+        }
+        .sdp-search::placeholder { color: var(--text-muted); }
+        .sdp-search:focus { border-color: var(--purple-soft); }
+        .sdp-list {
+            max-height: 220px; overflow-y: auto;
+            scrollbar-width: thin; scrollbar-color: var(--purple-soft) transparent;
+        }
+        .sdp-list::-webkit-scrollbar { width: 4px; }
+        .sdp-list::-webkit-scrollbar-thumb { background: var(--purple-soft); border-radius: 2px; }
+        .sdp-option {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 10px; border-radius: var(--radius-sm);
+            font-size: 13px; color: var(--text-mid); cursor: pointer;
+            transition: background var(--transition), color var(--transition);
+        }
+        .sdp-option:hover { background: var(--purple-pale); color: var(--purple); }
+        .sdp-option.selected { background: var(--purple-pale); color: var(--purple); font-weight: 600; }
+        .sdp-option-check {
+            width: 14px; height: 14px; border-radius: 4px;
+            border: 1.5px solid var(--border); flex-shrink: 0;
+            display: grid; place-items: center; font-size: 9px;
+            transition: background var(--transition), border-color var(--transition);
+        }
+        .sdp-option.selected .sdp-option-check {
+            background: var(--purple); border-color: var(--purple); color: #fff;
+        }
+        .sdp-empty { padding: 12px 10px; font-size: 13px; color: var(--text-muted); text-align: center; }
+        .search-results-count {
+            font-size: 12.5px; color: var(--text-muted); margin-bottom: 12px;
+            min-height: 18px;
+        }
+        .no-results-msg {
+            grid-column: 1/-1; display: flex; flex-direction: column; align-items: center;
+            padding: 60px 40px; text-align: center;
+            background: var(--white); border: 1px solid var(--border);
+            border-radius: var(--radius-xl); display: none;
+        }
+        .no-results-msg.visible { display: flex; }
+        .no-results-msg .no-results-icon { font-size: 2.5rem; margin-bottom: 16px; }
+        .no-results-msg h4 { font-family: var(--font-head); font-size: 17px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+        .no-results-msg p  { font-size: 13.5px; color: var(--text-muted); }
+
+        /* ── COVER PREVIEW IN CHANGE-IMAGE MODAL ─────────────────── */
+        .cover-preview-wrap {
+            width: 100%; height: 140px; border-radius: var(--radius-md);
+            background: var(--purple-ghost); border: 1.5px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden; margin-bottom: 14px; font-size: 2.5rem;
+        }
+        .cover-preview-wrap img { width: 100%; height: 100%; object-fit: cover; }
+    </style>
+{% endblock %}
+
+{% block body %}
+    {% set current_route = app.request.attributes.get('_route') %}
+
+    {# ── TOPBAR ─────────────────────────────────────────────────────── #}
+    <header class="topbar">
+        <a href="{{ path('homepage') }}" class="topbar-logo">
+            <img src="{{ asset('images/logo.png') }}" class="logo-mark" alt="Harmony">
+        </a>
+        <nav class="nav-links">
+            <a href="{{ path('activites') }}"   class="nav-link {{ current_route == 'activites'   ? 'active' }}"><span class="nav-emoji">🏋</span> Activités</a>
+            <a href="{{ path('forum') }}"       class="nav-link {{ current_route == 'forum'       ? 'active' }}"><span class="nav-emoji">💬</span> Forum</a>
+            <a href="{{ path('taches') }}"      class="nav-link {{ current_route == 'taches'      ? 'active' }}"><span class="nav-emoji">📚</span> Tâches</a>
+            <a href="{{ path('evenements') }}"  class="nav-link {{ current_route == 'evenements'  ? 'active' }}"><span class="nav-emoji">📅</span> Événements</a>
+            <a href="{{ path('nutrition') }}"   class="nav-link {{ current_route == 'nutrition'   ? 'active' }}"><span class="nav-emoji">🥗</span> Nutrition</a>
+            <a href="{{ path('meditation') }}"  class="nav-link {{ current_route == 'meditation'  ? 'active' }}"><span class="nav-emoji">🧘</span> Méditation</a>
+            <a href="{{ path('journal') }}"     class="nav-link {{ current_route == 'journal'     ? 'active' }}"><span class="nav-emoji">📔</span> Journal</a>
+            <a href="{{ path('library') }}"     class="nav-link {{ current_route == 'library' or current_route starts with 'app_courses' ? 'active' }}"><span class="nav-emoji">📖</span> Library</a>
+        </nav>
+        <div class="topbar-right">
+            <form method="post" action="{{ path('app_logout') }}" style="margin:0">
+                <input type="hidden" name="_token" value="{{ csrf_token('logout') }}">
+                <button type="submit" class="logout-btn">🚪 Déconnexion</button>
+            </form>
+            <div class="profile-wrap">
+                <div class="avatar" id="avatarBtn">
+                    {{ app.user ? app.user.firstName|first|upper : 'E' }}
+                </div>
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="pd-name">{{ app.user ? app.user.firstName ~ ' ' ~ app.user.lastName : 'Étudiant' }}</div>
+                    <div class="pd-email">{{ app.user ? app.user.email : 'email@exemple.com' }}</div>
+                    <div class="pd-divider"></div>
+                    <div class="pd-hint">Double-clic pour modifier</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    {# ── PAGE ───────────────────────────────────────────────────────── #}
+    <div class="container">
+
+        {# Page header #}
+        <div class="page-header">
+            <div class="page-header-left">
+                <div class="page-icon">📖</div>
+                <h1 class="page-title">My Courses</h1>
+            </div>
+            <div class="page-header-actions">
+                <button class="btn btn-primary" id="addCourseBtn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Add Course
+                </button>
+                <a href="{{ path('library') }}" class="btn btn-secondary">📚 Library</a>
+            </div>
+        </div>
+
+        {# ── SEARCH & FILTER BAR ────────────────────────────────────── #}
+        <div class="search-filter-bar">
+            <div class="search-wrap">
+                <span class="search-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </span>
+                <input type="search" id="courseSearchInput" class="search-input"
+                       placeholder="Search courses…" autocomplete="off" aria-label="Search courses">
+                <button type="button" id="searchClearBtn" class="search-clear" aria-label="Clear search">✕</button>
+            </div>
+            {% if subjects is defined and subjects|length > 0 %}
+                <div class="subject-dropdown-wrap" id="subjectDropdownWrap">
+                    <button type="button" class="subject-dropdown-trigger" id="subjectDropdownTrigger"
+                            aria-haspopup="listbox" aria-expanded="false" aria-label="Filter by subject">
+                        <span class="sdt-label" id="subjectDropdownLabel">All Subjects</span>
+                        <button type="button" class="sdt-clear" id="subjectDropdownClear" aria-label="Clear subject filter" tabindex="-1">✕</button>
+                        <svg class="sdt-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="subject-dropdown-panel" id="subjectDropdownPanel" role="listbox" aria-label="Subjects">
+                        <div class="sdp-search-wrap">
+                            <span class="sdp-search-icon">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            </span>
+                            <input type="search" class="sdp-search" id="subjectSearch" placeholder="Search subjects…" autocomplete="off" aria-label="Search subjects">
+                        </div>
+                        <div class="sdp-list" id="subjectList">
+                            <div class="sdp-option selected" data-subject="" role="option" aria-selected="true">
+                                <span class="sdp-option-check">✓</span> All Subjects
+                            </div>
+                            {% for subject in subjects %}
+                                <div class="sdp-option" data-subject="{{ subject.name }}" role="option" aria-selected="false">
+                                    <span class="sdp-option-check"></span> {{ subject.name }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        <div class="search-results-count" id="searchResultsCount" aria-live="polite"></div>
+
+        {# Toolbar — view toggle #}
+        <div class="toolbar">
+            <div class="view-toggle-group" role="group" aria-label="View mode">
+                <button class="view-toggle-btn active" id="gridViewBtn" aria-pressed="true" aria-label="Grid view">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                        <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+                    </svg>
+                </button>
+                <button class="view-toggle-btn" id="listViewBtn" aria-pressed="false" aria-label="List view">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+                        <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        {# ── GRID VIEW ──────────────────────────────────────────────── #}
+        <div class="courses-grid" id="gridView">
+            {% if courses is defined and courses|length > 0 %}
+                {% for course in courses %}
+                    <div class="course-card"
+                         data-id="{{ course.id }}"
+                         data-title="{{ course.title }}"
+                         data-subject="{{ course.subjectName ?? '' }}"
+                         data-published="{{ course.isPublished ? '1' : '0' }}"
+                         data-cover="{{ course.coverImagePath ?? '' }}"
+                         data-saved="{{ course.isSaved is defined and course.isSaved ? '1' : '0' }}"
+                         tabindex="0" role="button"
+                         aria-label="Open {{ course.title }}">
+
+                        {% if course.coverImagePath %}
+                            <img class="course-card-image"
+                                 src="/covers/{{ course.coverImagePath }}"
+                                 alt="{{ course.title }}"
+                                 width="260" height="148" loading="lazy">
+                        {% else %}
+                            <div class="course-card-placeholder" aria-hidden="true">🎓</div>
+                        {% endif %}
+
+                        <div class="course-card-body">
+                            <p class="course-title">{{ course.title }}</p>
+                            {% if course.subjectName is defined and course.subjectName %}
+                                <p class="course-subtitle">{{ course.subjectName }}</p>
+                            {% endif %}
+                        </div>
+
+                        {% if course.isSaved is defined and course.isSaved %}
+                            <span class="saved-badge">🔖 In Library</span>
+                        {% else %}
+                            <button class="course-edit-btn"
+                                    data-action="edit"
+                                    data-id="{{ course.id }}"
+                                    data-title="{{ course.title }}"
+                                    data-subject="{{ course.subjectName ?? '' }}"
+                                    aria-label="Edit {{ course.title }}">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
+                            </button>
+                            <button class="course-delete-btn"
+                                    data-action="delete"
+                                    data-id="{{ course.id }}"
+                                    data-title="{{ course.title }}"
+                                    aria-label="Delete {{ course.title }}">✕</button>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">📚</div>
+                    <h3>No courses yet</h3>
+                    <p>Create your first course and start organising your studies.</p>
+                    <button class="btn btn-primary" id="emptyAddBtn">Add Course</button>
+                </div>
+            {% endif %}
+            <div class="no-results-msg" id="noResultsGrid">
+                <div class="no-results-icon">🔍</div>
+                <h4>No courses match your search</h4>
+                <p>Try a different keyword or clear the subject filter.</p>
+            </div>
+        </div>
+
+        {# ── LIST VIEW (hidden by default) ──────────────────────────── #}
+        <div class="courses-list" id="listView" style="display:none;">
+            {% if courses is defined and courses|length > 0 %}
+                {% for course in courses %}
+                    <div class="course-list-item"
+                         data-id="{{ course.id }}"
+                         data-title="{{ course.title }}"
+                         data-subject="{{ course.subjectName ?? '' }}"
+                         data-published="{{ course.isPublished ? '1' : '0' }}"
+                         data-cover="{{ course.coverImagePath ?? '' }}"
+                         data-saved="{{ course.isSaved is defined and course.isSaved ? '1' : '0' }}"
+                         tabindex="0" role="button"
+                         aria-label="Open {{ course.title }}">
+
+                        {% if course.coverImagePath %}
+                            <img class="course-list-thumb"
+                                 src="/covers/{{ course.coverImagePath }}"
+                                 alt="{{ course.title }}"
+                                 width="56" height="56" loading="lazy">
+                        {% else %}
+                            <div class="course-list-placeholder" aria-hidden="true">🎓</div>
+                        {% endif %}
+
+                        <div class="course-list-info">
+                            <p class="course-list-title">{{ course.title }}</p>
+                            {% if course.subjectName is defined and course.subjectName %}
+                                <p class="course-list-subject">{{ course.subjectName }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="course-list-actions">
+                            {% if course.isSaved is defined and course.isSaved %}
+                                <span style="font-size:12px; color:var(--text-muted);">🔖 In Library</span>
+                            {% else %}
+                                <button class="course-list-edit-btn"
+                                        data-action="edit"
+                                        data-id="{{ course.id }}"
+                                        data-title="{{ course.title }}"
+                                        data-subject="{{ course.subjectName ?? '' }}"
+                                        aria-label="Edit {{ course.title }}">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
+                                </button>
+                                <button class="btn btn-ghost"
+                                        data-action="delete"
+                                        data-id="{{ course.id }}"
+                                        data-title="{{ course.title }}"
+                                        aria-label="Delete {{ course.title }}"
+                                        style="font-size:13px;">✕</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state" style="grid-column:unset;">
+                    <div class="empty-icon">📚</div>
+                    <h3>No courses yet</h3>
+                    <p>Create your first course and start organising your studies.</p>
+                    <button class="btn btn-primary" id="emptyAddBtnList">Add Course</button>
+                </div>
+            {% endif %}
+            <div class="no-results-msg" id="noResultsList" style="grid-column:unset;">
+                <div class="no-results-icon">🔍</div>
+                <h4>No courses match your search</h4>
+                <p>Try a different keyword or clear the subject filter.</p>
+            </div>
+        </div>
+
+    </div>{# /container #}
+
+    {# ── ADD COURSE MODAL ───────────────────────────────────────────── #}
+    <div class="modal-backdrop" id="addCourseModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Add Course</h2>
+                <button class="modal-close" id="modalCloseBtn" aria-label="Close">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+
+            <form id="addCourseForm" novalidate>
+                <div class="form-group">
+                    <label class="form-label" for="courseNameInput">Course name <span class="form-required">*</span></label>
+                    <input class="form-control" id="courseNameInput" name="title" type="text" placeholder="e.g. Introduction to Algorithms" required autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="subjectInput">Subject <span class="form-required">*</span></label>
+                    <input class="form-control" id="subjectInput" name="subject" type="text" placeholder="e.g. Computer Science" list="subjectsList" required autocomplete="off">
+                    <datalist id="subjectsList">
+                        {% if subjects is defined %}
+                        {% for subject in subjects %}
+                        <option value="{{ subject.name }}">
+                            {% endfor %}
+                            {% endif %}
+                    </datalist>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Cover image</label>
+                    <div class="image-row">
+                        <label class="btn btn-secondary" for="coverImageInput" style="cursor:pointer;" id="pickImageLabel">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                            Choose image…
+                        </label>
+                        <input type="file" id="coverImageInput" accept="image/png,image/jpeg,image/webp" style="display:none;" aria-label="Cover image">
+                        <button type="button" class="auto-gen-toggle" id="autoGenToggle">✨ Auto generate</button>
+                    </div>
+                    <p class="image-hint" id="imageHint">No image selected</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Files</label>
+                    <button type="button" class="btn btn-secondary" id="pickFilesBtn" style="margin-bottom:8px; font-size:13px;">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        Add files…
+                    </button>
+                    <input type="file" id="filesInput" multiple style="display:none;" aria-label="Course files">
+                    <div class="form-file-list" id="filesList" aria-live="polite"></div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="createBtn" disabled>
+                        <span id="createBtnLabel">Create</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {# ── DELETE CONFIRM MODAL ───────────────────────────────────────── #}
+    <div class="modal-backdrop" id="confirmModal" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
+        <div class="modal" style="max-width:380px;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="confirmTitle">Delete course?</h2>
+            </div>
+            <p id="confirmMsg" style="font-size:13.5px; color:var(--text-muted); line-height:1.6; margin-bottom:28px;"></p>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="confirmCancelBtn">Cancel</button>
+                <button class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    {# ── CONTEXT MENU ───────────────────────────────────────────────── #}
+    <div class="ctx-menu" id="ctxMenu" role="menu">
+        <button class="ctx-item" id="ctxEdit" role="menuitem">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
+            Rename / Subject
+        </button>
+        <button class="ctx-item" id="ctxCover" role="menuitem">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            Change image
+        </button>
+        <div class="ctx-sep"></div>
+        <button class="ctx-item ctx-publish" id="ctxPublish" role="menuitem">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <span id="ctxPublishLabel">Publish</span>
+        </button>
+        <div class="ctx-sep"></div>
+        <button class="ctx-item ctx-danger" id="ctxDelete" role="menuitem">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+            Delete
+        </button>
+    </div>
+
+    {# ── EDIT MODAL (rename + subject) ──────────────────────────────── #}
+    <div class="modal-backdrop" id="editModal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+        <div class="modal" style="max-width:420px;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="editModalTitle">Edit Course</h2>
+                <button class="modal-close" id="editModalClose" aria-label="Close">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="editTitleInput">Course name <span class="form-required">*</span></label>
+                <input class="form-control" id="editTitleInput" type="text" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="editSubjectInput">Subject</label>
+                <input class="form-control" id="editSubjectInput" type="text" autocomplete="off" list="subjectsList">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="editCancelBtn">Cancel</button>
+                <button class="btn btn-primary" id="editSaveBtn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    {# ── CHANGE COVER MODAL ─────────────────────────────────────────── #}
+    <div class="modal-backdrop" id="coverModal" role="dialog" aria-modal="true" aria-labelledby="coverModalTitle">
+        <div class="modal" style="max-width:420px;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="coverModalTitle">Change Cover Image</h2>
+                <button class="modal-close" id="coverModalClose" aria-label="Close">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="cover-preview-wrap" id="coverPreviewWrap">🎓</div>
+            <div class="form-group">
+                <div class="image-row">
+                    <label class="btn btn-secondary" for="coverModalFileInput" style="cursor:pointer;" id="coverPickLabel">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        Choose image…
+                    </label>
+                    <input type="file" id="coverModalFileInput" accept="image/png,image/jpeg,image/webp" style="display:none;">
+                    <button type="button" class="auto-gen-toggle" id="coverAutoGenToggle">✨ Auto generate</button>
+                </div>
+                <p class="image-hint" id="coverModalHint">Select an image or auto-generate one</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="coverCancelBtn">Cancel</button>
+                <button class="btn btn-primary" id="coverSaveBtn" disabled>
+                    <span id="coverSaveBtnLabel">Apply</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {# ── TOASTS ─────────────────────────────────────────────────────── #}
+    <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+    <script>
+        /* ── SEARCH & FILTER ────────────────────────────────────────── */
+        (function () {
+            const searchInput   = document.getElementById('courseSearchInput');
+            const clearBtn      = document.getElementById('searchClearBtn');
+            const countEl       = document.getElementById('searchResultsCount');
+            const noResultsGrid = document.getElementById('noResultsGrid');
+            const noResultsList = document.getElementById('noResultsList');
+
+            const trigger   = document.getElementById('subjectDropdownTrigger');
+            const panel     = document.getElementById('subjectDropdownPanel');
+            const label     = document.getElementById('subjectDropdownLabel');
+            const sdtClear  = document.getElementById('subjectDropdownClear');
+            const sdpSearch = document.getElementById('subjectSearch');
+            const sdpList   = document.getElementById('subjectList');
+
+            let activeSubject = '';
+
+            /* ── Filtering ── */
+            function filterCourses() {
+                const query = (searchInput ? searchInput.value.trim().toLowerCase() : '');
+                if (clearBtn) clearBtn.classList.toggle('visible', query.length > 0);
+
+                const gridCards = [...document.querySelectorAll('#gridView .course-card')];
+                const listItems = [...document.querySelectorAll('#listView .course-list-item')];
+
+                function matches(el) {
+                    const title   = (el.dataset.title   || '').toLowerCase();
+                    const subject = (el.dataset.subject || '').toLowerCase();
+                    const qOk = !query || title.includes(query) || subject.includes(query);
+                    const sOk = !activeSubject || subject === activeSubject.toLowerCase();
+                    return qOk && sOk;
+                }
+
+                let visible = 0;
+                gridCards.forEach(el => { const s = matches(el); el.style.display = s ? '' : 'none'; if (s) visible++; });
+                listItems.forEach(el => { el.style.display = matches(el) ? '' : 'none'; });
+
+                if (query || activeSubject) {
+                    if (countEl) countEl.textContent = visible + ' of ' + gridCards.length + ' course' + (gridCards.length !== 1 ? 's' : '') + ' shown';
+                    if (noResultsGrid) noResultsGrid.classList.toggle('visible', visible === 0);
+                    if (noResultsList) noResultsList.classList.toggle('visible', visible === 0);
+                } else {
+                    if (countEl) countEl.textContent = '';
+                    if (noResultsGrid) noResultsGrid.classList.remove('visible');
+                    if (noResultsList) noResultsList.classList.remove('visible');
+                }
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('input', filterCourses);
+                if (clearBtn) clearBtn.addEventListener('click', () => { searchInput.value = ''; filterCourses(); searchInput.focus(); });
+            }
+
+            /* ── Dropdown open/close ── */
+            function openPanel() {
+                if (!panel) return;
+                panel.classList.add('open');
+                trigger.classList.add('open');
+                trigger.setAttribute('aria-expanded', 'true');
+                setTimeout(() => sdpSearch && sdpSearch.focus(), 60);
+            }
+            function closePanel() {
+                if (!panel) return;
+                panel.classList.remove('open');
+                trigger.classList.remove('open');
+                trigger.setAttribute('aria-expanded', 'false');
+                if (sdpSearch) { sdpSearch.value = ''; renderOptions(''); }
+            }
+
+            if (trigger) {
+                trigger.addEventListener('click', e => {
+                    if (e.target.closest('.sdt-clear')) return;
+                    panel.classList.contains('open') ? closePanel() : openPanel();
+                });
+            }
+            document.addEventListener('click', e => {
+                if (panel && panel.classList.contains('open') && !e.target.closest('#subjectDropdownWrap')) closePanel();
+            });
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape' && panel && panel.classList.contains('open')) closePanel();
+            });
+
+            /* ── Search inside dropdown ── */
+            function renderOptions(query) {
+                if (!sdpList) return;
+                const q = query.toLowerCase();
+                sdpList.querySelectorAll('.sdp-option').forEach(opt => {
+                    const text = (opt.dataset.subject || 'all subjects').toLowerCase();
+                    opt.style.display = (!q || text.includes(q)) ? '' : 'none';
+                });
+                const anyVisible = [...sdpList.querySelectorAll('.sdp-option')].some(o => o.style.display !== 'none');
+                let emptyMsg = sdpList.querySelector('.sdp-empty');
+                if (!anyVisible) {
+                    if (!emptyMsg) { emptyMsg = document.createElement('div'); emptyMsg.className = 'sdp-empty'; emptyMsg.textContent = 'No subjects found'; sdpList.appendChild(emptyMsg); }
+                    emptyMsg.style.display = '';
+                } else if (emptyMsg) { emptyMsg.style.display = 'none'; }
+            }
+            if (sdpSearch) sdpSearch.addEventListener('input', () => renderOptions(sdpSearch.value));
+
+            /* ── Select option ── */
+            function selectSubject(subject, text) {
+                activeSubject = subject;
+                if (label) label.textContent = subject ? text : 'All Subjects';
+                if (trigger) trigger.classList.toggle('has-value', !!subject);
+                if (sdtClear) sdtClear.classList.toggle('visible', !!subject);
+                if (sdpList) sdpList.querySelectorAll('.sdp-option').forEach(opt => {
+                    const sel = opt.dataset.subject === subject;
+                    opt.classList.toggle('selected', sel);
+                    opt.setAttribute('aria-selected', String(sel));
+                    opt.querySelector('.sdp-option-check').textContent = sel ? '✓' : '';
+                });
+                closePanel();
+                filterCourses();
+            }
+
+            if (sdpList) sdpList.addEventListener('click', e => {
+                const opt = e.target.closest('.sdp-option');
+                if (!opt) return;
+                selectSubject(opt.dataset.subject, opt.textContent.replace('✓', '').trim());
+            });
+            if (sdtClear) sdtClear.addEventListener('click', e => { e.stopPropagation(); selectSubject('', ''); });
+        })();
+
+        (function () {
+            /* ── VIEW TOGGLE ────────────────────────────────────────────── */
+            const gridView    = document.getElementById('gridView');
+            const listView    = document.getElementById('listView');
+            const gridViewBtn = document.getElementById('gridViewBtn');
+            const listViewBtn = document.getElementById('listViewBtn');
+
+            function setView(grid) {
+                gridView.style.display = grid ? '' : 'none';
+                listView.style.display = grid ? 'none' : '';
+                gridViewBtn.classList.toggle('active', grid);
+                listViewBtn.classList.toggle('active', !grid);
+                gridViewBtn.setAttribute('aria-pressed', String(grid));
+                listViewBtn.setAttribute('aria-pressed', String(!grid));
+            }
+            gridViewBtn.addEventListener('click', () => setView(true));
+            listViewBtn.addEventListener('click', () => setView(false));
+
+            /* ── CARD / LIST CLICK → OPEN COURSE ───────────────────────── */
+            document.querySelectorAll('.course-card, .course-list-item').forEach(el => {
+                el.addEventListener('click', e => {
+                    if (e.target.closest('[data-action]')) return;
+                    window.location.href = '/courses/' + el.dataset.id;
+                });
+                el.addEventListener('keydown', e => {
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); }
+                });
+            });
+
+            /* ── CONTEXT MENU ───────────────────────────────────────────── */
+            const ctxMenu         = document.getElementById('ctxMenu');
+            const ctxEdit         = document.getElementById('ctxEdit');
+            const ctxCover        = document.getElementById('ctxCover');
+            const ctxPublish      = document.getElementById('ctxPublish');
+            const ctxPublishLabel = document.getElementById('ctxPublishLabel');
+            const ctxDelete       = document.getElementById('ctxDelete');
+            let ctxTarget = null; // the card/list-item element
+
+            function openCtx(e, cardEl) {
+                e.preventDefault();
+                ctxTarget = cardEl;
+                const isSaved = cardEl.dataset.saved === '1';
+                if (isSaved) return; // no actions for saved courses
+
+                // Update publish label
+                const isPublished = cardEl.dataset.published === '1';
+                ctxPublishLabel.textContent = isPublished ? 'Unpublish' : 'Publish';
+                ctxPublish.style.color = isPublished ? '#E05252' : '';
+                ctxPublish.classList.toggle('ctx-publish', !isPublished);
+                ctxPublish.classList.toggle('ctx-danger', isPublished);
+                ctxPublish.onmouseover = null; ctxPublish.onmouseout = null;
+
+                // Position
+                const vw = window.innerWidth, vh = window.innerHeight;
+                const mw = 200, mh = 210;
+                let x = e.clientX, y = e.clientY;
+                if (x + mw > vw) x = vw - mw - 8;
+                if (y + mh > vh) y = vh - mh - 8;
+                ctxMenu.style.left = x + 'px';
+                ctxMenu.style.top  = y + 'px';
+                ctxMenu.classList.add('open');
+            }
+
+            function closeCtx() {
+                ctxMenu.classList.remove('open');
+                ctxTarget = null;
+            }
+
+            document.querySelectorAll('.course-card, .course-list-item').forEach(el => {
+                el.addEventListener('contextmenu', e => openCtx(e, el));
+            });
+
+            document.addEventListener('click', e => {
+                if (!ctxMenu.contains(e.target)) closeCtx();
+            });
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape') closeCtx();
+            });
+
+            /* ── CTX: PUBLISH ───────────────────────────────────────────── */
+            ctxPublish.addEventListener('click', async () => {
+                if (!ctxTarget) return;
+                const id        = ctxTarget.dataset.id;
+                const published = ctxTarget.dataset.published === '1';
+                const newPublished = !published;
+                closeCtx();
+                try {
+                    const res  = await post('/courses/' + id + '/publish', { published: newPublished ? '1' : '0' });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.message || 'Failed');
+                    const nowPublished = data.published !== undefined ? (data.published ? '1' : '0') : (newPublished ? '1' : '0');
+                    // Update dataset on all matching elements so next right-click reads correctly
+                    document.querySelectorAll('[data-id="' + id + '"]').forEach(el => {
+                        el.dataset.published = nowPublished;
+                    });
+                    showToast(data.message, 'success');
+                } catch (err) { showToast(err.message || 'Failed', 'error'); }
+            });
+
+            /* ── CTX: DELETE ────────────────────────────────────────────── */
+            ctxDelete.addEventListener('click', () => {
+                if (!ctxTarget) return;
+                pendingDeleteId = ctxTarget.dataset.id;
+                const title = ctxTarget.dataset.title;
+                closeCtx();
+                document.getElementById('confirmMsg').textContent =
+                    'Delete "' + title + '"? This will remove the course and all its files.';
+                openModal('confirmModal');
+            });
+
+            /* ── CTX: EDIT (rename / subject) ───────────────────────────── */
+            ctxEdit.addEventListener('click', () => {
+                if (!ctxTarget) return;
+                openEditModal(ctxTarget.dataset.id, ctxTarget.dataset.title, ctxTarget.dataset.subject);
+                closeCtx();
+            });
+
+            /* ── CTX: CHANGE COVER ──────────────────────────────────────── */
+            ctxCover.addEventListener('click', () => {
+                if (!ctxTarget) return;
+                openCoverModal(ctxTarget.dataset.id, ctxTarget.dataset.cover);
+                closeCtx();
+            });
+
+            /* ── PENCIL BUTTONS (edit) ──────────────────────────────────── */
+            document.querySelectorAll('[data-action="edit"]').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    openEditModal(btn.dataset.id, btn.dataset.title, btn.dataset.subject);
+                });
+            });
+
+            /* ── EDIT MODAL ─────────────────────────────────────────────── */
+            const editModal      = document.getElementById('editModal');
+            const editTitleInput = document.getElementById('editTitleInput');
+            const editSubjectInput = document.getElementById('editSubjectInput');
+            const editSaveBtn    = document.getElementById('editSaveBtn');
+            let editingId = null;
+
+            function openEditModal(id, title, subject) {
+                editingId = id;
+                editTitleInput.value   = title || '';
+                editSubjectInput.value = subject || '';
+                openModal('editModal');
+                setTimeout(() => editTitleInput.focus(), 80);
+            }
+
+            document.getElementById('editModalClose').addEventListener('click', () => closeModal('editModal'));
+            document.getElementById('editCancelBtn').addEventListener('click', () => closeModal('editModal'));
+
+            editSaveBtn.addEventListener('click', async () => {
+                const title   = editTitleInput.value.trim();
+                const subject = editSubjectInput.value.trim();
+                if (!title) { editTitleInput.focus(); return; }
+                editSaveBtn.disabled = true;
+                editSaveBtn.textContent = 'Saving…';
+                try {
+                    const res  = await post('/courses/' + editingId + '/update', { title, subject });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.message || 'Failed');
+                    // Update DOM
+                    document.querySelectorAll('[data-id="' + editingId + '"]').forEach(el => {
+                        el.dataset.title   = title;
+                        el.dataset.subject = subject;
+                        const tEl = el.querySelector('.course-title, .course-list-title');
+                        if (tEl) tEl.textContent = title;
+                        const sEl = el.querySelector('.course-subtitle, .course-list-subject');
+                        if (sEl) sEl.textContent = subject;
+                    });
+                    closeModal('editModal');
+                    showToast('Course updated', 'success');
+                } catch (err) { showToast(err.message || 'Failed', 'error'); }
+                finally { editSaveBtn.disabled = false; editSaveBtn.textContent = 'Save'; }
+            });
+
+            /* ── CHANGE COVER MODAL ─────────────────────────────────────── */
+            const coverModal        = document.getElementById('coverModal');
+            const coverPreviewWrap  = document.getElementById('coverPreviewWrap');
+            const coverModalHint    = document.getElementById('coverModalHint');
+            const coverModalFile    = document.getElementById('coverModalFileInput');
+            const coverAutoGen      = document.getElementById('coverAutoGenToggle');
+            const coverSaveBtn      = document.getElementById('coverSaveBtn');
+            const coverSaveBtnLabel = document.getElementById('coverSaveBtnLabel');
+            let coveringId  = null;
+            let coverFile   = null;
+            let coverAutoGenOn = false;
+
+            function openCoverModal(id, currentCover) {
+                coveringId     = id;
+                coverFile      = null;
+                coverAutoGenOn = false;
+                coverAutoGen.classList.remove('active');
+                coverModalHint.textContent = 'Select an image or auto-generate one';
+                coverSaveBtn.disabled = true;
+                coverSaveBtnLabel.textContent = 'Apply';
+                coverModalFile.value = '';
+
+                // Show current cover
+                coverPreviewWrap.innerHTML = '';
+                if (currentCover) {
+                    const img = document.createElement('img');
+                    img.src = '/covers/' + currentCover;
+                    img.alt = 'Current cover';
+                    coverPreviewWrap.appendChild(img);
+                } else {
+                    coverPreviewWrap.textContent = '🎓';
+                }
+                openModal('coverModal');
+            }
+
+            document.getElementById('coverModalClose').addEventListener('click', () => closeModal('coverModal'));
+            document.getElementById('coverCancelBtn').addEventListener('click', () => closeModal('coverModal'));
+
+            coverModalFile.addEventListener('change', () => {
+                if (!coverModalFile.files[0]) return;
+                coverFile = coverModalFile.files[0];
+                coverAutoGenOn = false;
+                coverAutoGen.classList.remove('active');
+                coverModalHint.textContent = coverFile.name;
+                coverSaveBtn.disabled = false;
+                // Preview
+                const reader = new FileReader();
+                reader.onload = ev => {
+                    coverPreviewWrap.innerHTML = '<img src="' + ev.target.result + '" alt="Preview">';
+                };
+                reader.readAsDataURL(coverFile);
+            });
+
+            coverAutoGen.addEventListener('click', () => {
+                coverAutoGenOn = !coverAutoGenOn;
+                coverAutoGen.classList.toggle('active', coverAutoGenOn);
+                if (coverAutoGenOn) {
+                    coverFile = null;
+                    coverModalFile.value = '';
+                    coverModalHint.textContent = 'Will generate on apply';
+                    coverSaveBtn.disabled = false;
+                } else {
+                    coverModalHint.textContent = 'Select an image or auto-generate one';
+                    coverSaveBtn.disabled = true;
+                }
+            });
+
+            coverSaveBtn.addEventListener('click', async () => {
+                coverSaveBtn.disabled = true;
+                coverSaveBtnLabel.textContent = coverAutoGenOn ? 'Generating…' : 'Uploading…';
+                const fd = new FormData();
+                if (coverFile) fd.append('coverImage', coverFile);
+                if (coverAutoGenOn) fd.append('autoGen', '1');
+                fd.append('_token', getCsrf());
+                try {
+                    const res  = await fetch('/courses/' + coveringId + '/cover', {
+                        method: 'POST', body: fd,
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.message || 'Failed');
+                    // Update all card images with this id
+                    document.querySelectorAll('[data-id="' + coveringId + '"]').forEach(el => {
+                        el.dataset.cover = data.coverPath;
+                        const img = el.querySelector('.course-card-image, .course-list-thumb');
+                        const placeholder = el.querySelector('.course-card-placeholder, .course-list-placeholder');
+                        if (img) {
+                            img.src = '/covers/' + data.coverPath + '?t=' + Date.now();
+                        } else if (placeholder) {
+                            // Replace placeholder with img
+                            const newImg = document.createElement('img');
+                            newImg.src = '/covers/' + data.coverPath;
+                            newImg.alt = el.dataset.title;
+                            newImg.className = placeholder.classList.contains('course-card-placeholder')
+                                ? 'course-card-image' : 'course-list-thumb';
+                            placeholder.replaceWith(newImg);
+                        }
+                    });
+                    closeModal('coverModal');
+                    showToast('Cover updated', 'success');
+                } catch (err) {
+                    showToast(err.message || 'Failed to update cover', 'error');
+                    coverSaveBtn.disabled = false;
+                    coverSaveBtnLabel.textContent = 'Apply';
+                }
+            });
+
+            /* ── DELETE ─────────────────────────────────────────────────── */
+            let pendingDeleteId = null;
+
+            document.querySelectorAll('[data-action="delete"]').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    pendingDeleteId = btn.dataset.id;
+                    document.getElementById('confirmMsg').textContent =
+                        'Delete "' + btn.dataset.title + '"? This will remove the course and all its files.';
+                    openModal('confirmModal');
+                });
+            });
+
+            document.getElementById('confirmCancelBtn').addEventListener('click', () => closeModal('confirmModal'));
+            document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+                if (!pendingDeleteId) return;
+                closeModal('confirmModal');
+                try {
+                    const res = await fetch('/courses/' + pendingDeleteId + '/delete', {
+                        method: 'POST',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        body: new URLSearchParams({ _token: getCsrf() })
+                    });
+                    if (!res.ok) throw new Error();
+                    document.querySelectorAll('[data-id="' + pendingDeleteId + '"]').forEach(el => el.remove());
+                    showToast('Course deleted', 'success');
+                } catch { showToast('Failed to delete course', 'error'); }
+                pendingDeleteId = null;
+            });
+
+            /* ── ADD COURSE MODAL ───────────────────────────────────────── */
+            let autoGen = false, addCoverFile = null, selectedFiles = [];
+
+            const addCourseModal  = document.getElementById('addCourseModal');
+            const addCourseForm   = document.getElementById('addCourseForm');
+            const courseNameInput = document.getElementById('courseNameInput');
+            const subjectInput    = document.getElementById('subjectInput');
+            const imageHint       = document.getElementById('imageHint');
+            const autoGenToggle   = document.getElementById('autoGenToggle');
+            const coverImageInput = document.getElementById('coverImageInput');
+            const filesInput      = document.getElementById('filesInput');
+            const pickFilesBtn    = document.getElementById('pickFilesBtn');
+            const filesListEl     = document.getElementById('filesList');
+            const createBtn       = document.getElementById('createBtn');
+
+            function openAddModal() { openModal('addCourseModal'); setTimeout(() => courseNameInput.focus(), 80); }
+
+            document.getElementById('addCourseBtn').addEventListener('click', openAddModal);
+            const eb  = document.getElementById('emptyAddBtn');
+            const ebl = document.getElementById('emptyAddBtnList');
+            if (eb)  eb.addEventListener('click', openAddModal);
+            if (ebl) ebl.addEventListener('click', openAddModal);
+            document.getElementById('modalCloseBtn').addEventListener('click', () => closeModal('addCourseModal'));
+            document.getElementById('cancelBtn').addEventListener('click', () => closeModal('addCourseModal'));
+
+            function validate() {
+                createBtn.disabled = !courseNameInput.value.trim() || !subjectInput.value.trim();
+            }
+            courseNameInput.addEventListener('input', validate);
+            subjectInput.addEventListener('input', validate);
+
+            autoGenToggle.addEventListener('click', () => {
+                autoGen = !autoGen;
+                autoGenToggle.classList.toggle('active', autoGen);
+                if (autoGen) { imageHint.textContent = 'Will be generated on create'; addCoverFile = null; coverImageInput.value = ''; }
+                else         { imageHint.textContent = 'No image selected'; }
+            });
+
+            coverImageInput.addEventListener('change', () => {
+                if (coverImageInput.files[0]) {
+                    addCoverFile = coverImageInput.files[0];
+                    imageHint.textContent = addCoverFile.name;
+                    autoGen = false;
+                    autoGenToggle.classList.remove('active');
+                }
+            });
+
+            pickFilesBtn.addEventListener('click', () => filesInput.click());
+            filesInput.addEventListener('change', () => {
+                Array.from(filesInput.files).forEach(f => {
+                    if (!selectedFiles.find(x => x.name === f.name)) selectedFiles.push(f);
+                });
+                renderFiles();
+            });
+
+            function renderFiles() {
+                filesListEl.innerHTML = '';
+                if (!selectedFiles.length) { filesListEl.textContent = 'No files selected'; return; }
+                selectedFiles.forEach((f, i) => {
+                    const row = document.createElement('div');
+                    row.className = 'form-file-item';
+                    row.innerHTML = '<span>' + f.name + '</span><button class="file-remove" type="button" aria-label="Remove">✕</button>';
+                    row.querySelector('button').addEventListener('click', () => { selectedFiles.splice(i, 1); renderFiles(); });
+                    filesListEl.appendChild(row);
+                });
+            }
+
+            addCourseForm.addEventListener('submit', async e => {
+                e.preventDefault();
+                const title   = courseNameInput.value.trim();
+                const subject = subjectInput.value.trim();
+                if (!title || !subject) return;
+
+                createBtn.disabled = true;
+                document.getElementById('createBtnLabel').textContent = autoGen ? 'Generating…' : 'Creating…';
+
+                const fd = new FormData();
+                fd.append('title',   title);
+                fd.append('subject', subject);
+                fd.append('autoGen', autoGen ? '1' : '0');
+                fd.append('_token',  getCsrf());
+                if (addCoverFile) fd.append('coverImage', addCoverFile);
+                selectedFiles.forEach(f => fd.append('files[]', f));
+
+                try {
+                    const res  = await fetch('{{ path("app_courses_create") }}', {
+                        method: 'POST', body: fd,
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.message || 'Failed');
+                    showToast('Course created!', 'success');
+                    closeModal('addCourseModal');
+                    window.location.reload();
+                } catch (err) {
+                    showToast(err.message || 'Failed to create course', 'error');
+                    createBtn.disabled = false;
+                    document.getElementById('createBtnLabel').textContent = 'Create';
+                }
+            });
+
+            function resetForm() {
+                addCourseForm.reset();
+                autoGen = false; addCoverFile = null; selectedFiles = [];
+                imageHint.textContent = 'No image selected';
+                autoGenToggle.classList.remove('active');
+                renderFiles();
+                validate();
+                document.getElementById('createBtnLabel').textContent = 'Create';
+            }
+
+            /* ── MODAL HELPERS ──────────────────────────────────────────── */
+            function openModal(id) {
+                const el = document.getElementById(id);
+                el.classList.add('open');
+                el._backdropHandler = e => { if (e.target === el) closeModal(id); };
+                el.addEventListener('click', el._backdropHandler);
+            }
+            function closeModal(id) {
+                const el = document.getElementById(id);
+                el.classList.remove('open');
+                if (el._backdropHandler) el.removeEventListener('click', el._backdropHandler);
+                if (id === 'addCourseModal') resetForm();
+            }
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape') {
+                    closeModal('addCourseModal');
+                    closeModal('confirmModal');
+                    closeModal('editModal');
+                    closeModal('coverModal');
+                }
+            });
+
+            /* ── SHARED POST HELPER ─────────────────────────────────────── */
+            function post(url, data) {
+                return fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' },
+                    body: new URLSearchParams({ ...data, _token: getCsrf() })
+                });
+            }
+
+            /* ── TOAST ──────────────────────────────────────────────────── */
+            function showToast(msg, type) {
+                const t = document.createElement('div');
+                t.className = 'toast toast-' + (type || 'success');
+                t.textContent = msg;
+                document.getElementById('toastContainer').appendChild(t);
+                setTimeout(() => t.remove(), 3500);
+            }
+
+            /* ── CSRF ───────────────────────────────────────────────────── */
+            function getCsrf() {
+                return document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+            }
+
+            /* ── PROFILE DROPDOWN ───────────────────────────────────────── */
+            const avatarBtn = document.getElementById('avatarBtn');
+            const profileDrop = document.getElementById('profileDropdown');
+            if (avatarBtn && profileDrop) {
+                avatarBtn.addEventListener('click', e => { e.stopPropagation(); profileDrop.classList.toggle('open'); });
+                document.addEventListener('click', () => profileDrop.classList.remove('open'));
+            }
+        })();
+    </script>
+    <script>
+        (function () {
+            const gridView    = document.getElementById('gridView');
+            const listView    = document.getElementById('listView');
+            const gridViewBtn = document.getElementById('gridViewBtn');
+            const listViewBtn = document.getElementById('listViewBtn');
+
+            function setView(grid) {
+                gridView.style.display = grid ? '' : 'none';
+                listView.style.display = grid ? 'none' : '';
+                gridViewBtn.classList.toggle('active', grid);
+                listViewBtn.classList.toggle('active', !grid);
+                gridViewBtn.setAttribute('aria-pressed', String(grid));
+                listViewBtn.setAttribute('aria-pressed', String(!grid));
+            }
+            gridViewBtn.addEventListener('click', () => setView(true));
+            listViewBtn.addEventListener('click', () => setView(false));
+
+            /* ── CARD / LIST CLICK → OPEN COURSE ───────────────────────── */
+            document.querySelectorAll('.course-card, .course-list-item').forEach(el => {
+                el.addEventListener('click', e => {
+                    if (e.target.closest('[data-action="delete"]')) return;
+                    window.location.href = '/courses/' + el.dataset.id;
+                });
+                el.addEventListener('keydown', e => {
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); }
+                });
+            });
+
+            /* ── DELETE ─────────────────────────────────────────────────── */
+            let pendingDeleteId = null;
+
+            document.querySelectorAll('[data-action="delete"]').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    pendingDeleteId = btn.dataset.id;
+                    document.getElementById('confirmMsg').textContent =
+                        'Delete "' + btn.dataset.title + '"? This will remove the course and all its files.';
+                    openModal('confirmModal');
+                });
+            });
+
+            document.getElementById('confirmCancelBtn').addEventListener('click', () => closeModal('confirmModal'));
+            document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+                if (!pendingDeleteId) return;
+                closeModal('confirmModal');
+                try {
+                    const res = await fetch('/courses/' + pendingDeleteId + '/delete', {
+                        method: 'POST',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        body: new URLSearchParams({ _token: getCsrf() })
+                    });
+                    if (!res.ok) throw new Error();
+                    document.querySelectorAll('[data-id="' + pendingDeleteId + '"]').forEach(el => el.remove());
+                    showToast('Course deleted', 'success');
+                } catch { showToast('Failed to delete course', 'error'); }
+                pendingDeleteId = null;
+            });
+
+            /* ── ADD COURSE MODAL ───────────────────────────────────────── */
+            let autoGen = false, coverFile = null, selectedFiles = [];
+
+            const addCourseModal  = document.getElementById('addCourseModal');
+            const addCourseForm   = document.getElementById('addCourseForm');
+            const courseNameInput = document.getElementById('courseNameInput');
+            const subjectInput    = document.getElementById('subjectInput');
+            const imageHint       = document.getElementById('imageHint');
+            const autoGenToggle   = document.getElementById('autoGenToggle');
+            const coverImageInput = document.getElementById('coverImageInput');
+            const filesInput      = document.getElementById('filesInput');
+            const pickFilesBtn    = document.getElementById('pickFilesBtn');
+            const filesListEl     = document.getElementById('filesList');
+            const createBtn       = document.getElementById('createBtn');
+
+            function openAddModal() { openModal('addCourseModal'); setTimeout(() => courseNameInput.focus(), 80); }
+
+            document.getElementById('addCourseBtn').addEventListener('click', openAddModal);
+            const eb  = document.getElementById('emptyAddBtn');
+            const ebl = document.getElementById('emptyAddBtnList');
+            if (eb)  eb.addEventListener('click', openAddModal);
+            if (ebl) ebl.addEventListener('click', openAddModal);
+            document.getElementById('modalCloseBtn').addEventListener('click', () => closeModal('addCourseModal'));
+            document.getElementById('cancelBtn').addEventListener('click', () => closeModal('addCourseModal'));
+
+            /* Validation */
+            function validate() {
+                createBtn.disabled = !courseNameInput.value.trim() || !subjectInput.value.trim();
+            }
+            courseNameInput.addEventListener('input', validate);
+            subjectInput.addEventListener('input', validate);
+
+            /* Auto-gen */
+            autoGenToggle.addEventListener('click', () => {
+                autoGen = !autoGen;
+                autoGenToggle.classList.toggle('active', autoGen);
+                if (autoGen) { imageHint.textContent = 'Will be generated on create'; coverFile = null; coverImageInput.value = ''; }
+                else         { imageHint.textContent = 'No image selected'; }
+            });
+
+            /* Cover image picker */
+            coverImageInput.addEventListener('change', () => {
+                if (coverImageInput.files[0]) {
+                    coverFile = coverImageInput.files[0];
+                    imageHint.textContent = coverFile.name;
+                    autoGen = false;
+                    autoGenToggle.classList.remove('active');
+                }
+            });
+
+            /* Files picker */
+            pickFilesBtn.addEventListener('click', () => filesInput.click());
+            filesInput.addEventListener('change', () => {
+                Array.from(filesInput.files).forEach(f => {
+                    if (!selectedFiles.find(x => x.name === f.name)) selectedFiles.push(f);
+                });
+                renderFiles();
+            });
+
+            function renderFiles() {
+                filesListEl.innerHTML = '';
+                if (!selectedFiles.length) { filesListEl.textContent = 'No files selected'; return; }
+                selectedFiles.forEach((f, i) => {
+                    const row = document.createElement('div');
+                    row.className = 'form-file-item';
+                    row.innerHTML = '<span>' + f.name + '</span><button class="file-remove" type="button" aria-label="Remove">✕</button>';
+                    row.querySelector('button').addEventListener('click', () => { selectedFiles.splice(i, 1); renderFiles(); });
+                    filesListEl.appendChild(row);
+                });
+            }
+
+            /* Submit */
+            addCourseForm.addEventListener('submit', async e => {
+                e.preventDefault();
+                const title   = courseNameInput.value.trim();
+                const subject = subjectInput.value.trim();
+                if (!title || !subject) return;
+
+                createBtn.disabled = true;
+                document.getElementById('createBtnLabel').textContent = autoGen ? 'Generating…' : 'Creating…';
+
+                const fd = new FormData();
+                fd.append('title',   title);
+                fd.append('subject', subject);
+                fd.append('autoGen', autoGen ? '1' : '0');
+                fd.append('_token',  getCsrf());
+                if (coverFile) fd.append('coverImage', coverFile);
+                selectedFiles.forEach(f => fd.append('files[]', f));
+
+                try {
+                    const res  = await fetch('{{ path("app_courses_create") }}', {
+                        method: 'POST', body: fd,
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.message || 'Failed');
+                    showToast('Course created!', 'success');
+                    closeModal('addCourseModal');
+                    window.location.reload();
+                } catch (err) {
+                    showToast(err.message || 'Failed to create course', 'error');
+                    createBtn.disabled = false;
+                    document.getElementById('createBtnLabel').textContent = 'Create';
+                }
+            });
+
+            function resetForm() {
+                addCourseForm.reset();
+                autoGen = false; coverFile = null; selectedFiles = [];
+                imageHint.textContent = 'No image selected';
+                autoGenToggle.classList.remove('active');
+                renderFiles();
+                validate();
+                document.getElementById('createBtnLabel').textContent = 'Create';
+            }
+
+            /* ── MODAL HELPERS ──────────────────────────────────────────── */
+            function openModal(id) {
+                const el = document.getElementById(id);
+                el.classList.add('open');
+                el._backdropHandler = e => { if (e.target === el) closeModal(id); };
+                el.addEventListener('click', el._backdropHandler);
+            }
+            function closeModal(id) {
+                const el = document.getElementById(id);
+                el.classList.remove('open');
+                if (el._backdropHandler) el.removeEventListener('click', el._backdropHandler);
+                if (id === 'addCourseModal') resetForm();
+            }
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape') { closeModal('addCourseModal'); closeModal('confirmModal'); }
+            });
+
+            /* ── TOAST ──────────────────────────────────────────────────── */
+            function showToast(msg, type) {
+                const t = document.createElement('div');
+                t.className = 'toast toast-' + (type || 'success');
+                t.textContent = msg;
+                document.getElementById('toastContainer').appendChild(t);
+                setTimeout(() => t.remove(), 3500);
+            }
+
+            /* ── CSRF ───────────────────────────────────────────────────── */
+            function getCsrf() {
+                return document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+            }
+
+            /* ── PROFILE DROPDOWN (matches homepage) ────────────────────── */
+            const avatarBtn = document.getElementById('avatarBtn');
+            const profileDrop = document.getElementById('profileDropdown');
+            if (avatarBtn && profileDrop) {
+                avatarBtn.addEventListener('click', e => { e.stopPropagation(); profileDrop.classList.toggle('open'); });
+                document.addEventListener('click', () => profileDrop.classList.remove('open'));
+            }
+        })();
+    </script>
+{% endblock %}

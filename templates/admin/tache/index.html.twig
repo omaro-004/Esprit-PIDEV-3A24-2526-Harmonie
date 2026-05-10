@@ -1,0 +1,84 @@
+{% extends 'admin/base.html.twig' %}
+
+{% macro statut_badge(s) %}
+    {% if s == 'A_FAIRE' %}
+        <span class="admin-badge" style="background:#f3f4f6;color:#374151;">TODO</span>
+    {% elseif s == 'EN_COURS' %}
+        <span class="admin-badge" style="background:#dbeafe;color:#1d4ed8;">DOING</span>
+    {% elseif s == 'TERMINEE' %}
+        <span class="admin-badge admin-badge--ok">DONE</span>
+    {% else %}
+        <span class="admin-badge">{{ s }}</span>
+    {% endif %}
+{% endmacro %}
+
+{% block title %}Tâches — Admin{% endblock %}
+
+{% block body %}
+<div class="admin-topbar">
+    <h1 class="admin-page-title">Tâches</h1>
+    <a href="{{ path('admin_tache_new') }}" class="admin-btn admin-btn-primary">Ajouter une tâche</a>
+</div>
+
+<div class="admin-toolbar">
+    <form class="admin-toolbar__search" method="get" action="{{ path('admin_tache_index') }}" role="search">
+        {% if statutFiltre %}<input type="hidden" name="statut" value="{{ statutFiltre }}">{% endif %}
+        <label class="visually-hidden" for="admin-tache-q">Recherche</label>
+        <input id="admin-tache-q" type="search" name="q" value="{{ searchQuery }}" placeholder="Recherche nom, notes…">
+    </form>
+    {% set t_q_params = { q: searchQuery, page: 1 } %}
+    <div class="admin-pills">
+        <a class="admin-pill {{ statutFiltre == '' ? 'is-active' : '' }}" href="{{ path('admin_tache_index', t_q_params) }}">Tous</a>
+        <a class="admin-pill {{ statutFiltre == 'A_FAIRE' ? 'is-active' : '' }}" href="{{ path('admin_tache_index', t_q_params|merge({ statut: 'A_FAIRE' })) }}">TODO</a>
+        <a class="admin-pill {{ statutFiltre == 'EN_COURS' ? 'is-active' : '' }}" href="{{ path('admin_tache_index', t_q_params|merge({ statut: 'EN_COURS' })) }}">DOING</a>
+        <a class="admin-pill {{ statutFiltre == 'TERMINEE' ? 'is-active' : '' }}" href="{{ path('admin_tache_index', t_q_params|merge({ statut: 'TERMINEE' })) }}">DONE</a>
+    </div>
+</div>
+
+<div class="admin-cards-grid">
+    {% for t in taches %}
+        {% set dl = t.deadline ? t.deadline|date('Y-m-d') : null %}
+        {% set today = 'now'|date('Y-m-d') %}
+        {% set overdue = dl and dl < today and t.statutTache != 'TERMINEE' %}
+        <article class="admin-module-card admin-module-card--accent-tache">
+            <div class="admin-module-card__head">
+                <h2 class="admin-module-card__title" style="margin:0;padding-right:8px;">{{ t.nom }}</h2>
+                <span style="flex-shrink:0;">{{ _self.statut_badge(t.statutTache) }}</span>
+            </div>
+            <div class="admin-module-card__body">
+                <p class="admin-module-card__meta {% if overdue %}admin-module-card__meta--warn{% endif %}">📅 {% if t.deadline %}{{ t.deadline|date('d/m/Y') }}{% if overdue %} (dépassée){% endif %}{% else %}—{% endif %}</p>
+                <p class="admin-module-card__meta">👤 —</p>
+                <p class="admin-module-card__meta">📝 {% if t.notes %}{{ t.notes|slice(0, 60) }}{% if t.notes|length > 60 %}…{% endif %}{% else %}—{% endif %}</p>
+            </div>
+            <div class="admin-module-card__footer">
+                <a href="{{ path('admin_tache_show', { id: t.id }) }}" class="admin-btn admin-btn-ghost">Voir</a>
+                <a href="{{ path('admin_tache_edit', { id: t.id }) }}" class="admin-btn admin-btn-ghost">Modifier</a>
+                <form class="inline-form" method="post" action="{{ path('admin_tache_delete', { id: t.id }) }}" onsubmit="return confirm('Supprimer ?');">
+                    <input type="hidden" name="_token" value="{{ csrf_token('admin_delete_tache' ~ t.id) }}">
+                    <button type="submit" class="admin-btn admin-btn-danger">Supprimer</button>
+                </form>
+            </div>
+        </article>
+    {% else %}
+        <p class="admin-empty-hint" style="grid-column: 1 / -1;">Aucune tâche.</p>
+    {% endfor %}
+</div>
+
+{% if pages > 1 %}
+    <nav class="admin-pagination-round" aria-label="Pagination">
+        {% if page > 1 %}
+            <a href="{{ path('admin_tache_index', app.request.query.all|merge({ page: page - 1 })) }}">‹</a>
+        {% endif %}
+        {% for p in 1..pages %}
+            {% if p == page %}
+                <span class="is-current" aria-current="page">{{ p }}</span>
+            {% else %}
+                <a href="{{ path('admin_tache_index', app.request.query.all|merge({ page: p })) }}">{{ p }}</a>
+            {% endif %}
+        {% endfor %}
+        {% if page < pages %}
+            <a href="{{ path('admin_tache_index', app.request.query.all|merge({ page: page + 1 })) }}">›</a>
+        {% endif %}
+    </nav>
+{% endif %}
+{% endblock %}

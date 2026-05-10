@@ -1,0 +1,100 @@
+{% extends 'admin/base.html.twig' %}
+{% block title %}Dashboard — Back Harmony{% endblock %}
+{% block page_title %}Accueil Back — Forum{% endblock %}
+
+{% block stylesheets %}
+<style>
+.kpi-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:28px; }
+.kpi-card {
+    background:white; border:1px solid rgba(106,90,205,.12); border-radius:16px;
+    padding:22px; display:flex; align-items:center; gap:16px;
+    text-decoration:none; color:inherit;
+    transition:border-color .2s, box-shadow .2s, transform .2s;
+}
+.kpi-card:hover { border-color:#8B7FD4; box-shadow:0 8px 28px rgba(106,90,205,.12); transform:translateY(-2px); }
+.kpi-icon { width:52px; height:52px; border-radius:14px; display:grid; place-items:center; font-size:26px; flex-shrink:0; }
+.kpi-icon.purple { background:#EDE8FA; }
+.kpi-icon.green  { background:#D1FAE5; }
+.kpi-icon.amber  { background:#FEF3C7; }
+.kpi-val { font-family:'Syne',sans-serif; font-size:32px; font-weight:800; color:#1C1733; line-height:1; }
+.kpi-lbl { font-size:12px; color:#9590B8; margin-top:4px; }
+
+.quick-grid {
+    display:grid; grid-template-columns:repeat(3,1fr);
+    border:1px solid rgba(106,90,205,.12); border-radius:16px; overflow:hidden;
+    background:rgba(106,90,205,.08); gap:1px;
+}
+.quick-item {
+    display:flex; align-items:center; gap:16px; padding:22px 24px;
+    background:white; text-decoration:none; color:inherit;
+    transition:background .15s;
+}
+.quick-item:hover { background:#F7F5FD; }
+.quick-item-icon { font-size:30px; flex-shrink:0; }
+.quick-item-label { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; color:#1C1733; }
+.quick-item-desc  { font-size:12px; color:#9590B8; margin-top:3px; }
+.quick-item-arrow { margin-left:auto; font-size:18px; color:#8B7FD4; }
+
+.section-title {
+    font-family:'Syne',sans-serif; font-size:15px; font-weight:700; color:#1C1733;
+    margin:28px 0 14px; display:flex; align-items:center; gap:8px;
+}
+.section-title::before { content:''; width:4px; height:16px; background:#6A5ACD; border-radius:4px; }
+</style>
+{% endblock %}
+
+{% block body %}
+
+<div style="margin-bottom:28px">
+    <h1 style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#1C1733;margin-bottom:4px">
+        🏠 Tableau de bord Forum
+    </h1>
+    <p style="font-size:13px;color:#9590B8;">Vue d'ensemble du forum de la communauté</p>
+</div>
+
+{# KPI CARDS #}
+<div class="kpi-grid">
+    <a href="{{ path('back_categories') }}" class="kpi-card">
+        <div class="kpi-icon purple">🗂️</div>
+        <div>
+            <div class="kpi-val">{{ nb_categories }}</div>
+            <div class="kpi-lbl">Catégories Forum</div>
+        </div>
+    </a>
+    <a href="{{ path('back_posts') }}" class="kpi-card">
+        <div class="kpi-icon green">📝</div>
+        <div>
+            <div class="kpi-val">{{ nb_posts }}</div>
+            <div class="kpi-lbl">Posts publiés</div>
+        </div>
+    </a>
+    <a href="{{ path('back_commentaires') }}" class="kpi-card">
+        <div class="kpi-icon amber">💬</div>
+        <div>
+            <div class="kpi-val">{{ nb_commentaires }}</div>
+            <div class="kpi-lbl">Commentaires</div>
+        </div>
+    </a>
+</div>
+
+{# ACCÈS RAPIDES #}
+<div class="section-title">🚀 Accès rapides</div>
+<div class="quick-grid">
+    {% set quick = [
+        {icon:'🗂️', label:'Gérer les catégories', route:'back_categories', desc:'Créer, modifier, supprimer'},
+        {icon:'📝', label:'Gérer les posts',       route:'back_posts',      desc:'Modérer les publications'},
+        {icon:'💬', label:'Gérer les commentaires',route:'back_commentaires',desc:'Modérer les échanges'},
+    ] %}
+    {% for item in quick %}
+    <a href="{{ path(item.route) }}" class="quick-item">
+        <span class="quick-item-icon">{{ item.icon }}</span>
+        <div>
+            <div class="quick-item-label">{{ item.label }}</div>
+            <div class="quick-item-desc">{{ item.desc }}</div>
+        </div>
+        <span class="quick-item-arrow">→</span>
+    </a>
+    {% endfor %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Helvetica, Arial, sans-serif; font-size: 12px; color: #1C1733; margin: 40px; }
+        h1 { color: #6A5ACD; font-size: 22px; margin-bottom: 4px; }
+        .subtitle { color: #9590B8; font-size: 11px; margin-bottom: 24px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th { background: #6A5ACD; color: white; text-align: left; padding: 8px 10px; font-size: 11px; }
+        td { padding: 8px 10px; border-bottom: 1px solid #EDE8FA; font-size: 11px; }
+        tr:nth-child(even) td { background: #F7F5FD; }
+        .footer { margin-top: 30px; font-size: 10px; color: #9590B8; text-align: center; border-top: 1px solid #EDE8FA; padding-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>HARMONIE - Sessions de Meditation</h1>
+    <div class="subtitle">Liste complete des sessions - {{ "now"|date("d/m/Y") }}</div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Theme</th>
+                <th>Auteur</th>
+                <th>Duree</th>
+                <th>Conseils</th>
+                <th>Audio</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in sessions %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ s.theme }}</td>
+                <td>{{ s.auteur }}</td>
+                <td>{{ s.duree }} min</td>
+                <td>{{ s.conseils|length }}</td>
+                <td>{{ s.audioUrl ? 'Oui' : 'Non' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Genere le {{ "now"|date("d/m/Y H:i") }} - Harmonie &copy; {{ "now"|date("Y") }}
+    </div>
+</body>
+</html>

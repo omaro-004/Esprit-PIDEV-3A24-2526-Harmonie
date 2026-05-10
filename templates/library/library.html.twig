@@ -1,0 +1,745 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Library – Harmony{% endblock %}
+
+{% block stylesheets %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --purple:        #6A5ACD;
+            --purple-dark:   #4B3B9E;
+            --purple-soft:   #8B7FD4;
+            --purple-pale:   #EDE8FA;
+            --purple-ghost:  #F7F5FD;
+            --text:          #1C1733;
+            --text-mid:      #4A4570;
+            --text-muted:    #9590B8;
+            --border:        rgba(106,90,205,.12);
+            --white:         #FFFFFF;
+            --font-head:     'Syne', sans-serif;
+            --font-body:     'Inter', sans-serif;
+            --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 22px;
+            --sh-sm: 0 2px 8px rgba(106,90,205,.08);
+            --sh-md: 0 6px 24px rgba(106,90,205,.12);
+            --sh-lg: 0 16px 48px rgba(106,90,205,.18);
+            --t: 160ms cubic-bezier(.16,1,.3,1);
+        }
+        html, body { height: 100%; font-family: var(--font-body); background: var(--purple-ghost); color: var(--text); }
+
+        /* ── TOPBAR ─────────────────────────────────────────── */
+        .topbar {
+            position: sticky; top: 0; z-index: 200;
+            background: var(--white); border-bottom: 1px solid var(--border);
+            height: 62px; display: flex; align-items: center; padding: 0 40px; gap: 8px;
+        }
+        .topbar-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; margin-right: 32px; flex-shrink: 0; }
+        .logo-mark { width: 34px; height: 34px; border-radius: 10px; object-fit: contain; }
+        .logo-name { font-family: var(--font-head); font-weight: 800; font-size: 17px; color: var(--text); }
+        .nav-links { display: flex; align-items: center; gap: 2px; flex: 1; overflow-x: auto; scrollbar-width: none; }
+        .nav-links::-webkit-scrollbar { display: none; }
+        .nav-link {
+            display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 9px;
+            font-size: 13px; font-weight: 500; color: var(--text-mid); text-decoration: none; white-space: nowrap;
+            transition: background var(--t), color var(--t);
+        }
+        .nav-link:hover  { background: var(--purple-pale); color: var(--purple); }
+        .nav-link.active { background: var(--purple-pale); color: var(--purple); font-weight: 600; }
+        .topbar-right { display: flex; align-items: center; gap: 10px; margin-left: auto; flex-shrink: 0; }
+        .logout-btn {
+            padding: 7px 16px; border-radius: 9px; border: 1.5px solid rgba(239,68,68,.25);
+            background: transparent; color: #E05252; font-family: var(--font-body); font-size: 13px; font-weight: 500; cursor: pointer;
+            transition: background var(--t), border-color var(--t);
+        }
+        .logout-btn:hover { background: #FEF2F2; border-color: #E05252; }
+        .avatar {
+            width: 36px; height: 36px; border-radius: 50%; background: var(--purple); color: #fff;
+            font-family: var(--font-head); font-weight: 700; font-size: 14px;
+            display: grid; place-items: center; cursor: pointer; border: 2px solid var(--purple-pale);
+            transition: box-shadow var(--t);
+        }
+        .avatar:hover { box-shadow: 0 0 0 3px rgba(106,90,205,.22); }
+        .profile-wrap { position: relative; }
+        .profile-dropdown {
+            position: absolute; top: calc(100% + 10px); right: 0; width: 220px;
+            background: var(--white); border: 1px solid var(--border); border-radius: 14px;
+            box-shadow: 0 12px 40px rgba(0,0,0,.1); padding: 16px; display: none; z-index: 500;
+        }
+        .profile-dropdown.open { display: block; }
+        .pd-name  { font-size: 14px; font-weight: 600; }
+        .pd-email { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        .pd-divider { height: 1px; background: var(--border); margin: 12px 0; }
+        .pd-hint { font-size: 11px; color: var(--text-muted); font-style: italic; }
+
+        /* ── PAGE ───────────────────────────────────────────── */
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 40px 80px; }
+        .page-header { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
+        .page-header-left { display: flex; align-items: center; gap: 12px; flex: 1; }
+        .page-icon { width: 44px; height: 44px; border-radius: var(--r-md); background: var(--purple-pale); display: grid; place-items: center; font-size: 22px; flex-shrink: 0; }
+        .page-title { font-family: var(--font-head); font-weight: 800; font-size: clamp(1.5rem, 2.5vw, 2rem); color: var(--text); letter-spacing: -.3px; }
+        .page-header-actions { display: flex; gap: 10px; align-items: center; }
+
+        /* ── BUTTONS ────────────────────────────────────────── */
+        .btn {
+            display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: var(--r-md);
+            font-family: var(--font-body); font-size: 13.5px; font-weight: 500;
+            cursor: pointer; border: none; text-decoration: none;
+            transition: background var(--t), box-shadow var(--t), transform var(--t);
+        }
+        .btn:active { transform: scale(.97); }
+        .btn-primary  { background: var(--purple); color: #fff; box-shadow: 0 2px 12px rgba(106,90,205,.3); }
+        .btn-primary:hover  { background: var(--purple-dark); box-shadow: 0 4px 18px rgba(106,90,205,.4); }
+        .btn-secondary { background: var(--white); color: var(--text-mid); border: 1px solid var(--border); box-shadow: var(--sh-sm); }
+        .btn-secondary:hover { background: var(--purple-ghost); color: var(--purple); }
+        .btn-ghost { background: none; color: var(--text-muted); border: 1px solid transparent; padding: 7px 12px; }
+        .btn-ghost:hover { background: var(--purple-pale); color: var(--purple); }
+        .btn-danger { background: #FEF2F2; color: #E05252; border: 1px solid rgba(239,68,68,.2); }
+        .btn-danger:hover { background: #FEE2E2; }
+        .btn:disabled { opacity: .5; cursor: not-allowed; transform: none !important; }
+
+        /* ── TOOLBAR ────────────────────────────────────────── */
+        .toolbar { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 24px; }
+        .view-toggle-group { display: flex; gap: 2px; background: var(--white); border: 1px solid var(--border); border-radius: var(--r-md); padding: 3px; }
+        .vtb { display: grid; place-items: center; width: 34px; height: 34px; border: none; background: none; cursor: pointer; border-radius: 8px; color: var(--text-muted); transition: background var(--t), color var(--t); }
+        .vtb:hover { color: var(--purple); background: var(--purple-ghost); }
+        .vtb.active { background: var(--purple-pale); color: var(--purple); }
+
+        /* ── GRID ───────────────────────────────────────────── */
+        .courses-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px,100%), 1fr)); gap: 20px; }
+
+        /* ── CARD ───────────────────────────────────────────── */
+        .course-card {
+            background: var(--white); border: 1px solid var(--border); border-radius: var(--r-xl);
+            overflow: hidden; box-shadow: var(--sh-sm); cursor: pointer; position: relative;
+            transition: box-shadow var(--t), transform var(--t);
+        }
+        .course-card:hover { box-shadow: var(--sh-md); transform: translateY(-3px); }
+        .course-card:focus-visible { outline: 2px solid var(--purple); outline-offset: 3px; }
+        .course-card-image { width: 100%; height: 148px; object-fit: cover; display: block; }
+        .course-card-placeholder { width: 100%; height: 148px; background: var(--purple-ghost); display: grid; place-items: center; font-size: 2.5rem; }
+        .course-card-body { padding: 14px 16px 18px; }
+        .course-card-title { font-family: var(--font-head); font-size: 14.5px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+        .course-card-subject { font-size: 12px; color: var(--text-muted); }
+        .course-delete-btn {
+            position: absolute; top: 8px; right: 8px; width: 28px; height: 28px;
+            border-radius: 50%; background: rgba(0,0,0,.45); backdrop-filter: blur(4px);
+            color: #fff; font-size: 12px; border: none; cursor: pointer; display: grid; place-items: center;
+            opacity: 0; transition: opacity var(--t), background var(--t);
+        }
+        .course-card:hover .course-delete-btn { opacity: 1; }
+        .course-delete-btn:hover { background: #E05252; }
+
+        /* ── LIST ───────────────────────────────────────────── */
+        .courses-list { display: flex; flex-direction: column; gap: 8px; }
+        .course-list-item {
+            display: flex; align-items: center; gap: 14px; padding: 12px 16px;
+            background: var(--white); border: 1px solid var(--border); border-radius: var(--r-lg);
+            cursor: pointer; transition: background var(--t), box-shadow var(--t);
+        }
+        .course-list-item:hover { background: var(--purple-ghost); box-shadow: var(--sh-sm); }
+        .course-list-thumb { width: 56px; height: 56px; border-radius: var(--r-md); object-fit: cover; flex-shrink: 0; }
+        .course-list-placeholder { width: 56px; height: 56px; border-radius: var(--r-md); background: var(--purple-ghost); display: grid; place-items: center; font-size: 1.4rem; flex-shrink: 0; }
+        .course-list-info { flex: 1; min-width: 0; }
+        .course-list-title { font-family: var(--font-head); font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .course-list-subject { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+        /* ── RECOMMENDED COURSES ────────────────────────────── */
+        .recommended-section {
+            margin-bottom: 32px;
+        }
+        .recommended-header {
+            display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+        }
+        .recommended-icon {
+            width: 32px; height: 32px; border-radius: var(--r-md);
+            background: var(--purple-pale); display: grid; place-items: center;
+            font-size: 16px; flex-shrink: 0;
+        }
+        .recommended-title {
+            font-family: var(--font-head); font-weight: 700; font-size: 18px;
+            color: var(--text); margin: 0;
+        }
+        .recommended-subtitle {
+            font-size: 13px; color: var(--text-muted); margin: 0;
+        }
+        .recommended-scroll-container {
+            position: relative; overflow: hidden;
+        }
+        .recommended-courses {
+            display: flex; gap: 16px; overflow-x: auto; padding: 4px 0 12px;
+            scrollbar-width: thin; scrollbar-color: var(--purple-soft) transparent;
+        }
+        .recommended-courses::-webkit-scrollbar {
+            height: 6px;
+        }
+        .recommended-courses::-webkit-scrollbar-track {
+            background: var(--purple-ghost); border-radius: 3px;
+        }
+        .recommended-courses::-webkit-scrollbar-thumb {
+            background: var(--purple-soft); border-radius: 3px;
+        }
+        .recommended-courses::-webkit-scrollbar-thumb:hover {
+            background: var(--purple);
+        }
+        .recommended-course-card {
+            flex: 0 0 220px; background: var(--white); border: 1px solid var(--border);
+            border-radius: var(--r-lg); overflow: hidden; box-shadow: var(--sh-sm);
+            cursor: pointer; transition: box-shadow var(--t), transform var(--t);
+        }
+        .recommended-course-card:hover {
+            box-shadow: var(--sh-md); transform: translateY(-2px);
+        }
+        .recommended-course-image {
+            width: 100%; height: 120px; object-fit: cover; display: block;
+        }
+        .recommended-course-placeholder {
+            width: 100%; height: 120px; background: var(--purple-ghost);
+            display: grid; place-items: center; font-size: 2rem;
+        }
+        .recommended-course-body {
+            padding: 12px 14px 16px;
+        }
+        .recommended-course-title {
+            font-family: var(--font-head); font-size: 13px; font-weight: 700;
+            color: var(--text); margin-bottom: 4px; line-height: 1.3;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .recommended-course-subject {
+            font-size: 11px; color: var(--text-muted);
+        }
+
+        /* ── SEARCH & FILTER BAR ────────────────────────────────── */
+        .search-filter-bar {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 20px; flex-wrap: wrap;
+        }
+        .search-wrap {
+            position: relative; flex: 1; min-width: 220px;
+        }
+        .search-icon {
+            position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+            color: var(--text-muted); pointer-events: none; display: flex;
+        }
+        .search-input {
+            width: 100%; padding: 9px 13px 9px 38px;
+            background: var(--white); border: 1.5px solid var(--border);
+            border-radius: var(--r-md); font-family: var(--font-body);
+            font-size: 13.5px; color: var(--text); outline: none;
+            box-shadow: var(--sh-sm);
+            transition: border-color var(--t), box-shadow var(--t);
+        }
+        .search-input::placeholder { color: var(--text-muted); }
+        .search-input:focus { border-color: var(--purple-soft); box-shadow: 0 0 0 3px rgba(106,90,205,.12); }
+        .search-clear {
+            position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+            width: 20px; height: 20px; border-radius: 50%; border: none;
+            background: var(--text-muted); color: #fff; font-size: 10px;
+            cursor: pointer; display: none; place-items: center;
+            transition: background var(--t);
+        }
+        .search-clear.visible { display: grid; }
+        .search-clear:hover { background: var(--purple); }
+        /* ── SUBJECT DROPDOWN ────────────────────────────────── */
+        .subject-dropdown-wrap { position: relative; flex-shrink: 0; }
+        .subject-dropdown-trigger {
+            display: inline-flex; align-items: center; gap: 8px; padding: 9px 13px; min-width: 180px;
+            background: var(--white); border: 1.5px solid var(--border); border-radius: var(--r-md);
+            font-family: var(--font-body); font-size: 13.5px; color: var(--text-mid); cursor: pointer;
+            box-shadow: var(--sh-sm); transition: border-color var(--t), box-shadow var(--t); user-select: none;
+        }
+        .subject-dropdown-trigger:hover,
+        .subject-dropdown-trigger.open { border-color: var(--purple-soft); box-shadow: 0 0 0 3px rgba(106,90,205,.1); color: var(--text); }
+        .subject-dropdown-trigger.has-value { color: var(--purple); font-weight: 500; }
+        .sdt-label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sdt-chevron { flex-shrink: 0; transition: transform var(--t); }
+        .subject-dropdown-trigger.open .sdt-chevron { transform: rotate(180deg); }
+        .sdt-clear {
+            flex-shrink: 0; width: 16px; height: 16px; border-radius: 50%; border: none;
+            background: var(--text-muted); color: #fff; font-size: 9px;
+            cursor: pointer; display: none; place-items: center; transition: background var(--t);
+        }
+        .sdt-clear.visible { display: grid; }
+        .sdt-clear:hover { background: var(--purple); }
+        .subject-dropdown-panel {
+            position: absolute; top: calc(100% + 6px); left: 0; width: 240px; z-index: 300;
+            background: var(--white); border: 1.5px solid var(--border); border-radius: var(--r-lg);
+            box-shadow: var(--sh-md); padding: 8px;
+            opacity: 0; pointer-events: none; transform: translateY(-6px);
+            transition: opacity var(--t), transform var(--t);
+        }
+        .subject-dropdown-panel.open { opacity: 1; pointer-events: all; transform: translateY(0); }
+        .sdp-search-wrap { position: relative; margin-bottom: 6px; }
+        .sdp-search-icon { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; display: flex; }
+        .sdp-search {
+            width: 100%; padding: 7px 10px 7px 30px; background: var(--purple-ghost);
+            border: 1.5px solid var(--border); border-radius: var(--r-sm);
+            font-family: var(--font-body); font-size: 13px; color: var(--text); outline: none;
+            transition: border-color var(--t);
+        }
+        .sdp-search::placeholder { color: var(--text-muted); }
+        .sdp-search:focus { border-color: var(--purple-soft); }
+        .sdp-list { max-height: 220px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--purple-soft) transparent; }
+        .sdp-list::-webkit-scrollbar { width: 4px; }
+        .sdp-list::-webkit-scrollbar-thumb { background: var(--purple-soft); border-radius: 2px; }
+        .sdp-option {
+            display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: var(--r-sm);
+            font-size: 13px; color: var(--text-mid); cursor: pointer;
+            transition: background var(--t), color var(--t);
+        }
+        .sdp-option:hover { background: var(--purple-pale); color: var(--purple); }
+        .sdp-option.selected { background: var(--purple-pale); color: var(--purple); font-weight: 600; }
+        .sdp-option-check {
+            width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid var(--border); flex-shrink: 0;
+            display: grid; place-items: center; font-size: 9px; transition: background var(--t), border-color var(--t);
+        }
+        .sdp-option.selected .sdp-option-check { background: var(--purple); border-color: var(--purple); color: #fff; }
+        .sdp-empty { padding: 12px 10px; font-size: 13px; color: var(--text-muted); text-align: center; }
+        .search-results-count { font-size: 12.5px; color: var(--text-muted); margin-bottom: 12px; min-height: 18px; }
+        .no-results-msg {
+            grid-column: 1/-1; flex-direction: column; align-items: center;
+            padding: 60px 40px; text-align: center;
+            background: var(--white); border: 1px solid var(--border); border-radius: var(--r-xl);
+            display: none;
+        }
+        .no-results-msg.visible { display: flex; }
+        .no-results-icon { font-size: 2.5rem; margin-bottom: 16px; }
+        .no-results-msg h4 { font-family: var(--font-head); font-size: 17px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+        .no-results-msg p  { font-size: 13.5px; color: var(--text-muted); }
+
+        /* ── EMPTY STATE ────────────────────────────────────── */
+        .empty-state {
+            grid-column: 1/-1; display: flex; flex-direction: column; align-items: center;
+            padding: 80px 40px; text-align: center;
+            background: var(--white); border: 1px solid var(--border); border-radius: var(--r-xl);
+        }
+        .empty-icon { font-size: 3rem; margin-bottom: 20px; }
+        .empty-state h3 { font-family: var(--font-head); font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+        .empty-state p  { font-size: 14px; color: var(--text-muted); max-width: 34ch; margin-bottom: 28px; line-height: 1.6; }
+
+        /* ── MODAL ──────────────────────────────────────────── */
+        .modal-backdrop {
+            position: fixed; inset: 0; z-index: 400;
+            background: rgba(28,23,51,.45); backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity var(--t);
+        }
+        .modal-backdrop.open { opacity: 1; pointer-events: all; }
+        .modal {
+            background: var(--white); border-radius: var(--r-xl); box-shadow: var(--sh-lg);
+            padding: 32px; width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto;
+            transform: translateY(20px); transition: transform var(--t);
+        }
+        .modal-backdrop.open .modal { transform: translateY(0); }
+        .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+        .modal-title { font-family: var(--font-head); font-size: 18px; font-weight: 800; }
+        .modal-close { width: 32px; height: 32px; border-radius: 8px; border: none; background: none; cursor: pointer; color: var(--text-muted); display: grid; place-items: center; transition: background var(--t); }
+        .modal-close:hover { background: var(--purple-pale); color: var(--purple); }
+        .form-group { margin-bottom: 18px; }
+        .form-label { display: block; font-size: 13px; font-weight: 600; color: var(--text-mid); margin-bottom: 7px; }
+        .req { color: #E05252; }
+        .form-control { width: 100%; padding: 9px 13px; background: var(--purple-ghost); border: 1.5px solid var(--border); border-radius: var(--r-md); font-family: var(--font-body); font-size: 13.5px; color: var(--text); outline: none; transition: border-color var(--t), box-shadow var(--t); }
+        .form-control::placeholder { color: var(--text-muted); }
+        .form-control:focus { border-color: var(--purple-soft); box-shadow: 0 0 0 3px rgba(106,90,205,.12); background: var(--white); }
+        .image-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .image-hint { font-size: 11.5px; color: var(--text-muted); margin-top: 6px; }
+        .auto-gen-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: var(--r-md); border: 1.5px solid var(--border); background: var(--white); font-family: var(--font-body); font-size: 13px; color: var(--text-muted); cursor: pointer; transition: all var(--t); }
+        .auto-gen-toggle:hover, .auto-gen-toggle.active { border-color: var(--purple); color: var(--purple); background: var(--purple-ghost); }
+        .form-file-list { min-height: 60px; max-height: 120px; overflow-y: auto; background: var(--purple-ghost); border: 1.5px solid var(--border); border-radius: var(--r-md); padding: 8px; font-size: 12px; color: var(--text-muted); }
+        .form-file-item { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 7px; }
+        .form-file-item:hover { background: var(--purple-pale); }
+        .form-file-remove { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 12px; }
+        .form-file-remove:hover { color: #E05252; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 28px; }
+        .toast-container { position: fixed; bottom: 28px; right: 28px; z-index: 600; display: flex; flex-direction: column; gap: 8px; }
+        .toast { padding: 12px 18px; border-radius: var(--r-md); font-size: 13.5px; font-weight: 500; box-shadow: var(--sh-md); animation: toastIn .2s ease; }
+        .toast-success { background: #ECFDF5; color: #166534; border: 1px solid #BBF7D0; }
+        .toast-error   { background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
+        @keyframes toastIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+        @media (max-width: 640px) {
+            .topbar { padding: 0 20px; }
+            .nav-links { display: none; }
+            .container { padding: 24px 20px 60px; }
+            .courses-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    {% set current_route = app.request.attributes.get('_route') %}
+    {% set on_library = (current_route == 'library') %}
+
+    <header class="topbar">
+        <a href="{{ path('homepage') }}" class="topbar-logo">
+            <img src="{{ asset('images/logo.png') }}" class="logo-mark" alt="Harmony">
+        </a>
+
+        <nav class="nav-links">
+            <a href="{{ path('activites') }}"   class="nav-link {{ current_route == 'activites'   ? 'active' }}"><span class="nav-emoji">🏋</span> Activités</a>
+            <a href="{{ path('forum') }}"       class="nav-link {{ current_route == 'forum'       ? 'active' }}"><span class="nav-emoji">💬</span> Forum</a>
+            <a href="{{ path('taches') }}"      class="nav-link {{ current_route == 'taches'      ? 'active' }}"><span class="nav-emoji">📚</span> Tâches</a>
+            <a href="{{ path('evenements') }}"  class="nav-link {{ current_route == 'evenements'  ? 'active' }}"><span class="nav-emoji">📅</span> Événements</a>
+            <a href="{{ path('nutrition') }}"   class="nav-link {{ current_route == 'nutrition'   ? 'active' }}"><span class="nav-emoji">🥗</span> Nutrition</a>
+            <a href="{{ path('meditation') }}"  class="nav-link {{ current_route == 'meditation'  ? 'active' }}"><span class="nav-emoji">🧘</span> Méditation</a>
+            <a href="{{ path('journal') }}"     class="nav-link {{ current_route == 'journal'     ? 'active' }}"><span class="nav-emoji">📔</span> Journal</a>
+            <a href="{{ path('app_courses') }}"  class="nav-link {{ current_route starts with 'app_courses' ? 'active' }}"><span class="nav-emoji">📖</span> My Courses</a>
+        </nav>
+
+        <div class="topbar-right">
+            <form method="post" action="{{ path('app_logout') }}" style="margin: 0;">
+                <input type="hidden" name="_token" value="{{ csrf_token('logout') }}">
+                <button type="submit" class="logout-btn">Déconnexion</button>
+            </form>
+            <div class="profile-wrap">
+                <div class="avatar" id="avatarBtn">
+                    {{ app.user ? app.user.firstName|first|upper : 'E' }}
+                </div>
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="pd-name">{{ app.user ? app.user.firstName ~ ' ' ~ app.user.lastName : 'Étudiant' }}</div>
+                    <div class="pd-email">{{ app.user ? app.user.email : 'email@exemple.com' }}</div>
+                    <div class="pd-divider"></div>
+                    <div class="pd-hint">Double-clic pour modifier</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+
+        <div class="page-header">
+            <div class="page-header-left">
+                <div class="page-icon" aria-hidden="true">📚</div>
+                <h1 class="page-title">Library</h1>
+            </div>
+            <div class="page-header-actions">
+                <a href="{{ path('app_courses') }}" class="btn btn-secondary">📖 My Courses</a>
+            </div>
+        </div>
+
+        {# Collect unique subjects from courses for filter pills #}
+        {% set lib_subjects = [] %}
+        {% for course in courses %}
+            {% if course.subjectName and course.subjectName not in lib_subjects %}
+                {% set lib_subjects = lib_subjects|merge([course.subjectName]) %}
+            {% endif %}
+        {% endfor %}
+
+        {# ── SEARCH & FILTER BAR ────────────────────────────────────── #}
+        <div class="search-filter-bar">
+            <div class="search-wrap">
+                <span class="search-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </span>
+                <input type="search" id="libSearchInput" class="search-input"
+                       placeholder="Search library…" autocomplete="off" aria-label="Search library">
+                <button type="button" id="libSearchClearBtn" class="search-clear" aria-label="Clear search">✕</button>
+            </div>
+            {% if lib_subjects|length > 0 %}
+                <div class="subject-dropdown-wrap" id="subjectDropdownWrap">
+                    <button type="button" class="subject-dropdown-trigger" id="subjectDropdownTrigger"
+                            aria-haspopup="listbox" aria-expanded="false" aria-label="Filter by subject">
+                        <span class="sdt-label" id="subjectDropdownLabel">All Subjects</span>
+                        <button type="button" class="sdt-clear" id="subjectDropdownClear" aria-label="Clear subject filter" tabindex="-1">✕</button>
+                        <svg class="sdt-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="subject-dropdown-panel" id="subjectDropdownPanel" role="listbox" aria-label="Subjects">
+                        <div class="sdp-search-wrap">
+                            <span class="sdp-search-icon">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            </span>
+                            <input type="search" class="sdp-search" id="subjectSearch" placeholder="Search subjects…" autocomplete="off" aria-label="Search subjects">
+                        </div>
+                        <div class="sdp-list" id="subjectList">
+                            <div class="sdp-option selected" data-subject="" role="option" aria-selected="true">
+                                <span class="sdp-option-check">✓</span> All Subjects
+                            </div>
+                            {% for subject in lib_subjects %}
+                                <div class="sdp-option" data-subject="{{ subject }}" role="option" aria-selected="false">
+                                    <span class="sdp-option-check"></span> {{ subject }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        <div class="search-results-count" id="libResultsCount" aria-live="polite"></div>
+
+        <div class="toolbar">
+            <div class="view-toggle-group" role="group" aria-label="View mode">
+                <button class="vtb active" id="gridViewBtn" type="button" aria-pressed="true" aria-label="Grid view" title="Grid view">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                        <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+                    </svg>
+                </button>
+                <button class="vtb" id="listViewBtn" type="button" aria-pressed="false" aria-label="List view" title="List view">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+                        <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+
+        {# ── RECOMMENDED COURSES ─────────────────────────────────────── #}
+        {% if recommendedCourses is not empty %}
+            <section class="recommended-section">
+                <div class="recommended-header">
+                    <div class="recommended-icon" aria-hidden="true">✨</div>
+                    <div>
+                        <h2 class="recommended-title">Recommended for You</h2>
+                        <p class="recommended-subtitle">Based on your course subjects</p>
+                    </div>
+                </div>
+                <div class="recommended-scroll-container">
+                    <div class="recommended-courses">
+                        {% for course in recommendedCourses %}
+                            <article class="recommended-course-card"
+                                     data-id="{{ course.id }}"
+                                     data-href="{{ path('app_courses_detail', {id: course.id}) }}"
+                                     tabindex="0" role="button" aria-label="Open {{ course.title }}">
+                                {% if course.coverImagePath %}
+                                    <img class="recommended-course-image" src="/covers/{{ course.coverImagePath }}"
+                                         alt="{{ course.title }}" width="220" height="120" loading="lazy">
+                                {% else %}
+                                    <div class="recommended-course-placeholder" aria-hidden="true">🎓</div>
+                                {% endif %}
+                                <div class="recommended-course-body">
+                                    <p class="recommended-course-title">{{ course.title }}</p>
+                                    {% if course.subjectName %}<p class="recommended-course-subject">{{ course.subjectName }}</p>{% endif %}
+                                </div>
+                            </article>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+        {% endif %}
+
+        {# ── GRID VIEW ───────────────────────────────────────────────── #}
+        <div class="courses-grid" id="gridView" aria-label="Library grid">
+            {% if courses is not empty %}
+                {% for course in courses %}
+                    <article class="course-card"
+                             data-id="{{ course.id }}"
+                             data-title="{{ course.title }}"
+                             data-subject="{{ course.subjectName ?? '' }}"
+                             data-href="{{ path('app_courses_detail', {id: course.id}) }}"
+                             tabindex="0" role="button" aria-label="Open {{ course.title }}">
+                        {% if course.coverImagePath %}
+                            <img class="course-card-image" src="/covers/{{ course.coverImagePath }}"
+                                 alt="{{ course.title }}" width="260" height="148" loading="lazy">
+                        {% else %}
+                            <div class="course-card-placeholder" aria-hidden="true">🎓</div>
+                        {% endif %}
+                        <div class="course-card-body">
+                            <p class="course-card-title">{{ course.title }}</p>
+                            {% if course.subjectName %}<p class="course-card-subject">{{ course.subjectName }}</p>{% endif %}
+                        </div>
+                    </article>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon" aria-hidden="true">📖</div>
+                    <h3>No published courses yet</h3>
+                    <p>No courses have been published to the library yet.</p>
+                </div>
+            {% endif %}
+            <div class="no-results-msg" id="libNoResultsGrid">
+                <div class="no-results-icon">🔍</div>
+                <h4>No courses match your search</h4>
+                <p>Try a different keyword or clear the subject filter.</p>
+            </div>
+        </div>
+
+        {# ── LIST VIEW ───────────────────────────────────────────────── #}
+        <div class="courses-list" id="listView" style="display:none;" aria-label="Library list">
+            {% if courses is not empty %}
+                {% for course in courses %}
+                    <div class="course-list-item"
+                         data-id="{{ course.id }}"
+                         data-title="{{ course.title }}"
+                         data-subject="{{ course.subjectName ?? '' }}"
+                         data-href="{{ path('app_courses_detail', {id: course.id}) }}"
+                         tabindex="0" role="button" aria-label="Open {{ course.title }}">
+                        {% if course.coverImagePath %}
+                            <img class="course-list-thumb" src="/covers/{{ course.coverImagePath }}"
+                                 alt="{{ course.title }}" width="56" height="56" loading="lazy">
+                        {% else %}
+                            <div class="course-list-placeholder" aria-hidden="true">🎓</div>
+                        {% endif %}
+                        <div class="course-list-info">
+                            <p class="course-list-title">{{ course.title }}</p>
+                            {% if course.subjectName %}<p class="course-list-subject">{{ course.subjectName }}</p>{% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state" style="grid-column:unset;">
+                    <div class="empty-icon" aria-hidden="true">📖</div>
+                    <h3>No published courses yet</h3>
+                    <p>No courses have been published to the library yet.</p>
+                </div>
+            {% endif %}
+            <div class="no-results-msg" id="libNoResultsList" style="grid-column:unset;">
+                <div class="no-results-icon">🔍</div>
+                <h4>No courses match your search</h4>
+                <p>Try a different keyword or clear the subject filter.</p>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        /* ── SEARCH & FILTER ────────────────────────────────────────── */
+        (function () {
+            const searchInput   = document.getElementById('libSearchInput');
+            const clearBtn      = document.getElementById('libSearchClearBtn');
+            const countEl       = document.getElementById('libResultsCount');
+            const noResultsGrid = document.getElementById('libNoResultsGrid');
+            const noResultsList = document.getElementById('libNoResultsList');
+
+            const trigger   = document.getElementById('subjectDropdownTrigger');
+            const panel     = document.getElementById('subjectDropdownPanel');
+            const label     = document.getElementById('subjectDropdownLabel');
+            const sdtClear  = document.getElementById('subjectDropdownClear');
+            const sdpSearch = document.getElementById('subjectSearch');
+            const sdpList   = document.getElementById('subjectList');
+
+            let activeSubject = '';
+
+            function filterCourses() {
+                const query = (searchInput ? searchInput.value.trim().toLowerCase() : '');
+                if (clearBtn) clearBtn.classList.toggle('visible', query.length > 0);
+
+                const gridCards = [...document.querySelectorAll('#gridView .course-card')];
+                const listItems = [...document.querySelectorAll('#listView .course-list-item')];
+
+                function matches(el) {
+                    const title   = (el.dataset.title   || '').toLowerCase();
+                    const subject = (el.dataset.subject || '').toLowerCase();
+                    const qOk = !query || title.includes(query) || subject.includes(query);
+                    const sOk = !activeSubject || subject === activeSubject.toLowerCase();
+                    return qOk && sOk;
+                }
+
+                let visible = 0;
+                gridCards.forEach(el => { const s = matches(el); el.style.display = s ? '' : 'none'; if (s) visible++; });
+                listItems.forEach(el => { el.style.display = matches(el) ? '' : 'none'; });
+
+                if (query || activeSubject) {
+                    if (countEl) countEl.textContent = visible + ' of ' + gridCards.length + ' course' + (gridCards.length !== 1 ? 's' : '') + ' shown';
+                    if (noResultsGrid) noResultsGrid.classList.toggle('visible', visible === 0);
+                    if (noResultsList) noResultsList.classList.toggle('visible', visible === 0);
+                } else {
+                    if (countEl) countEl.textContent = '';
+                    if (noResultsGrid) noResultsGrid.classList.remove('visible');
+                    if (noResultsList) noResultsList.classList.remove('visible');
+                }
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('input', filterCourses);
+                if (clearBtn) clearBtn.addEventListener('click', () => { searchInput.value = ''; filterCourses(); searchInput.focus(); });
+            }
+
+            function openPanel() {
+                if (!panel) return;
+                panel.classList.add('open'); trigger.classList.add('open');
+                trigger.setAttribute('aria-expanded', 'true');
+                setTimeout(() => sdpSearch && sdpSearch.focus(), 60);
+            }
+            function closePanel() {
+                if (!panel) return;
+                panel.classList.remove('open'); trigger.classList.remove('open');
+                trigger.setAttribute('aria-expanded', 'false');
+                if (sdpSearch) { sdpSearch.value = ''; renderOptions(''); }
+            }
+
+            if (trigger) {
+                trigger.addEventListener('click', e => {
+                    if (e.target.closest('.sdt-clear')) return;
+                    panel.classList.contains('open') ? closePanel() : openPanel();
+                });
+            }
+            document.addEventListener('click', e => {
+                if (panel && panel.classList.contains('open') && !e.target.closest('#subjectDropdownWrap')) closePanel();
+            });
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape' && panel && panel.classList.contains('open')) closePanel();
+            });
+
+            function renderOptions(query) {
+                if (!sdpList) return;
+                const q = query.toLowerCase();
+                sdpList.querySelectorAll('.sdp-option').forEach(opt => {
+                    const text = (opt.dataset.subject || 'all subjects').toLowerCase();
+                    opt.style.display = (!q || text.includes(q)) ? '' : 'none';
+                });
+                const anyVisible = [...sdpList.querySelectorAll('.sdp-option')].some(o => o.style.display !== 'none');
+                let emptyMsg = sdpList.querySelector('.sdp-empty');
+                if (!anyVisible) {
+                    if (!emptyMsg) { emptyMsg = document.createElement('div'); emptyMsg.className = 'sdp-empty'; emptyMsg.textContent = 'No subjects found'; sdpList.appendChild(emptyMsg); }
+                    emptyMsg.style.display = '';
+                } else if (emptyMsg) { emptyMsg.style.display = 'none'; }
+            }
+            if (sdpSearch) sdpSearch.addEventListener('input', () => renderOptions(sdpSearch.value));
+
+            function selectSubject(subject, text) {
+                activeSubject = subject;
+                if (label) label.textContent = subject ? text : 'All Subjects';
+                if (trigger) trigger.classList.toggle('has-value', !!subject);
+                if (sdtClear) sdtClear.classList.toggle('visible', !!subject);
+                if (sdpList) sdpList.querySelectorAll('.sdp-option').forEach(opt => {
+                    const sel = opt.dataset.subject === subject;
+                    opt.classList.toggle('selected', sel);
+                    opt.setAttribute('aria-selected', String(sel));
+                    opt.querySelector('.sdp-option-check').textContent = sel ? '✓' : '';
+                });
+                closePanel();
+                filterCourses();
+            }
+
+            if (sdpList) sdpList.addEventListener('click', e => {
+                const opt = e.target.closest('.sdp-option');
+                if (!opt) return;
+                selectSubject(opt.dataset.subject, opt.textContent.replace('✓', '').trim());
+            });
+            if (sdtClear) sdtClear.addEventListener('click', e => { e.stopPropagation(); selectSubject('', ''); });
+        })();
+
+        (function () {
+            'use strict';
+            const gridView    = document.getElementById('gridView');
+            const listView    = document.getElementById('listView');
+            const gridViewBtn = document.getElementById('gridViewBtn');
+            const listViewBtn = document.getElementById('listViewBtn');
+
+            function setView(grid) {
+                gridView.style.display = grid ? '' : 'none';
+                listView.style.display = grid ? 'none' : '';
+                gridViewBtn.classList.toggle('active', grid);
+                listViewBtn.classList.toggle('active', !grid);
+                gridViewBtn.setAttribute('aria-pressed', String(grid));
+                listViewBtn.setAttribute('aria-pressed', String(!grid));
+            }
+            gridViewBtn.addEventListener('click', () => setView(true));
+            listViewBtn.addEventListener('click', () => setView(false));
+
+            document.querySelectorAll('.course-card, .course-list-item, .recommended-course-card').forEach(el => {
+                el.addEventListener('click', () => window.location.href = el.dataset.href);
+                el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); } });
+            });
+
+            const avatarBtn = document.getElementById('avatarBtn'); const dropdown = document.getElementById('profileDropdown');
+            if (avatarBtn) {
+                avatarBtn.addEventListener('click', e => { e.stopPropagation(); const open = dropdown.classList.toggle('open'); avatarBtn.setAttribute('aria-expanded', String(open)); });
+                document.addEventListener('click', () => { dropdown.classList.remove('open'); avatarBtn.setAttribute('aria-expanded', 'false'); });
+            }
+        })();
+    </script>
+{% endblock %}

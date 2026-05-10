@@ -1,0 +1,83 @@
+{# Template personnalisé pour la pagination — style violet @ #}
+
+{% if pageCount > 1 %}
+<nav style="display:flex;align-items:center;justify-content:center;
+            gap:8px;margin-top:32px;flex-wrap:wrap;">
+
+    {# Bouton Précédent #}
+    {% if previous is defined %}
+        <a href="{{ path(route, query|merge({(pageParameterName): previous})) }}"
+           style="display:inline-flex;align-items:center;padding:8px 16px;
+                  border:1.5px solid rgba(106,90,205,.2);border-radius:9px;
+                  background:white;color:#4A4570;font-size:13px;
+                  font-weight:500;text-decoration:none;
+                  transition:all .15s;"
+           onmouseover="this.style.borderColor='#6A5ACD';this.style.color='#6A5ACD'"
+           onmouseout="this.style.borderColor='rgba(106,90,205,.2)';this.style.color='#4A4570'">
+            ← Précédent
+        </a>
+        
+    {% else %}
+        {# Bouton désactivé si on est à la 1ère page #}
+        <span style="display:inline-flex;align-items:center;padding:8px 16px;
+                     border:1.5px solid rgba(106,90,205,.1);border-radius:9px;
+                     background:#F7F5FD;color:#C4BFDF;font-size:13px;
+                     font-weight:500;cursor:not-allowed;">
+            ← Précédent
+        </span>
+    {% endif %}
+
+    {# Numéros de pages #}
+    {% for page in pagesInRange %}
+        {% if page != current %}
+            <a href="{{ path(route, query|merge({(pageParameterName): page})) }}"
+               style="display:inline-flex;align-items:center;justify-content:center;
+                      width:36px;height:36px;
+                      border:1.5px solid rgba(106,90,205,.2);border-radius:9px;
+                      background:white;color:#4A4570;font-size:13px;
+                      font-weight:500;text-decoration:none;transition:all .15s;"
+               onmouseover="this.style.borderColor='#6A5ACD';this.style.color='#6A5ACD';this.style.background='#EDE8FA'"
+               onmouseout="this.style.borderColor='rgba(106,90,205,.2)';this.style.color='#4A4570';this.style.background='white'">
+                {{ page }}
+            </a>
+        {% else %}
+            {# Page courante — fond violet #}
+            <span style="display:inline-flex;align-items:center;justify-content:center;
+                         width:36px;height:36px;
+                         border:1.5px solid #6A5ACD;border-radius:9px;
+                         background:#6A5ACD;color:white;font-size:13px;
+                         font-weight:700;">
+                {{ page }}
+            </span>
+        {% endif %}
+    {% endfor %}
+
+    {# Bouton Suivant #}
+    {% if next is defined %}
+        <a href="{{ path(route, query|merge({(pageParameterName): next})) }}"
+           style="display:inline-flex;align-items:center;padding:8px 16px;
+                  border:1.5px solid rgba(106,90,205,.2);border-radius:9px;
+                  background:white;color:#4A4570;font-size:13px;
+                  font-weight:500;text-decoration:none;transition:all .15s;"
+           onmouseover="this.style.borderColor='#6A5ACD';this.style.color='#6A5ACD'"
+           onmouseout="this.style.borderColor='rgba(106,90,205,.2)';this.style.color='#4A4570'">
+            Suivant →
+        </a>
+    {% else %}
+        {# Bouton désactivé si on est à la dernière page #}
+        <span style="display:inline-flex;align-items:center;padding:8px 16px;
+                     border:1.5px solid rgba(106,90,205,.1);border-radius:9px;
+                     background:#F7F5FD;color:#C4BFDF;font-size:13px;
+                     font-weight:500;cursor:not-allowed;">
+            Suivant →
+        </span>
+    {% endif %}
+
+</nav>
+
+{# Info page courante #}
+<div style="text-align:center;margin-top:10px;font-size:12px;color:#9590B8;">
+    Page {{ current }} sur {{ pageCount }} — {{ totalCount }} post(s) au total
+</div>
+
+{% endif %}

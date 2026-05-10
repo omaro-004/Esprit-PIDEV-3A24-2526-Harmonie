@@ -1,0 +1,908 @@
+{% extends 'admin/base.html.twig' %}
+{% block title %}Gestion Nutrition — Harmony{% endblock %}
+{% block page_title %}🥗 Gestion de la Nutrition{% endblock %}
+
+{% block stylesheets %}
+<style>
+    :root {
+        --nut-green: #10B981; --nut-green-dark: #059669; --nut-green-pale: #D1FAE5;
+        --nut-orange: #F59E0B; --nut-red: #EF4444; --nut-blue: #3B82F6; --nut-purple: #8B5CF6;
+    }
+
+    /* ── TOOLBAR ── */
+    .n-toolbar {
+        display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap;
+        background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 14px 18px;
+    }
+    .n-search-wrap { position: relative; flex: 1; min-width: 220px; }
+    .n-search-wrap .si { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); font-size: 14px; pointer-events: none; opacity: .5; }
+    .n-search { width: 100%; padding: 9px 14px 9px 40px; border: 1.5px solid var(--border); border-radius: 10px; font-family: var(--font-body); font-size: 13.5px; color: var(--text); background: var(--purple-ghost); outline: none; transition: border-color .15s; }
+    .n-search:focus { border-color: var(--nut-green); background: #fff; }
+    .n-select { padding: 9px 13px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 13px; font-family: var(--font-body); color: var(--text); background: var(--purple-ghost); outline: none; cursor: pointer; }
+    .n-select:focus { border-color: var(--nut-green); }
+    .btn-add-food {
+        display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px;
+        background: linear-gradient(135deg, var(--nut-green), var(--nut-green-dark));
+        color: #fff; border: none; border-radius: 10px; font-family: var(--font-body);
+        font-size: 13px; font-weight: 600; cursor: pointer;
+        box-shadow: 0 4px 14px rgba(16,185,129,.35); transition: .15s; white-space: nowrap;
+    }
+    .btn-add-food:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16,185,129,.45); }
+
+    /* ── BOUTON EXPORT EXCEL ── */
+    .btn-export-excel {
+        display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px;
+        background: linear-gradient(135deg, #7C3AED, #5B21B6);
+        color: #fff; border: none; border-radius: 10px; font-family: var(--font-body);
+        font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none;
+        box-shadow: 0 4px 14px rgba(124,58,237,.35); transition: .15s; white-space: nowrap;
+    }
+    .btn-export-excel:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(124,58,237,.5); color: #fff; text-decoration: none; }
+    .btn-export-excel:active { transform: translateY(0); }
+    .btn-export-excel .xl-icon { font-size: 15px; }
+
+    /* ── FILTRE AVANCÉ ── */
+    .n-filter-panel {
+        background: var(--white); border: 1px solid var(--border); border-radius: 14px;
+        margin-bottom: 14px; overflow: hidden;
+    }
+    .n-filter-toggle {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 12px 18px; cursor: pointer; user-select: none;
+        font-size: 13.5px; font-weight: 700; color: var(--text);
+    }
+    .n-filter-toggle-left { display: flex; align-items: center; gap: 9px; }
+    .n-filter-active-badge {
+        padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 700;
+        background: var(--nut-green); color: #fff;
+    }
+    .n-filter-arrow { font-size: 16px; color: var(--text-muted); transition: transform .2s; }
+    .n-filter-arrow.open { transform: rotate(180deg); }
+    .n-filter-body { display: none; padding: 16px 18px; border-top: 1px solid var(--border); }
+    .n-filter-body.open { display: block; }
+
+    .n-filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+    .n-filter-group { display: flex; flex-direction: column; gap: 4px; }
+    .n-filter-label { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--text-muted); }
+    .n-filter-input {
+        padding: 8px 11px; border: 1.5px solid var(--border); border-radius: 9px;
+        font-family: var(--font-body); font-size: 13px; color: var(--text);
+        background: var(--purple-ghost); outline: none; width: 100%;
+        transition: border-color .15s, background .15s;
+    }
+    .n-filter-input:focus { border-color: var(--nut-green); background: #fff; }
+    .n-filter-range { display: flex; align-items: center; gap: 5px; }
+    .n-filter-range-sep { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
+
+    .n-filter-actions {
+        display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+        margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);
+    }
+    .btn-filter-reset {
+        padding: 8px 16px; background: none; border: 1.5px solid var(--border);
+        border-radius: 9px; font-family: var(--font-body); font-size: 12.5px;
+        color: var(--text-muted); cursor: pointer; transition: .12s; text-decoration: none;
+        display: inline-flex; align-items: center;
+    }
+    .btn-filter-reset:hover { border-color: var(--nut-red); color: var(--nut-red); }
+    .btn-filter-apply {
+        padding: 8px 18px; background: linear-gradient(135deg, var(--nut-green), var(--nut-green-dark));
+        color: #fff; border: none; border-radius: 9px; font-family: var(--font-body);
+        font-size: 12.5px; font-weight: 600; cursor: pointer;
+        box-shadow: 0 3px 10px rgba(16,185,129,.3); transition: .15s;
+    }
+    .btn-filter-apply:hover { transform: translateY(-1px); }
+
+    /* Chips filtres actifs */
+    .n-chips-bar { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
+    .n-chip {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 4px 11px; border-radius: 20px;
+        background: var(--nut-green-pale); color: var(--nut-green-dark);
+        font-size: 12px; font-weight: 600; border: 1.5px solid rgba(16,185,129,.25);
+    }
+    .n-chip a { color: inherit; text-decoration: none; opacity: .7; font-size: 13px; line-height: 1; }
+    .n-chip a:hover { opacity: 1; }
+
+    /* ── STATS ── */
+    .n-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+    .n-stat { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; display: flex; align-items: center; gap: 14px; transition: box-shadow .2s; }
+    .n-stat:hover { box-shadow: 0 4px 18px rgba(0,0,0,.07); }
+    .n-stat-icon { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; font-size: 20px; flex-shrink: 0; }
+    .n-stat-val { font-family: var(--font-head); font-size: 26px; font-weight: 800; color: var(--text); line-height: 1; }
+    .n-stat-lbl { font-size: 11.5px; color: var(--text-muted); margin-top: 3px; }
+
+    /* ── TABLE ── */
+    .n-table-card { background: var(--white); border: 1px solid var(--border); border-radius: 18px; overflow: hidden; }
+    .n-table-head { padding: 14px 20px; background: var(--purple-ghost); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+    .n-table-title { font-family: var(--font-head); font-size: 14px; font-weight: 700; color: var(--text); }
+    .n-table-head-right { display: flex; align-items: center; gap: 10px; }
+    .n-count-badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; background: var(--nut-green-pale); color: var(--nut-green-dark); font-weight: 600; white-space: nowrap; }
+    .n-per-page { padding: 6px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-family: var(--font-body); font-size: 12px; color: var(--text); background: var(--white); outline: none; cursor: pointer; }
+    .n-per-page:focus { border-color: var(--nut-green); }
+
+    table.n-table { width: 100%; border-collapse: collapse; }
+    table.n-table th { padding: 11px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: var(--text-muted); background: var(--purple-ghost); border-bottom: 1px solid var(--border); white-space: nowrap; }
+    table.n-table th a { color: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: color .12s; }
+    table.n-table th a:hover { color: var(--nut-green); }
+    table.n-table th.sorted a { color: var(--nut-green); }
+    table.n-table td { padding: 12px 16px; font-size: 13.5px; color: var(--text); border-bottom: 1px solid var(--purple-ghost); vertical-align: middle; }
+    table.n-table tr:last-child td { border: none; }
+    table.n-table tr:hover td { background: rgba(16,185,129,.04); }
+
+    .food-name-text { font-weight: 600; color: var(--text); }
+    .id-badge { font-size: 11px; color: var(--text-muted); }
+    .macro-mini { display: flex; align-items: center; gap: 6px; }
+    .macro-mini .bar { width: 50px; height: 5px; background: #eee; border-radius: 4px; overflow: hidden; }
+    .macro-mini .bar-fill { height: 100%; border-radius: 4px; }
+    .macro-mini .val { font-size: 12.5px; font-weight: 600; color: var(--text); min-width: 36px; }
+    .cal-badge { font-family: var(--font-head); font-size: 14px; font-weight: 700; color: var(--nut-orange); }
+
+    .act-row { display: flex; gap: 6px; align-items: center; }
+    .btn-sm-action { padding: 5px 11px; border-radius: 8px; font-size: 12px; font-weight: 500; border: 1.5px solid var(--border); cursor: pointer; background: none; transition: .12s; font-family: var(--font-body); }
+    .btn-edit-act { color: var(--purple); }
+    .btn-edit-act:hover { background: var(--purple-pale); border-color: var(--purple); }
+    .btn-del-act { color: #E05252; }
+    .btn-del-act:hover { background: #FEE2E2; border-color: #FCA5A5; }
+    .empty-table { text-align: center; padding: 50px 20px; color: var(--text-muted); font-size: 14px; }
+
+    /* ── PAGINATION KNP — override Bootstrap ── */
+    .n-pagination-wrap {
+        display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+        gap: 12px; padding: 14px 20px; border-top: 1px solid var(--border);
+    }
+    .n-pagination-info { font-size: 12.5px; color: var(--text-muted); }
+    .n-pagination-info strong { color: var(--text); }
+    .n-pagination-wrap .pagination { display: flex; gap: 4px; list-style: none; margin: 0; padding: 0; flex-wrap: wrap; }
+    .n-pagination-wrap .pagination li > a,
+    .n-pagination-wrap .pagination li > span {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 34px; height: 34px; padding: 0 9px;
+        border-radius: 9px; font-size: 13px; font-weight: 600;
+        border: 1.5px solid var(--border); color: var(--text-muted);
+        background: var(--white); text-decoration: none; transition: all .12s;
+    }
+    .n-pagination-wrap .pagination li > a:hover { background: var(--nut-green-pale); border-color: var(--nut-green); color: var(--nut-green-dark); }
+    .n-pagination-wrap .pagination li.active > a,
+    .n-pagination-wrap .pagination li.active > span { background: var(--nut-green); border-color: var(--nut-green); color: #fff; }
+    .n-pagination-wrap .pagination li.disabled > a,
+    .n-pagination-wrap .pagination li.disabled > span { opacity: .4; pointer-events: none; cursor: default; }
+
+    /* ── MODAL ADD/EDIT ── */
+    .n-modal-overlay { position: fixed; inset: 0; background: rgba(10,8,28,.55); display: flex; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(6px); opacity: 0; pointer-events: none; transition: opacity .2s; }
+    .n-modal-overlay.open { opacity: 1; pointer-events: all; }
+    .n-modal { background: var(--white); border-radius: 22px; width: 540px; max-width: 95vw; max-height: 92vh; overflow-y: auto; box-shadow: 0 32px 80px rgba(0,0,0,.22); transform: scale(.95) translateY(14px); transition: transform .25s; }
+    .n-modal-overlay.open .n-modal { transform: scale(1) translateY(0); }
+    .n-modal-header { padding: 22px 26px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, #F0FDF4, #ECFDF5); }
+    .n-modal-title { font-family: var(--font-head); font-size: 17px; font-weight: 800; color: var(--text); }
+    .n-modal-close { background: none; border: none; cursor: pointer; font-size: 20px; color: var(--text-muted); width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; transition: .12s; }
+    .n-modal-close:hover { background: var(--nut-green-pale); color: var(--nut-green); }
+    .n-modal-body { padding: 24px 26px; }
+    .n-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .n-form-group { display: flex; flex-direction: column; gap: 5px; }
+    .n-form-group.full { grid-column: 1 / -1; }
+    .n-form-group label { font-size: 12px; font-weight: 600; color: var(--text-mid); }
+    .n-form-group input { padding: 10px 13px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; font-family: var(--font-body); color: var(--text); background: var(--purple-ghost); outline: none; transition: border-color .15s, box-shadow .15s; width: 100%; }
+    .n-form-group input:focus { border-color: var(--nut-green); background: #fff; box-shadow: 0 0 0 3px rgba(16,185,129,.12); }
+    .n-form-group.has-err input { border-color: var(--nut-red); }
+    .n-form-group .err-msg { font-size: 11.5px; color: var(--nut-red); display: none; font-weight: 500; }
+    .n-form-group.has-err .err-msg { display: block; }
+    .req-star { color: var(--nut-red); }
+    .macro-verif { background: linear-gradient(135deg,#F0FDF4,#ECFDF5); border: 1px solid #A7F3D0; border-radius: 12px; padding: 14px 16px; margin-top: 14px; }
+    .macro-verif-title { font-size: 12px; font-weight: 700; color: var(--nut-green-dark); margin-bottom: 10px; }
+    .mv-row { display: flex; justify-content: space-between; font-size: 13px; margin: 4px 0; }
+    .mv-label { color: var(--text-muted); }
+    .mv-val { font-weight: 700; }
+    .mv-ok { color: var(--nut-green); }
+    .mv-warn { color: var(--nut-orange); }
+    .mv-sep { height: 1px; background: rgba(16,185,129,.15); margin: 6px 0; }
+    .n-modal-footer { padding: 16px 26px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; background: var(--purple-ghost); border-radius: 0 0 22px 22px; }
+    .btn-n-cancel { padding: 10px 20px; background: var(--white); border: 1.5px solid var(--border); border-radius: 10px; font-family: var(--font-body); font-size: 13px; cursor: pointer; color: var(--text-mid); }
+    .btn-n-save { padding: 10px 24px; background: linear-gradient(135deg, var(--nut-green), var(--nut-green-dark)); color: #fff; border: none; border-radius: 10px; font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 14px rgba(16,185,129,.35); transition: .15s; }
+    .btn-n-save:hover { transform: translateY(-1px); }
+
+    /* Delete confirm modal */
+    .del-overlay { position: fixed; inset: 0; background: rgba(10,8,28,.55); display: flex; align-items: center; justify-content: center; z-index: 3000; backdrop-filter: blur(6px); opacity: 0; pointer-events: none; transition: opacity .2s; }
+    .del-overlay.open { opacity: 1; pointer-events: all; }
+    .del-box { background: var(--white); border-radius: 20px; width: 400px; max-width: 95vw; padding: 32px; box-shadow: 0 32px 80px rgba(0,0,0,.22); text-align: center; transform: scale(.92); transition: transform .2s; }
+    .del-overlay.open .del-box { transform: scale(1); }
+    .del-icon { font-size: 48px; margin-bottom: 12px; }
+    .del-title { font-family: var(--font-head); font-size: 18px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
+    .del-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5; }
+    .del-actions { display: flex; gap: 10px; justify-content: center; }
+    .btn-del-cancel { padding: 10px 22px; background: var(--purple-ghost); border: 1.5px solid var(--border); border-radius: 10px; font-family: var(--font-body); font-size: 13px; cursor: pointer; color: var(--text-mid); }
+    .btn-del-confirm { padding: 10px 22px; background: #EF4444; color: #fff; border: none; border-radius: 10px; font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 14px rgba(239,68,68,.3); }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 28px; right: 28px; padding: 13px 20px; border-radius: 12px; font-size: 13.5px; font-weight: 600; color: #fff; box-shadow: 0 8px 28px rgba(0,0,0,.2); z-index: 9999; transform: translateY(20px); opacity: 0; transition: all .3s; pointer-events: none; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { background: var(--nut-green); }
+    .toast.error { background: var(--nut-red); }
+
+    @keyframes rowIn { from { opacity:0; transform:translateX(-8px); } to { opacity:1; transform:none; } }
+    .row-anim { animation: rowIn .22s ease both; }
+
+    @media(max-width: 768px) {
+        .n-stats { grid-template-columns: repeat(2,1fr); }
+        .n-filter-grid { grid-template-columns: 1fr; }
+        table.n-table th:nth-child(n+4), table.n-table td:nth-child(n+4) { display: none; }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+
+{# ── TOOLBAR ── #}
+<div class="n-toolbar">
+    <div class="n-search-wrap">
+        <span class="si">🔍</span>
+        <input
+            type="text"
+            class="n-search"
+            id="quickSearch"
+            placeholder="Rechercher un aliment…"
+            value="{{ filters.search }}"
+            oninput="debounceSearch()"
+        >
+    </div>
+    <select class="n-select" id="sortSelect" onchange="applySort(this.value)">
+        <option value="">Trier par…</option>
+        <option value="nomAliment_ASC"        {% if filters.sort=='nomAliment'       and filters.direction=='ASC'  %}selected{% endif %}>Nom A → Z</option>
+        <option value="nomAliment_DESC"       {% if filters.sort=='nomAliment'       and filters.direction=='DESC' %}selected{% endif %}>Nom Z → A</option>
+        <option value="caloriesPour100g_DESC" {% if filters.sort=='caloriesPour100g' and filters.direction=='DESC' %}selected{% endif %}>Calories ↓</option>
+        <option value="caloriesPour100g_ASC"  {% if filters.sort=='caloriesPour100g' and filters.direction=='ASC'  %}selected{% endif %}>Calories ↑</option>
+        <option value="proteines_DESC"        {% if filters.sort=='proteines'        and filters.direction=='DESC' %}selected{% endif %}>Protéines ↓</option>
+        <option value="glucides_DESC"         {% if filters.sort=='glucides'         and filters.direction=='DESC' %}selected{% endif %}>Glucides ↓</option>
+        <option value="lipides_DESC"          {% if filters.sort=='lipides'          and filters.direction=='DESC' %}selected{% endif %}>Lipides ↓</option>
+    </select>
+    <button class="btn-add-food" onclick="openFoodModal()">＋ Ajouter un aliment</button>
+
+    {# ── Bouton Export Excel ── #}
+    <a href="{{ path('admin_nutrition_export') }}"
+       class="btn-export-excel"
+       title="Exporter toute la base de données en Excel (.xlsx) avec logo et mise en forme Harmony"
+       id="btnExport"
+       onclick="startExportFeedback(this)">
+        <span class="xl-icon">📊</span>
+        Exporter le catalogue Excel
+    </a>
+</div>
+
+{# ── PANNEAU FILTRES AVANCÉS ── #}
+<div class="n-filter-panel">
+    <div class="n-filter-toggle" onclick="toggleFilterPanel(this)">
+        <div class="n-filter-toggle-left">
+            <span>⚙️</span>
+            Filtres avancés
+            {% if hasActiveFilters %}
+                <span class="n-filter-active-badge">actifs</span>
+            {% endif %}
+        </div>
+        <span class="n-filter-arrow {% if hasActiveFilters %}open{% endif %}">▾</span>
+    </div>
+
+    <div class="n-filter-body {% if hasActiveFilters %}open{% endif %}">
+        <form method="GET" action="{{ path('admin_nutrition_index') }}" id="filterForm">
+            {# Champs cachés — synchronisés depuis JS avant soumission #}
+            <input type="hidden" name="page"      value="1">
+            <input type="hidden" name="orderby"   id="hSort"      value="{{ filters.sort }}">
+            <input type="hidden" name="orderdir" id="hDirection" value="{{ filters.direction }}">
+            <input type="hidden" name="limit"     value="{{ limit }}">
+            <input type="hidden" name="search"    id="hSearch"    value="{{ filters.search }}">
+
+            <div class="n-filter-grid">
+
+                {# Calories #}
+                <div class="n-filter-group">
+                    <label class="n-filter-label">🔥 Calories kcal/100g</label>
+                    <div class="n-filter-range">
+                        <input class="n-filter-input" type="number" name="cal_min"
+                               value="{{ filters.cal_min }}"
+                               placeholder="Min ({{ stats.calMin }})"
+                               min="0" max="9000" step="1" style="max-width:100px">
+                        <span class="n-filter-range-sep">→</span>
+                        <input class="n-filter-input" type="number" name="cal_max"
+                               value="{{ filters.cal_max }}"
+                               placeholder="Max ({{ stats.calMax }})"
+                               min="0" max="9000" step="1" style="max-width:100px">
+                    </div>
+                </div>
+
+                {# Protéines #}
+                <div class="n-filter-group">
+                    <label class="n-filter-label">💪 Protéines g/100g</label>
+                    <div class="n-filter-range">
+                        <input class="n-filter-input" type="number" name="prot_min"
+                               value="{{ filters.prot_min }}"
+                               placeholder="Min ({{ stats.protMin }})"
+                               min="0" max="100" step="0.1" style="max-width:100px">
+                        <span class="n-filter-range-sep">→</span>
+                        <input class="n-filter-input" type="number" name="prot_max"
+                               value="{{ filters.prot_max }}"
+                               placeholder="Max ({{ stats.protMax }})"
+                               min="0" max="100" step="0.1" style="max-width:100px">
+                    </div>
+                </div>
+
+                {# Plage d'ID #}
+                <div class="n-filter-group">
+                    <label class="n-filter-label">🆔 Plage ID (ordre d'ajout)</label>
+                    <div class="n-filter-range">
+                        <input class="n-filter-input" type="number" name="id_from"
+                               value="{{ filters.id_from }}"
+                               placeholder="Depuis ({{ stats.idMin }})"
+                               min="1" style="max-width:100px">
+                        <span class="n-filter-range-sep">→</span>
+                        <input class="n-filter-input" type="number" name="id_to"
+                               value="{{ filters.id_to }}"
+                               placeholder="Jusqu'à ({{ stats.idMax }})"
+                               min="1" style="max-width:100px">
+                    </div>
+                </div>
+
+            </div>{# /n-filter-grid #}
+
+            <div class="n-filter-actions">
+                {% if hasActiveFilters %}
+                    <a href="{{ path('admin_nutrition_index') }}" class="btn-filter-reset">✕ Effacer les filtres</a>
+                {% endif %}
+                <button type="submit" class="btn-filter-apply">🔎 Appliquer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{# ── CHIPS FILTRES ACTIFS ── #}
+{% if hasActiveFilters %}
+<div class="n-chips-bar">
+    {% if filters.search %}
+        <span class="n-chip">
+            🔤 « {{ filters.search }} »
+            <a href="{{ path('admin_nutrition_index', filters|merge({search:'', page:1})) }}">✕</a>
+        </span>
+    {% endif %}
+    {% if filters.cal_min or filters.cal_max %}
+        <span class="n-chip">
+            🔥 Cal : {{ filters.cal_min ?: '…' }} → {{ filters.cal_max ?: '…' }} kcal
+            <a href="{{ path('admin_nutrition_index', filters|merge({cal_min:'', cal_max:'', page:1})) }}">✕</a>
+        </span>
+    {% endif %}
+    {% if filters.prot_min or filters.prot_max %}
+        <span class="n-chip">
+            💪 Prot : {{ filters.prot_min ?: '…' }} → {{ filters.prot_max ?: '…' }} g
+            <a href="{{ path('admin_nutrition_index', filters|merge({prot_min:'', prot_max:'', page:1})) }}">✕</a>
+        </span>
+    {% endif %}
+    {% if filters.id_from or filters.id_to %}
+        <span class="n-chip">
+            🆔 ID : {{ filters.id_from ?: '…' }} → {{ filters.id_to ?: '…' }}
+            <a href="{{ path('admin_nutrition_index', filters|merge({id_from:'', id_to:'', page:1})) }}">✕</a>
+        </span>
+    {% endif %}
+</div>
+{% endif %}
+
+{# ── STATS ── #}
+<div class="n-stats">
+    <div class="n-stat">
+        <div class="n-stat-icon" style="background:#D1FAE5;">🥗</div>
+        <div>
+            <div class="n-stat-val">{{ stats.idMax is not null ? (stats.idMax - stats.idMin + 1) : 0 }}</div>
+            <div class="n-stat-lbl">Total aliments</div>
+        </div>
+    </div>
+    <div class="n-stat">
+        <div class="n-stat-icon" style="background:#FEF3C7;">🔥</div>
+        <div>
+            <div class="n-stat-val" style="font-size:18px">{{ stats.calMin }}–{{ stats.calMax }}</div>
+            <div class="n-stat-lbl">Cal. min/max (100g)</div>
+        </div>
+    </div>
+    <div class="n-stat">
+        <div class="n-stat-icon" style="background:#EDE9FE;">💪</div>
+        <div>
+            <div class="n-stat-val">{{ stats.protMax }}g</div>
+            <div class="n-stat-lbl">Max protéines</div>
+        </div>
+    </div>
+    <div class="n-stat">
+        <div class="n-stat-icon" style="background:#DBEAFE;">📊</div>
+        <div>
+            <div class="n-stat-val">{{ totalFiltered }}</div>
+            <div class="n-stat-lbl">Résultats filtrés</div>
+        </div>
+    </div>
+</div>
+
+{# ── TABLE CARD ── #}
+<div class="n-table-card">
+    <div class="n-table-head">
+        <div class="n-table-title">📋 Base de données alimentaire</div>
+        <div class="n-table-head-right">
+            <span class="n-count-badge">
+                {{ (pagination.currentPageNumber - 1) * pagination.numItemsPerPage + 1 }}–{{ min(pagination.currentPageNumber * pagination.numItemsPerPage, pagination.totalItemCount) }}
+                sur {{ totalFiltered }} aliment(s)
+            </span>
+            <label style="font-size:12px;color:var(--text-muted);font-weight:600">Par page :</label>
+            <select class="n-per-page" onchange="changeLimit(this.value)">
+                {% for opt in [10, 20, 50, 100] %}
+                    <option value="{{ opt }}" {% if limit == opt %}selected{% endif %}>{{ opt }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    {% if pagination.items|length > 0 %}
+    <div style="overflow-x:auto">
+        <table class="n-table">
+            <thead>
+            <tr>
+                {# Macro helper pour les liens de tri — préserve TOUS les filtres actifs #}
+                <th class="{% if filters.sort=='nomAliment' %}sorted{% endif %}">
+                    <a href="{{ path('admin_nutrition_index', filters|merge({
+                        orderby:'nomAliment',
+                        orderdir:(filters.sort=='nomAliment' and filters.direction=='ASC') ? 'DESC' : 'ASC',
+                        page:1
+                    })) }}">
+                        Aliment
+                        <span>{{ filters.sort=='nomAliment' ? (filters.direction=='ASC' ? '↑' : '↓') : '↕' }}</span>
+                    </a>
+                </th>
+                <th id="th-cal" class="{% if filters.sort=='caloriesPour100g' %}sorted{% endif %}">
+                    <a href="{{ path('admin_nutrition_index', filters|merge({
+                        orderby:'caloriesPour100g',
+                        orderdir:(filters.sort=='caloriesPour100g' and filters.direction=='ASC') ? 'DESC' : 'ASC',
+                        page:1
+                    })) }}">
+                        Calories / 100g
+                        <span>{{ filters.sort=='caloriesPour100g' ? (filters.direction=='ASC' ? '↑' : '↓') : '↕' }}</span>
+                    </a>
+                </th>
+                <th id="th-prot" class="{% if filters.sort=='proteines' %}sorted{% endif %}">
+                    <a href="{{ path('admin_nutrition_index', filters|merge({
+                        orderby:'proteines',
+                        orderdir:(filters.sort=='proteines' and filters.direction=='ASC') ? 'DESC' : 'ASC',
+                        page:1
+                    })) }}">
+                        Protéines
+                        <span>{{ filters.sort=='proteines' ? (filters.direction=='ASC' ? '↑' : '↓') : '↕' }}</span>
+                    </a>
+                </th>
+                <th id="th-lip" class="{% if filters.sort=='lipides' %}sorted{% endif %}">
+                    <a href="{{ path('admin_nutrition_index', filters|merge({
+                        orderby:'lipides',
+                        orderdir:(filters.sort=='lipides' and filters.direction=='ASC') ? 'DESC' : 'ASC',
+                        page:1
+                    })) }}">
+                        Lipides
+                        <span>{{ filters.sort=='lipides' ? (filters.direction=='ASC' ? '↑' : '↓') : '↕' }}</span>
+                    </a>
+                </th>
+                <th id="th-gluc" class="{% if filters.sort=='glucides' %}sorted{% endif %}">
+                    <a href="{{ path('admin_nutrition_index', filters|merge({
+                        orderby:'glucides',
+                        orderdir:(filters.sort=='glucides' and filters.direction=='ASC') ? 'DESC' : 'ASC',
+                        page:1
+                    })) }}">
+                        Glucides
+                        <span>{{ filters.sort=='glucides' ? (filters.direction=='ASC' ? '↑' : '↓') : '↕' }}</span>
+                    </a>
+                </th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% set maxProt = stats.protMax > 0 ? stats.protMax : 1 %}
+            {% set maxCal  = stats.calMax  > 0 ? stats.calMax  : 1 %}
+            {% for aliment in pagination.items %}
+            <tr class="row-anim" style="animation-delay:{{ loop.index0 * 0.02 }}s" id="row-{{ aliment.id }}">
+                <td>
+                    <span class="food-name-text">{{ aliment.nomAliment }}</span>
+                    <span class="id-badge">&nbsp;#{{ aliment.id }}</span>
+                </td>
+                <td><span class="cal-badge">{{ aliment.caloriesPour100g }} kcal</span></td>
+                <td>
+                    <div class="macro-mini">
+                        <div class="bar"><div class="bar-fill" style="width:{{ min([((aliment.proteines / maxProt) * 100)|round, 100]) }}%;background:#8B5CF6"></div></div>
+                        <span class="val">{{ aliment.proteines }}g</span>
+                    </div>
+                </td>
+                <td>
+                    <div class="macro-mini">
+                        <div class="bar"><div class="bar-fill" style="width:{{ min([((aliment.lipides / maxProt) * 100)|round, 100]) }}%;background:#F59E0B"></div></div>
+                        <span class="val">{{ aliment.lipides }}g</span>
+                    </div>
+                </td>
+                <td>
+                    <div class="macro-mini">
+                        <div class="bar"><div class="bar-fill" style="width:{{ min([((aliment.glucides / maxProt) * 100)|round, 100]) }}%;background:#3B82F6"></div></div>
+                        <span class="val">{{ aliment.glucides }}g</span>
+                    </div>
+                </td>
+                <td>
+                    <div class="act-row">
+                        <button class="btn-sm-action btn-edit-act"
+                            onclick="editFoodServer({{ aliment.id }}, {{ aliment.nomAliment|json_encode }}, {{ aliment.caloriesPour100g }}, {{ aliment.proteines }}, {{ aliment.lipides }}, {{ aliment.glucides }})">
+                            ✏ Modifier
+                        </button>
+                        <button class="btn-sm-action btn-del-act"
+                            onclick="askDelete({{ aliment.id }}, {{ aliment.nomAliment|json_encode }})">
+                            🗑
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <div class="empty-table">
+            <div style="font-size:36px;opacity:.4;margin-bottom:10px">🔍</div>
+            <strong>Aucun aliment trouvé</strong><br>
+            <span style="font-size:13px">Modifiez ou effacez vos filtres.</span>
+        </div>
+    {% endif %}
+
+    {# ── PAGINATION MANUELLE ── #}
+    <div class="n-pagination-wrap">
+        <div class="n-pagination-info">
+            Page <strong>{{ pagination.currentPageNumber }}</strong> /
+            <strong>{{ pagination.pageCount }}</strong>
+            — <strong>{{ pagination.totalItemCount }}</strong> résultat(s)
+        </div>
+        <nav aria-label="Pagination">
+            <ul class="pagination">
+                {% if pagination.currentPageNumber > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ path('admin_nutrition_index', filters|merge({'page': pagination.currentPageNumber - 1, 'limit': pagination.numItemsPerPage})) }}">Précédent</a>
+                    </li>
+                {% endif %}
+
+                {% for i in max(1, pagination.currentPageNumber - 2)..min(pagination.pageCount, pagination.currentPageNumber + 2) %}
+                    <li class="page-item {% if i == pagination.currentPageNumber %}active{% endif %}">
+                        <a class="page-link" href="{{ path('admin_nutrition_index', filters|merge({'page': i, 'limit': pagination.numItemsPerPage})) }}">{{ i }}</a>
+                    </li>
+                {% endfor %}
+
+                {% if pagination.currentPageNumber < pagination.pageCount %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ path('admin_nutrition_index', filters|merge({'page': pagination.currentPageNumber + 1, 'limit': pagination.numItemsPerPage})) }}">Suivant</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+
+{# ── MODAL ADD / EDIT ── #}
+<div class="n-modal-overlay" id="foodModalOverlay" onclick="if(event.target===this)closeFoodModal()">
+    <div class="n-modal">
+        <div class="n-modal-header">
+            <div class="n-modal-title" id="modalTitle">🥗 Ajouter un aliment</div>
+            <button class="n-modal-close" onclick="closeFoodModal()">✕</button>
+        </div>
+        <div class="n-modal-body">
+            <input type="hidden" id="editId">
+            <div class="n-form-grid">
+                <div class="n-form-group full" id="fg-nom">
+                    <label>Nom de l'aliment <span class="req-star">*</span></label>
+                    <input type="text" id="f-nom" placeholder="Ex : Poulet grillé" maxlength="100">
+                    <span class="err-msg">Ce champ est obligatoire</span>
+                </div>
+                <div class="n-form-group" id="fg-cal">
+                    <label>Calories (kcal / 100g) <span class="req-star">*</span></label>
+                    <input type="number" id="f-cal" min="0" max="9000" step="1" placeholder="Ex : 165" oninput="updateMacroVerif()">
+                    <span class="err-msg">Valeur entre 0 et 9000</span>
+                </div>
+                <div class="n-form-group" id="fg-prot">
+                    <label>Protéines (g / 100g) <span class="req-star">*</span></label>
+                    <input type="number" id="f-prot" min="0" max="100" step="0.1" placeholder="Ex : 31" oninput="updateMacroVerif()">
+                    <span class="err-msg">Valeur entre 0 et 100</span>
+                </div>
+                <div class="n-form-group" id="fg-lip">
+                    <label>Lipides (g / 100g) <span class="req-star">*</span></label>
+                    <input type="number" id="f-lip" min="0" max="100" step="0.1" placeholder="Ex : 3.6" oninput="updateMacroVerif()">
+                    <span class="err-msg">Valeur entre 0 et 100</span>
+                </div>
+                <div class="n-form-group" id="fg-gluc">
+                    <label>Glucides (g / 100g) <span class="req-star">*</span></label>
+                    <input type="number" id="f-gluc" min="0" max="100" step="0.1" placeholder="Ex : 0" oninput="updateMacroVerif()">
+                    <span class="err-msg">Valeur entre 0 et 100</span>
+                </div>
+            </div>
+            <div class="macro-verif">
+                <div class="macro-verif-title">🔬 Vérificateur de cohérence calorique</div>
+                <div class="mv-row"><span class="mv-label">Calories déclarées</span><span class="mv-val" id="mv-declared">—</span></div>
+                <div class="mv-sep"></div>
+                <div class="mv-row"><span class="mv-label">Calculées (P×4 + G×4 + L×9)</span><span class="mv-val" id="mv-computed">—</span></div>
+                <div class="mv-sep"></div>
+                <div class="mv-row"><span class="mv-label">Écart</span><span class="mv-val" id="mv-diff">—</span></div>
+                <div class="mv-sep"></div>
+                <div class="mv-row"><span class="mv-label">Statut</span><span class="mv-val" id="mv-status">—</span></div>
+            </div>
+        </div>
+        <div class="n-modal-footer">
+            <button class="btn-n-cancel" onclick="closeFoodModal()">Annuler</button>
+            <button class="btn-n-save" id="btnSave" onclick="saveFoodItem()">💾 Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+{# ── MODAL SUPPRESSION ── #}
+<div class="del-overlay" id="delOverlay">
+    <div class="del-box">
+        <div class="del-icon">🗑️</div>
+        <div class="del-title">Supprimer cet aliment ?</div>
+        <div class="del-sub" id="delSub">Cette action est irréversible.</div>
+        <div class="del-actions">
+            <button class="btn-del-cancel" onclick="closeDelModal()">Annuler</button>
+            <button class="btn-del-confirm" id="btnDelConfirm" onclick="confirmDelete()">Supprimer</button>
+        </div>
+    </div>
+</div>
+
+{# ── TOAST ── #}
+<div class="toast" id="toast"></div>
+
+{% endblock %}
+
+{% block javascripts %}
+<script>
+// ═══════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════
+let deleteTargetId = null;
+let searchDebounce = null;
+
+// ═══════════════════════════════════════════════════════════
+//  API
+// ═══════════════════════════════════════════════════════════
+const API = {
+    create: '{{ path("admin_nutrition_create") }}',
+    update: (id) => `/admin/nutrition/api/update/${id}`,
+    delete: (id) => `/admin/nutrition/api/delete/${id}`,
+};
+
+async function apiFetch(url, opts = {}) {
+    const res  = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opts });
+    const text = await res.text();
+    let json;
+    try { json = JSON.parse(text); } catch(e) { throw new Error('Réponse non JSON : ' + text.substring(0, 200)); }
+    if (!res.ok) throw new Error(json.error || 'Erreur HTTP ' + res.status);
+    return json;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RECHERCHE RAPIDE (debounce 450ms → soumet le formulaire)
+// ═══════════════════════════════════════════════════════════
+function debounceSearch() {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => {
+        document.getElementById('hSearch').value = document.getElementById('quickSearch').value;
+        document.getElementById('filterForm').submit();
+    }, 450);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TRI RAPIDE via le select de la toolbar
+// ═══════════════════════════════════════════════════════════
+function applySort(val) {
+    if (!val) return;
+    const parts = val.split('_');
+    // Gérer "caloriesPour100g_DESC" qui contient un underscore dans le champ
+    const dir   = parts[parts.length - 1];
+    const field = parts.slice(0, -1).join('_');
+    document.getElementById('hSort').value      = field;
+    document.getElementById('hDirection').value = dir;
+    document.getElementById('hSearch').value    = document.getElementById('quickSearch').value;
+    document.getElementById('filterForm').submit();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ITEMS PAR PAGE
+// ═══════════════════════════════════════════════════════════
+function changeLimit(val) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('limit', val);
+    url.searchParams.set('page', '1');
+    window.location.href = url.toString();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PANNEAU FILTRES — toggle
+// ═══════════════════════════════════════════════════════════
+function toggleFilterPanel(header) {
+    const body  = header.nextElementSibling;
+    const arrow = header.querySelector('.n-filter-arrow');
+    const open  = body.classList.toggle('open');
+    arrow.classList.toggle('open', open);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MODAL OPEN / CLOSE
+// ═══════════════════════════════════════════════════════════
+function openFoodModal(food) {
+    food = food || null;
+    clearErrors();
+    document.getElementById('editId').value  = food ? food.id   : '';
+    document.getElementById('f-nom').value   = food ? food.nom  : '';
+    document.getElementById('f-cal').value   = food ? food.cal  : '';
+    document.getElementById('f-prot').value  = food ? food.prot : '';
+    document.getElementById('f-lip').value   = food ? food.lip  : '';
+    document.getElementById('f-gluc').value  = food ? food.gluc : '';
+    document.getElementById('modalTitle').textContent = food ? '✏️ Modifier l\'aliment' : '🥗 Ajouter un aliment';
+    updateMacroVerif();
+    document.getElementById('foodModalOverlay').classList.add('open');
+    setTimeout(() => document.getElementById('f-nom').focus(), 100);
+}
+
+// Appelé depuis les boutons du tableau (données injectées par Twig, pas de tableau JS)
+function editFoodServer(id, nom, cal, prot, lip, gluc) {
+    openFoodModal({ id: id, nom: nom, cal: cal, prot: prot, lip: lip, gluc: gluc });
+}
+
+function closeFoodModal() {
+    document.getElementById('foodModalOverlay').classList.remove('open');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CRUD SAVE
+// ═══════════════════════════════════════════════════════════
+async function saveFoodItem() {
+    if (!validateForm()) return;
+
+    const id   = document.getElementById('editId').value;
+    const body = {
+        nomAliment: document.getElementById('f-nom').value.trim(),
+        calories:   parseFloat(document.getElementById('f-cal').value),
+        proteines:  parseFloat(document.getElementById('f-prot').value),
+        lipides:    parseFloat(document.getElementById('f-lip').value),
+        glucides:   parseFloat(document.getElementById('f-gluc').value),
+    };
+
+    const btn = document.getElementById('btnSave');
+    btn.disabled    = true;
+    btn.textContent = '⏳ Enregistrement…';
+
+    try {
+        const url = id ? API.update(id) : API.create;
+        await apiFetch(url, { method: 'POST', body: JSON.stringify(body) });
+        closeFoodModal();
+        showToast(id ? '✅ Aliment modifié avec succès' : '✅ Aliment ajouté avec succès', 'success');
+        setTimeout(() => window.location.reload(), 800);
+    } catch(e) {
+        showToast('❌ ' + e.message, 'error');
+        btn.disabled    = false;
+        btn.textContent = '💾 Enregistrer';
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CRUD DELETE
+// ═══════════════════════════════════════════════════════════
+function askDelete(id, nom) {
+    deleteTargetId = id;
+    document.getElementById('delSub').textContent = 'Supprimer « ' + nom + ' » ? Cette action est irréversible.';
+    document.getElementById('delOverlay').classList.add('open');
+}
+
+function closeDelModal() {
+    deleteTargetId = null;
+    document.getElementById('delOverlay').classList.remove('open');
+}
+
+async function confirmDelete() {
+    if (!deleteTargetId) return;
+    const btn = document.getElementById('btnDelConfirm');
+    btn.disabled    = true;
+    btn.textContent = '⏳ Suppression…';
+
+    try {
+        await apiFetch(API.delete(deleteTargetId), { method: 'POST' });
+        closeDelModal();
+        showToast('🗑️ Aliment supprimé', 'success');
+
+        const row = document.getElementById('row-' + deleteTargetId);
+        if (row) {
+            row.style.transition = 'opacity .3s, transform .3s';
+            row.style.opacity    = '0';
+            row.style.transform  = 'translateX(20px)';
+            setTimeout(() => row.remove(), 350);
+        } else {
+            setTimeout(() => window.location.reload(), 800);
+        }
+    } catch(e) {
+        showToast('❌ ' + e.message, 'error');
+        btn.disabled    = false;
+        btn.textContent = 'Supprimer';
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  VALIDATION
+// ═══════════════════════════════════════════════════════════
+function validateForm() {
+    clearErrors();
+    let valid = true;
+    if (!document.getElementById('f-nom').value.trim())                      { setErr('fg-nom');  valid = false; }
+    const cal  = parseFloat(document.getElementById('f-cal').value);
+    if (isNaN(cal)  || cal  < 0 || cal  > 9000)                             { setErr('fg-cal');  valid = false; }
+    const prot = parseFloat(document.getElementById('f-prot').value);
+    if (isNaN(prot) || prot < 0 || prot > 100)                              { setErr('fg-prot'); valid = false; }
+    const lip  = parseFloat(document.getElementById('f-lip').value);
+    if (isNaN(lip)  || lip  < 0 || lip  > 100)                              { setErr('fg-lip');  valid = false; }
+    const gluc = parseFloat(document.getElementById('f-gluc').value);
+    if (isNaN(gluc) || gluc < 0 || gluc > 100)                              { setErr('fg-gluc'); valid = false; }
+    return valid;
+}
+
+function setErr(id)    { document.getElementById(id).classList.add('has-err'); }
+function clearErrors() { document.querySelectorAll('.n-form-group.has-err').forEach(el => el.classList.remove('has-err')); }
+
+// ═══════════════════════════════════════════════════════════
+//  VÉRIFICATEUR CALORIQUE
+// ═══════════════════════════════════════════════════════════
+function updateMacroVerif() {
+    const cal      = parseFloat(document.getElementById('f-cal').value)  || 0;
+    const prot     = parseFloat(document.getElementById('f-prot').value) || 0;
+    const lip      = parseFloat(document.getElementById('f-lip').value)  || 0;
+    const gluc     = parseFloat(document.getElementById('f-gluc').value) || 0;
+    const computed = +(prot * 4 + gluc * 4 + lip * 9).toFixed(1);
+    const diff     = +(cal - computed).toFixed(1);
+    const ok       = Math.abs(diff) <= 20;
+
+    document.getElementById('mv-declared').textContent = cal + ' kcal';
+    document.getElementById('mv-computed').textContent = computed + ' kcal';
+    document.getElementById('mv-diff').textContent     = (diff > 0 ? '+' : '') + diff + ' kcal';
+    const st = document.getElementById('mv-status');
+    st.textContent = ok ? '✅ Cohérent' : '⚠️ Écart > 20 kcal';
+    st.className   = 'mv-val ' + (ok ? 'mv-ok' : 'mv-warn');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════════
+function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className   = 'toast ' + type + ' show';
+    setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  EXPORT EXCEL — Feedback visuel pendant le téléchargement
+// ═══════════════════════════════════════════════════════════
+/**
+ * Affiche un feedback visuel sur le bouton d'export pendant
+ * que le fichier se génère côté serveur (~1-3 secondes).
+ * Le bouton retrouve son état normal 4 secondes après le clic.
+ */
+function startExportFeedback(btn) {
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML      = '⏳ Génération en cours…';
+    btn.style.opacity  = '0.75';
+    btn.style.pointerEvents = 'none';
+
+    setTimeout(function () {
+        btn.innerHTML = '✅ Téléchargé !';
+        btn.style.opacity = '1';
+    }, 2500);
+
+    setTimeout(function () {
+        btn.innerHTML = originalHTML;
+        btn.style.pointerEvents = '';
+    }, 4500);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  KEYBOARD
+// ═══════════════════════════════════════════════════════════
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        document.getElementById('foodModalOverlay').classList.remove('open');
+        document.getElementById('delOverlay').classList.remove('open');
+    }
+});
+</script>
+{% endblock %}

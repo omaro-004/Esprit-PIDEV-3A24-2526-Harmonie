@@ -1,0 +1,302 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tâches - Harmony{% endblock %}
+
+{% block stylesheets %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --purple:       #6A5ACD;
+            --purple-dark:  #4B3B9E;
+            --purple-soft:  #8B7FD4;
+            --purple-pale:  #EDE8FA;
+            --purple-ghost: #F7F5FD;
+            --text:         #1C1733;
+            --text-mid:     #4A4570;
+            --text-muted:   #9590B8;
+            --border:       rgba(106,90,205,.12);
+            --white:        #FFFFFF;
+            --font-head:    'Syne', sans-serif;
+            --font-body:    'Inter', sans-serif;
+        }
+
+        html, body {
+            height: 100%;
+            font-family: var(--font-body);
+            background: var(--purple-ghost);
+            color: var(--text);
+        }
+
+        /* ── TOPBAR ───────────────────────────────── */
+        .topbar {
+            position: sticky; top: 0; z-index: 200;
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            height: 62px;
+            display: flex;
+            align-items: center;
+            padding: 0 40px;
+            gap: 8px;
+        }
+        .topbar-logo {
+            display: flex; align-items: center; gap: 10px;
+            text-decoration: none;
+            margin-right: 32px;
+        }
+        .logo-mark {
+            width: 34px; height: 34px;
+            border-radius: 10px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            flex: 1;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+        }
+        .nav-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border-radius: 9px;
+            font-size: 13.5px;
+            font-weight: 500;
+            color: var(--text-mid);
+            text-decoration: none;
+            white-space: nowrap;
+            transition: background .15s, color .15s;
+        }
+        .nav-link:hover { background: var(--purple-pale); color: var(--purple); }
+        .nav-link.active { background: var(--purple-pale); color: var(--purple); font-weight: 600; }
+        .nav-link .nav-emoji { font-size: 14px; }
+        .topbar-right {
+            display: flex; align-items: center;
+            gap: 10px; margin-left: auto; flex-shrink: 0;
+        }
+        .logout-btn {
+            padding: 7px 16px;
+            border-radius: 9px;
+            border: 1.5px solid rgba(239,68,68,.2);
+            background: transparent;
+            color: #E05252;
+            font-family: var(--font-body);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background .15s, border-color .15s;
+            white-space: nowrap;
+        }
+        .logout-btn:hover { background: #FEF2F2; border-color: #E05252; }
+        .profile-wrap { position: relative; }
+        .avatar {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: var(--purple);
+            color: white;
+            font-family: var(--font-head);
+            font-weight: 700;
+            font-size: 14px;
+            display: grid; place-items: center;
+            cursor: pointer;
+            border: 2px solid var(--purple-pale);
+            transition: box-shadow .15s;
+        }
+        .avatar:hover { box-shadow: 0 0 0 3px rgba(106,90,205,.25); }
+        .profile-dropdown {
+            position: absolute; top: calc(100% + 10px); right: 0;
+            width: 220px;
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            box-shadow: 0 12px 40px rgba(0,0,0,.1);
+            padding: 16px;
+            display: none;
+            z-index: 500;
+        }
+        .profile-dropdown.open { display: block; }
+        .pd-name  { font-size: 14px; font-weight: 600; color: var(--text); }
+        .pd-email { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        .pd-divider { height: 1px; background: var(--border); margin: 12px 0; }
+        .pd-hint { font-size: 11px; color: var(--text-muted); font-style: italic; }
+
+        /* ── PAGE ── */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 48px 40px 80px;
+        }
+        .content-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            padding: 60px 40px;
+            text-align: center;
+        }
+        .page-title {
+            font-family: var(--font-head);
+            font-weight: 800;
+            font-size: 48px;
+            color: var(--purple);
+            margin-bottom: 16px;
+            letter-spacing: -.5px;
+        }
+        .page-description {
+            font-size: 16px;
+            font-weight: 300;
+            color: var(--text-mid);
+            line-height: 1.7;
+            max-width: 500px;
+            margin: 0 auto 28px;
+        }
+        .wip-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: .8px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            background: var(--purple-ghost);
+            border: 1px solid var(--border);
+            padding: 6px 16px;
+            border-radius: 20px;
+        }
+
+        @media (max-width: 640px) {
+            .topbar { padding: 0 20px; }
+            .nav-links { display: none; }
+            .container { padding: 24px 20px 60px; }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    {% set current_route = app.request.attributes.get('_route') %}
+
+    <!-- ═══ TOPBAR ════════════════════════════════════════════════════ -->
+    <header class="topbar">
+        <a href="{{ path('homepage') }}" class="topbar-logo">
+            <img src="{{ asset('images/logo.png') }}" class="logo-mark" alt="Harmony">
+        </a>
+        <nav class="nav-links">
+            <a href="{{ path('activites') }}" class="nav-link {{ current_route == 'activites' ? 'active' }}"><span class="nav-emoji">🏋</span> Activités</a>
+            <a href="{{ path('forum') }}" class="nav-link {{ current_route == 'forum' ? 'active' }}"><span class="nav-emoji">💬</span> Forum</a>
+            <a href="{{ path('taches') }}" class="nav-link {{ current_route == 'taches' ? 'active' }}"><span class="nav-emoji">📚</span> Tâches</a>
+            <a href="{{ path('evenements') }}" class="nav-link {{ current_route == 'evenements' ? 'active' }}"><span class="nav-emoji">📅</span> Événements</a>
+            <a href="{{ path('nutrition') }}" class="nav-link {{ current_route == 'nutrition' ? 'active' }}"><span class="nav-emoji">🥗</span> Nutrition</a>
+            <a href="{{ path('meditation') }}" class="nav-link {{ current_route == 'meditation' ? 'active' }}"><span class="nav-emoji">🧘</span> Méditation</a>
+            <a href="{{ path('journal') }}" class="nav-link {{ current_route == 'journal' ? 'active' }}"><span class="nav-emoji">📔</span> Journal</a>
+            <a href="{{ path('library') }}" class="nav-link {{ current_route == 'library' ? 'active' }}"><span class="nav-emoji">📖</span> Library</a>
+        </nav>
+        <div class="topbar-right">
+            <button class="logout-btn">🚪 Déconnexion</button>
+            <div class="profile-wrap">
+                <div class="avatar" id="avatarBtn">
+                    {{ app.user ? app.user.firstName|first|upper : 'E' }}
+                </div>
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="pd-name">{{ app.user ? app.user.firstName ~ ' ' ~ app.user.lastName : 'Étudiant' }}</div>
+                    <div class="pd-email">{{ app.user ? app.user.email : 'email@exemple.com' }}</div>
+                    <div class="pd-divider"></div>
+                    <div class="pd-hint">Double-clic pour modifier</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ═══ PAGE ═════════════════════════════════════════════════════ -->
+    <div class="container">
+        <div class="content-card">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+                <div>
+                    <h1 class="page-title">📚 Tâches</h1>
+                    <p class="page-description">Organisez et gérez vos tâches académiques et personnelles.</p>
+                    <span class="wip-badge">🚧 En cours de développement</span>
+                </div>
+                <button onclick="document.getElementById('githubModal').style.display='flex'"
+                        style="display:inline-flex;align-items:center;gap:7px;padding:8px 16px;background:#fff;border:1.5px solid #333;border-radius:20px;font-size:13px;font-weight:600;color:#333;cursor:pointer;transition:background .15s;"
+                        onmouseover="this.style.background='#f6f8fa'" onmouseout="this.style.background='#fff'">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12"/></svg>
+                    GitHub Sync
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {# ── GitHub Settings Modal ── #}
+    <div id="githubModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center;">
+        <div style="background:#fff;border-radius:20px;padding:28px;width:420px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.25);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+                <h3 style="margin:0;font-family:'Syne',sans-serif;font-size:17px;font-weight:700;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:6px;"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12"/></svg>
+                    GitHub Issues Sync
+                </h3>
+                <button onclick="document.getElementById('githubModal').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888;">✕</button>
+            </div>
+            <p style="font-size:13px;color:#666;margin:0 0 18px;">Chaque tâche créée/modifiée sera automatiquement synchronisée avec vos GitHub Issues.</p>
+            <div style="margin-bottom:12px;">
+                <label style="display:block;font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Personal Access Token</label>
+                <input id="gh-token" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                       style="width:100%;padding:9px 12px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:13.5px;outline:none;box-sizing:border-box;">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="display:block;font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Dépôt (owner/repo)</label>
+                <input id="gh-repo" type="text" placeholder="monuser/mon-projet"
+                       style="width:100%;padding:9px 12px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:13.5px;outline:none;box-sizing:border-box;">
+            </div>
+            <div id="gh-status" style="font-size:12.5px;color:#666;min-height:18px;margin-bottom:14px;"></div>
+            <div style="display:flex;gap:10px;">
+                <button onclick="githubSave()"
+                        style="flex:1;padding:10px;background:linear-gradient(135deg,#333,#111);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;">
+                    💾 Sauvegarder
+                </button>
+                <button onclick="githubSyncDoing()"
+                        style="padding:10px 14px;background:#fff;border:1.5px solid #333;border-radius:10px;font-size:13px;cursor:pointer;">
+                    🔄 Re-sync EN COURS
+                </button>
+            </div>
+        </div>
+    </div>
+    <script>
+    (function(){
+        // Load current settings
+        fetch('/api/github/settings').then(r=>r.json()).then(d=>{
+            if(d.token) document.getElementById('gh-token').value = d.token;
+            if(d.repo)  document.getElementById('gh-repo').value  = d.repo;
+        }).catch(()=>{});
+
+        window.githubSave = function(){
+            var token = document.getElementById('gh-token').value.trim();
+            var repo  = document.getElementById('gh-repo').value.trim();
+            var st    = document.getElementById('gh-status');
+            st.textContent = 'Sauvegarde…';
+            fetch('/api/github/settings',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,repo})})
+            .then(r=>r.json()).then(d=>{ st.style.color='#34a853'; st.textContent='✅ Sauvegardé !'; setTimeout(()=>st.textContent='',3000); })
+            .catch(()=>{ st.style.color='#b91c1c'; st.textContent='❌ Erreur réseau'; });
+        };
+        window.githubSyncDoing = function(){
+            var st = document.getElementById('gh-status');
+            st.textContent = 'Synchronisation en cours…';
+            fetch('/api/github/settings/sync-doing',{method:'POST'})
+            .then(r=>r.json()).then(d=>{ st.style.color='#34a853'; st.textContent='✅ '+(d.synced||0)+' tâche(s) synchronisée(s)'; })
+            .catch(()=>{ st.style.color='#b91c1c'; st.textContent='❌ Erreur'; });
+        };
+    })();
+    </script>
+
+    <script>
+        const btn = document.getElementById('avatarBtn');
+        const drop = document.getElementById('profileDropdown');
+        btn.addEventListener('click', e => { e.stopPropagation(); drop.classList.toggle('open'); });
+        document.addEventListener('click', () => drop.classList.remove('open'));
+    </script>
+{% endblock %}
