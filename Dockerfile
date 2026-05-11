@@ -3,6 +3,7 @@ FROM php:8.2-cli
 RUN apt-get update && apt-get install -y \
     git \
     curl \
+    libicu-dev \
     libzip-dev \
     libpng-dev \
     libonig-dev \
