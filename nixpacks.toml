@@ -9,12 +9,20 @@ nixPkgs = [
   "php82Extensions.intl",
   "php82Extensions.curl",
   "php82Extensions.sodium",
+  "php82Extensions.xml",
+  "php82Extensions.dom",
+  "php82Extensions.tokenizer",
+  "php82Extensions.ctype",
+  "php82Extensions.iconv",
+  "php82Extensions.simplexml",
+  "php82Extensions.xmlwriter",
+  "php82Extensions.fileinfo",
   "composer"
 ]
 
 [phases.build]
 cmds = [
-  "composer install --optimize-autoloader --no-scripts --no-interaction --ignore-platform-req=ext-zip --ignore-platform-req=ext-gd"
+  "composer install --optimize-autoloader --no-scripts --no-interaction --ignore-platform-reqs"
 ]
 
 [start]
