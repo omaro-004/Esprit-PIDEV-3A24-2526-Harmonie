@@ -1,5 +1,5 @@
 FROM php:8.2-cli
-# force-rebuild-1
+# force-rebuild-2
 
 RUN apt-get update && apt-get install -y \
     git \
@@ -16,13 +16,24 @@ RUN apt-get update && apt-get install -y \
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+RUN useradd -m appuser
+
 WORKDIR /app
 COPY . .
+RUN chown -R appuser:appuser /app
 
+USER appuser
+
+ENV COMPOSER_ALLOW_SUPERUSER=0
 ENV APP_ENV=prod
+
 RUN composer install --optimize-autoloader --no-interaction
 
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 EXPOSE 8080
+
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+USER root
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+USER appuser
+
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
