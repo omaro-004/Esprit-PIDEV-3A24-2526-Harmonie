@@ -55,7 +55,17 @@ class GoogleLoginAuthenticator extends OAuth2Authenticator
                 }
                 $googleId = $googleUser->getId();
 
-                // 1) Si utilisateur existant par email → connexion directe + liaison googleId.
+                // 1) Si utilisateur existant par googleId → connexion directe.
+                $user = $this->userRepo->findOneBy(['googleId' => $googleId]);
+                if ($user instanceof User) {
+                    if (!$user->getOauthAvatarUrl()) {
+                        $user->setOauthAvatarUrl($googleUser->getAvatar());
+                        $this->em->flush();
+                    }
+                    return $user;
+                }
+
+                // 2) Si utilisateur existant par email → connexion directe + liaison googleId.
                 if ($email) {
                     $user = $this->userRepo->findOneBy(['userEmail' => $email]);
                     if ($user instanceof User) {
@@ -71,7 +81,7 @@ class GoogleLoginAuthenticator extends OAuth2Authenticator
                     }
                 }
 
-                // 2) Sinon création automatique du compte.
+                // 3) Sinon création automatique du compte.
                 $name = (string) $googleUser->getName();
                 if ($name === '') {
                     $name = 'Google User';
