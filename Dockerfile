@@ -1,4 +1,5 @@
 FROM php:8.2-cli
+# force-rebuild-1
 
 RUN apt-get update && apt-get install -y \
     git \
