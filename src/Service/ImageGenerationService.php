@@ -7,18 +7,25 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class ImageGenerationService
 {
-    private const API_KEY = 'REDACTED';
     private const API_URL = 'https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell';
+    private string $apiKey;
 
-    public function __construct(private readonly HttpClientInterface $http) {}
+    public function __construct(private readonly HttpClientInterface $http)
+    {
+        $this->apiKey = $_ENV['HUGGINGFACE_API_KEY'] ?? '';
+    }
 
 
     public function generateImage(string $prompt): ?string
     {
+        if ($this->apiKey === '') {
+            return null;
+        }
+
         try {
             $response = $this->http->request('POST', self::API_URL, [
                 'headers' => [
-                    'Authorization' => 'Bearer ' . self::API_KEY,
+                    'Authorization' => 'Bearer ' . $this->apiKey,
                     'Content-Type'  => 'application/json',
                     'Accept'        => 'image/png',
                 ],

@@ -53,5 +53,5 @@ security:
         - { path: ^/forgot-password,       roles: PUBLIC_ACCESS }
         - { path: ^/admin,                 roles: ROLE_ADMIN }
         - { path: ^/profile,               roles: ROLE_USER }
-        - { path: ^/,                      roles: ROLE_USER }
+        - { path: ^/,                      roles: PUBLIC_ACCESS }
         - { path: ^/forum/post/\d+/summarize, roles: PUBLIC_ACCESS }

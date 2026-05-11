@@ -959,7 +959,7 @@
                 const data = await r.json();
                 const jwt  = data.token;
 
-                const mercureUrl = `http://localhost:3000/.well-known/mercure`;
+                const mercureUrl = '{{ app.request.schemeAndHttpHost }}/.well-known/mercure';
                 const topic      = `user/${this.myId}/messages`;
                 const url        = new URL(mercureUrl);
                 url.searchParams.append('topic', topic);

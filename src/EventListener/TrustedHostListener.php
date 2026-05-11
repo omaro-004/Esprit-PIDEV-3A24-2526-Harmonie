@@ -23,9 +23,6 @@ class TrustedHostListener implements EventSubscriberInterface
 
         $request = $event->getRequest();
 
-        // Remplacer 127.0.0.1 par localhost dans le host
-        if ($request->getHost() === '127.0.0.1') {
-            $request->headers->set('HOST', 'localhost:8000');
-        }
+        // No host override for production environments.
     }
 }
