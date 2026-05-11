@@ -21,6 +21,7 @@ COPY . .
 
 RUN composer install --optimize-autoloader --no-scripts --no-interaction
 
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 EXPOSE 8080
-
-CMD php -S 0.0.0.0:${PORT:-8080} -t public/
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
