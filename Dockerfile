@@ -1,5 +1,5 @@
 FROM php:8.2-cli
-# force-rebuild-2
+# force-rebuild-3
 
 RUN apt-get update && apt-get install -y \
     git \
@@ -31,6 +31,8 @@ RUN MERCURE_URL=http://localhost/.well-known/mercure \
     MERCURE_PUBLIC_URL=http://localhost/.well-known/mercure \
     MERCURE_JWT_SECRET=dummy \
     composer install --optimize-autoloader --no-interaction
+
+RUN php bin/console asset-map:compile
 
 EXPOSE 8080
 
