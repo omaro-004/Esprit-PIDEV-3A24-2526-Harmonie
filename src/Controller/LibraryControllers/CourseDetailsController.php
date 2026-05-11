@@ -633,6 +633,7 @@ class CourseDetailsController extends AbstractController
                             $lines
                         )];
                     }
+                                $fk = $this->getCourseFileFkColumn();
                     $html = $this->renderView('library/note-pdf.html.twig', [
                         'title'      => $baseName,
                         'paragraphs' => $doc['paragraphs'],
@@ -642,7 +643,7 @@ class CourseDetailsController extends AbstractController
                     $zip->addFromString($zipName, $pdfBytes);
                 } catch (\Throwable) {
                     // Conversion failed — include raw file instead
-                    $rawName = $this->uniqueZipName($usedNames, $origName);
+                                $update  .= sprintf(' WHERE id = ? AND %s = ?', $fk);
                     $zip->addFromString($rawName, $data);
                 }
             } else {
