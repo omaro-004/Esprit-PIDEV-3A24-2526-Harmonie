@@ -39,6 +39,8 @@ class CoursesController extends AbstractController
         'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg',
     ];
 
+    private ?string $courseFileFkColumn = null;
+
     public function __construct(
         private readonly Connection $db,
         private readonly ImageGen   $imageGenerationService,
@@ -55,6 +57,21 @@ class CoursesController extends AbstractController
             [$user->getUserIdentifier()]
         );
         return $row ? (int) $row['user_id'] : 0;
+    }
+
+    private function getCourseFileFkColumn(): string
+    {
+        if ($this->courseFileFkColumn !== null) {
+            return $this->courseFileFkColumn;
+        }
+
+        $column = $this->db->fetchOne(
+            "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'coursefile' AND COLUMN_NAME IN ('courseid_id','courseid') ORDER BY FIELD(COLUMN_NAME,'courseid_id','courseid') LIMIT 1"
+        );
+
+        $this->courseFileFkColumn = is_string($column) && $column !== '' ? $column : 'courseid_id';
+
+        return $this->courseFileFkColumn;
     }
 
     private function isAllowedFile(\Symfony\Component\HttpFoundation\File\UploadedFile $file): bool
@@ -204,9 +221,13 @@ class CoursesController extends AbstractController
             }
             $mime     = $file->getMimeType() ?? 'application/octet-stream';
             $origName = $file->getClientOriginalName();
+            $fk = $this->getCourseFileFkColumn();
             $this->db->executeStatement(
-                     'INSERT INTO coursefile (courseid_id, originalname, mimetype, sizebytes, filedata)
+                sprintf(
+                    'INSERT INTO coursefile (%s, originalname, mimetype, sizebytes, filedata)
              VALUES (:courseId, :name, :mime, :size, :data)',
+                    $fk
+                ),
                 ['courseId' => $courseId, 'name' => $origName, 'mime' => $mime, 'size' => strlen($data), 'data' => $data]
             );
         }
@@ -363,7 +384,8 @@ class CoursesController extends AbstractController
         }
 
         $this->db->executeStatement('DELETE FROM saved_courses WHERE course_id = :id', ['id' => $id]);
-        $this->db->executeStatement('DELETE FROM coursefile WHERE courseid_id = :id',     ['id' => $id]);
+        $fk = $this->getCourseFileFkColumn();
+        $this->db->executeStatement(sprintf('DELETE FROM coursefile WHERE %s = :id', $fk), ['id' => $id]);
         $this->db->executeStatement('DELETE FROM courses WHERE id = :id',              ['id' => $id]);
 
         return new JsonResponse(['message' => 'Course deleted.']);
