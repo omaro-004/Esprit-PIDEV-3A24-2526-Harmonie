@@ -27,7 +27,10 @@ USER appuser
 ENV COMPOSER_ALLOW_SUPERUSER=0
 ENV APP_ENV=prod
 
-RUN composer install --optimize-autoloader --no-interaction
+RUN MERCURE_URL=http://localhost/.well-known/mercure \
+    MERCURE_PUBLIC_URL=http://localhost/.well-known/mercure \
+    MERCURE_JWT_SECRET=dummy \
+    composer install --optimize-autoloader --no-interaction
 
 EXPOSE 8080
 
