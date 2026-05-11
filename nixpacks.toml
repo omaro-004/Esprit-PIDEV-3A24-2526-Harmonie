@@ -14,7 +14,7 @@ nixPkgs = [
 
 [phases.build]
 cmds = [
-  "composer install --optimize-autoloader --no-scripts --no-interaction"
+  "composer install --optimize-autoloader --no-scripts --no-interaction --ignore-platform-req=ext-zip --ignore-platform-req=ext-gd"
 ]
 
 [start]
